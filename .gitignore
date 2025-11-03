@@ -1,0 +1,16 @@
+# Archivos de entorno
+.env
+
+# Configuración local de Docker Compose
+docker-compose.override.yml
+
+# Volúmenes o datos persistentes
+docker-volume/
+
+# Archivos de respaldo o copias
+*.tar
+*.bak
+
+# Archivos de entorno remoto de VS Code
+.vscode/
+.vscode-server/
