@@ -12,3 +12,6 @@ sudo
 RUN useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}
 RUN echo "${USUARIO}:1234" | chpasswd
 RUN echo "Bienvenida ${USUARIO} a la empresa" > /home/${USUARIO}/hello.txt
+
+# el primer comando que use el contenedor para manenerse vivo
+CMD ["tail", "-f", "/dev/null"]
