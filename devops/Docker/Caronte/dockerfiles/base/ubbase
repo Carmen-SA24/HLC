@@ -12,7 +12,11 @@ sudo
 # copiar los srcipt's del entrypoint (sc pcpal --> sc' perosonalizados)
 RUN mkdir -p /root/admin/base
 WORKDIR /root/admin/base
-COPY ./dockerfiles/base/admin/start.sh .
+# relaitvo al directorio donde se encuentra ubbase
+COPY ./admin/start.sh .
+# relativo a la ruta del contexto en el docker-compose.yml del proyecto
+# workdir dentro del contenedor
+# COPY ./dockerfiles/base/admin/start.sh .
 RUN chmod +x ./start.sh
 
 
