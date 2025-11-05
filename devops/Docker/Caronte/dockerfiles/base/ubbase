@@ -9,9 +9,13 @@ git  curl  wget \
 iputils-ping net-tools \
 sudo
 
-RUN useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}
-RUN echo "${USUARIO}:1234" | chpasswd
-RUN echo "Bienvenida ${USUARIO} a la empresa" > /home/${USUARIO}/hello.txt
+# copiar los srcipt's del entrypoint (sc pcpal --> sc' perosonalizados)
+RUN mkdir -p /root/admin
+COPY ./dockerfiles/base/admin/start.sh /root/admin
+RUN chmod +x /root/admin/start.sh
+
 
 # el primer comando que use el contenedor para manenerse vivo
-CMD ["tail", "-f", "/dev/null"]
+# CMD ["tail", "-f", "/dev/null"]
+
+ENTRYPOINT [ "/root/admin/start.sh" ]
