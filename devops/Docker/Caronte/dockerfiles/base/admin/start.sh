@@ -1,9 +1,15 @@
 #!/bin/bash
 
-# encargada de dejar este contenedor vivo en background 
-tail -f /dev/null
+newUser(){
+  useradd -rm -d /home/rosa -s /bin/bash rosa   
+  echo "rosa:1234" | chpasswd
+  echo "Bienvenida Rosa ..." > /home/rosa/bienvenida.txt
+}
 
-## script's que se encargan de configurar el imagen/contenedor al iniciarse
-# RUN useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}
-# RUN echo "${USUARIO}:1234" | chpasswd
-# RUN echo "Bienvenida ${USUARIO} a la empresa" > /home/${USUARIO}/hello.txt
+main(){
+    newUser
+    # encargada de dejar este contenedor vivo en background 
+    tail -f /dev/null
+}
+
+main
