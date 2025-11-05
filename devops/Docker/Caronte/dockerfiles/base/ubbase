@@ -10,12 +10,13 @@ iputils-ping net-tools \
 sudo
 
 # copiar los srcipt's del entrypoint (sc pcpal --> sc' perosonalizados)
-RUN mkdir -p /root/admin
-COPY ./dockerfiles/base/admin/start.sh /root/admin
-RUN chmod +x /root/admin/start.sh
+RUN mkdir -p /root/admin/base
+WORKDIR /root/admin/base
+COPY ./dockerfiles/base/admin/start.sh .
+RUN chmod +x ./start.sh
 
 
 # el primer comando que use el contenedor para manenerse vivo
 # CMD ["tail", "-f", "/dev/null"]
 
-ENTRYPOINT [ "/root/admin/start.sh" ]
+ENTRYPOINT [ "./start.sh" ]
