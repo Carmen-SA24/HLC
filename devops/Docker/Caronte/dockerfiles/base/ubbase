@@ -21,7 +21,7 @@ COPY ./dockerfiles/base/admin/start.sh .
 
 # workdir dentro del contenedor
 # COPY ./dockerfiles/base/admin/start.sh .
-
+RUN chmod +x ./start.sh
 
 
 # el primer comando que use el contenedor para manenerse vivo
