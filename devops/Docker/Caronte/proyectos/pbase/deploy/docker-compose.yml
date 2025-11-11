@@ -11,4 +11,6 @@ services:
     environment:
       - USUARIO=alfonso
       - PASSWORD=pswalfonso
+    volumes:
+      - ./logs:/root/logs
    
