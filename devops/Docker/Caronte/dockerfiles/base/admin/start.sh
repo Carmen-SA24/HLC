@@ -14,11 +14,11 @@ check_usuario(){
 }
 newUser(){
   check_usuario
-  if [ $? -eq 0 ]
-   then
+  if [ $? -eq 0 ]; then
   useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
   echo "${USUARIO}:${PASSWORD}" | chpasswd
   echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt
+  fi
 }
 
 main(){
