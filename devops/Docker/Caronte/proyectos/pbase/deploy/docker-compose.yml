@@ -5,7 +5,7 @@ services:
       context: /home/rosa/devops/Docker/Caronte/
       dockerfile: ./dockerfiles/base/ubbase
       args: # variables en DFILE para la construccion (build de la imagen)
-        - USUARIO=pepe
+        - USUARIO=alfonso
         # - PASSWORD=1234
     container_name: ctpbase
     # ports:
