@@ -2,15 +2,17 @@ version: '3.9'
 services:
   web:
     build:
-      context: /home/rosa/devops/Docker/Caronte
+      context: ${CONTEXTO}
       dockerfile: ./dockerfiles/base/ubbase
       # args:  variables en DFILE para la construccion (build de la imagen)
         # - USUARIO=alfonso
         # - PASSWORD=1234
-    container_name: ctpbase
-    environment:
-      - USUARIO=alfonso
-      - PASSWORD=pswalfonso
+    container_name: ${CONTENEDOR}
+    env_file:
+      - ./.env
+    # environment:
+    #   - USUARIO=alfonso
+    #   - PASSWORD=pswalfonso
     volumes:
       - ./logs:/root/logs
    
