@@ -8,8 +8,7 @@ services:
         # - USUARIO=alfonso
         # - PASSWORD=1234
     container_name: ${CONTENEDOR}
-    env_file:
-      - ./.env
+    env_file:  ./.env
     # environment: # si necesito alguna variable de entorno que no esté en .env 
     #   - USUARIO=alfonso
     #   - PASSWORD=pswalfonso
