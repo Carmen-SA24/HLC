@@ -1,6 +1,6 @@
 #!/bin/bash
 # carga las varialbes de entorno pasadas desde el docker-compose.yml
-set -e
+# set -e
 
 source /root/admin/base/usuarios/mainUsuarios.sh
 
