@@ -14,7 +14,7 @@ check_usuario(){
 }
 
 check_home(){
-  if [ ! -d /home/${USUARIO} ]; then
+  if [ ! -d /home/${USUARIO} ]
    then
        echo "/home/${USUARIO} no existe" >> /root/logs/informe.log
        return 0 # true
