@@ -43,5 +43,3 @@ newUser(){
       echo "Usuario ${USUARIO} no creado, existe en passwd" >> /root/logs/informe.log 
   fi
 }
-
-newUser

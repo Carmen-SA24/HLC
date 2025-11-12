@@ -8,7 +8,7 @@ main(){
   # gestion usuario --> getUser.sh
   # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
-    newUser
+   newUser
     # encargada de dejar este contenedor vivo en background 
     tail -f /dev/null
 }
