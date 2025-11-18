@@ -10,7 +10,7 @@ main(){
   # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
     # resuser=newUser
-    #   res=if [ "resuser" -eq 0 ]
+    #   res=if [ "$?" -eq 0 ]
     #  then
     #       make_ssh
     #   fi
