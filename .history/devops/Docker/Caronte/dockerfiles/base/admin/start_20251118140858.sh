@@ -13,7 +13,7 @@ main(){
     # Aplicar configuración SSH
       make_ssh
 
-   # Iniciar el servicio SSH
+     # Iniciar el servicio SSH
       /usr/sbin/sshd
 
     # resuser=newUser

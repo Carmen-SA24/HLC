@@ -10,12 +10,8 @@ main(){
   # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
 
-    # Aplicar configuración SSH
-      make_ssh
-
-   # Iniciar el servicio SSH
-      /usr/sbin/sshd
-
+      # Aplicar configuración SSH
+    make_ssh
     # resuser=newUser
     #   res=if [ "resuser" -eq 0 ]
     #  then

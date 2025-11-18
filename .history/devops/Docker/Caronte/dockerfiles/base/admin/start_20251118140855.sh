@@ -11,11 +11,11 @@ main(){
     touch /root/logs/informe.log
 
     # Aplicar configuración SSH
-      make_ssh
+    make_ssh
 
-   # Iniciar el servicio SSH
-      /usr/sbin/sshd
-
+       # Iniciar el servicio SSH
+    /usr/sbin/sshd
+    
     # resuser=newUser
     #   res=if [ "resuser" -eq 0 ]
     #  then
