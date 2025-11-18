@@ -9,7 +9,7 @@ RUN apt update && apt install -yq --no-install-recommends \
 nano \
 git  curl  wget \
 iputils-ping net-tools \
-sudo \
+sudo
 openssh-server
 
 # copiar los srcipt's del entrypoint (sc pcpal --> sc' perosonalizados)
