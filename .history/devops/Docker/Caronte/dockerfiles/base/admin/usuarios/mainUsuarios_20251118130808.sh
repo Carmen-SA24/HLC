@@ -30,7 +30,7 @@ newUser(){
   if [ $? -eq 0 ]
   then
      check_home
-     if [ "$?" -eq 0 ]
+     if [ "$? -eq 0 ]
      then
           useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
           echo "${USUARIO}:${PASSWORD}" | chpasswd

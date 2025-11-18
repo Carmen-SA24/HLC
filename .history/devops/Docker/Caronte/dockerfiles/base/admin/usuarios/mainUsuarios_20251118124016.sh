@@ -22,7 +22,7 @@ check_home(){
       echo "/home/${USUARIO} existe" >> /root/logs/informe.log
       return 1 # falso
   fi
-}
+}5132
 
 newUser(){
   check_usuario
@@ -30,19 +30,16 @@ newUser(){
   if [ $? -eq 0 ]
   then
      check_home
-     if [ "$?" -eq 0 ]
+     if [ $? -eq 0 ]
      then
           useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
           echo "${USUARIO}:${PASSWORD}" | chpasswd
           echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt
           echo "Usuario ${USUARIO} creado correctamente" >> /root/logs/informe.log
-          return 0
       else
           echo "Usuario ${USUARIO} no reado, existe home" >> /root/logs/informe.log
-          return 1
     fi
     else
       echo "Usuario ${USUARIO} no creado, existe en passwd" >> /root/logs/informe.log 
-      return 1
   fi
 }

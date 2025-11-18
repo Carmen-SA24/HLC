@@ -10,7 +10,7 @@ main(){
   # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
     newUser
-      if [ "$?" -eq 0 ]
+      if [ "$? -eq 0 ]
      then
           make_ssh
     # encargada de dejar este contenedor vivo en background 
