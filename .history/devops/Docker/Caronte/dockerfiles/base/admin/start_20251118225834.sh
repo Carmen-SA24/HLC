@@ -21,16 +21,16 @@ main(){
     #       make_ssh
     #   fi
 
-     newUser
-      if [ "$?" -eq 0 ]
+     resuser=newUser
+      res=if [ "resuser" -eq 0 ]
      then
           make_ssh
       fi
 
-    #     if [ "$?" -eq 0 ]
-    #  then
-    #       make_ssh
-    #   fi
+        if [ "res" -eq 0 ]
+     then
+          make_ssh
+      fi
     # encargada de dejar este contenedor vivo en background 
     tail -f /dev/null
 }

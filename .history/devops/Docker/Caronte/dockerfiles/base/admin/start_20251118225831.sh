@@ -21,13 +21,13 @@ main(){
     #       make_ssh
     #   fi
 
-     newUser
-      if [ "$?" -eq 0 ]
-     then
-          make_ssh
-      fi
+     # resuser=newUser
+    #   res=if [ "resuser" -eq 0 ]
+    #  then
+    #       make_ssh
+    #   fi
 
-    #     if [ "$?" -eq 0 ]
+    #     if [ "res" -eq 0 ]
     #  then
     #       make_ssh
     #   fi
