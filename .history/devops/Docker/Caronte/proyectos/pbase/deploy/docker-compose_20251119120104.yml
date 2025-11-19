@@ -16,12 +16,5 @@ services:
       - "45678:45678"
     volumes:
       - ./logs:/root/logs
-    networks:
-      netcaronte:
-        ipv4_address: ${IP}
-networks:
-  netcaronte:
-    driver: default
-    ipam:
-      config:
-      - subnet: ${SUBNET}
+      
+   

@@ -20,8 +20,3 @@ services:
       netcaronte:
         ipv4_address: ${IP}
 networks:
-  netcaronte:
-    driver: default
-    ipam:
-      config:
-      - subnet: ${SUBNET}

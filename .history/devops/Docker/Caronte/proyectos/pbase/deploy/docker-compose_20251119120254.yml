@@ -18,10 +18,12 @@ services:
       - ./logs:/root/logs
     networks:
       netcaronte:
-        ipv4_address: ${IP}
-networks:
-  netcaronte:
-    driver: default
-    ipam:
-      config:
-      - subnet: ${SUBNET}
+        ipv4_address: ${IP_ASIGNADA}
+  
+  networks:
+    netcaronte:
+      ipam:
+        driver: default
+        config:
+          - subnet: ${SUBNET}
+   

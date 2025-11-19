@@ -39,6 +39,6 @@ cat "$PUB_KEY_SOURCE" >> "$USER_HOME/.ssh/authorized_keys"
 chmod 600 "$USER_HOME/.ssh/authorized_keys"
 
 chown -R "${USUARIO}:${USUARIO}" "$USER_HOME/.ssh"
-
+```
 
 }
