@@ -21,7 +21,7 @@ services:
         ipv4_address: ${IP}
 networks:
   netcaronte:
-    driver: bridge
+    driver: bridg
     ipam:
       config:
       - subnet: ${SUBNET}
