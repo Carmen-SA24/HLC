@@ -1,30 +1,20 @@
 FROM ubuntu
-# ARG USUARIO
 
-# ENV USER=${USUARIO}
-# ARG PASSWORD
-# RUN apt update && apt install -yq --no-install-recommends \ apache2 \ nano \ curl \ net-tools iputils-ping
-# **** Instalaciones *****
-RUN apt update && apt install -yq --no-install-recommends \ 
-nano \
-git \
-curl \
-wget \
-iputils-ping \
-net-tools \
-sudo \
-openssh-server
+RUN apt update && apt install -yq --no-install-recommends \
+     nano \
+     git curl  wget \
+     iputils-ping net-tools \ 
+     sudo \
+     openssh-server
 
-# copiar los srcipt's del entrypoint (sc pcpal --> sc' perosonalizados)
+# copiar los script's del entrypoint
 RUN mkdir -p /root/admin/base
 WORKDIR /root/admin/base
-COPY ./common/id_ed25519.pub ./common/.
+
 COPY ./dockerfiles/base/admin .
 RUN chmod +x ./start.sh
-# workdir dentro del contenedor
-# COPY ./dockerfiles/base/admin/start.sh .
 
-# el primer comando que use el contenedor para manenerse vivo
-# CMD ["tail", "-f", "/dev/null"]
+# Copiar clave SSH pública
+COPY ./common/id_ed25519.pub /tmp/authorized_key.pub
 
 ENTRYPOINT [ "./start.sh" ]
