@@ -19,9 +19,10 @@ services:
     networks:
       netcaronte:
         ipv4_address: ${IP}
-networks:
+  networks:
   netcaronte:
     driver: default
     ipam:
       config:
       - subnet: ${SUBNET}
+
