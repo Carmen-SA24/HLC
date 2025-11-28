@@ -9,6 +9,7 @@ main(){
     touch /root/logs/informe.log
     newUser
     make_ssh
+
     tail -f /dev/null
 }
 
