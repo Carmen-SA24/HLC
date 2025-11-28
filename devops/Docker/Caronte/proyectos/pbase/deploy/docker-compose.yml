@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: ${CONTEXTO}
+      context: /home/rosa/devops/devops/Docker/Caronte/
       dockerfile: ./dockerfiles/base/ubbase
     container_name: ${CONTENEDOR}
     ports:
