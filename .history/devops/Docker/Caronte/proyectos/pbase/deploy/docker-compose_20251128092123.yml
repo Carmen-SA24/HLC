@@ -3,14 +3,16 @@ services:
     build:
       context: ${CONTEXTO}
       dockerfile: ./dockerfiles/base/ubbase
+      
     container_name: ${CONTENEDOR}
     env_file:
-      - ./.env
+    - ./.env
     volumes:
       - ./logs:/root/logs
     networks:
       netcaronte:
         ipv4_address: ${IP}
+
 networks:
   netcaronte:
     ipam:

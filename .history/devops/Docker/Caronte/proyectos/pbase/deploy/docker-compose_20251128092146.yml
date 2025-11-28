@@ -11,6 +11,7 @@ services:
     networks:
       netcaronte:
         ipv4_address: ${IP}
+
 networks:
   netcaronte:
     ipam:
