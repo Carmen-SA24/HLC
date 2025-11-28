@@ -1,4 +1,9 @@
+.history
+*.log
 
+# Archivos de respaldo o copias
+*.tar
+*.bak
 
 # Archivos de entorno remoto de VS Code
 .vscode/

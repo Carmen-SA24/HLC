@@ -1,0 +1,23 @@
+services:
+  web:
+    build:
+      context: /home/rosa/devo
+      dockerfile: ./dockerfiles/base/ubbase
+    container_name: ${CONTENEDOR}
+    ports:
+      - ${PORT_SSH}:${PORT_SSH}
+    env_file:
+      - ./.env
+    volumes:
+      - ./logs:/root/logs
+    networks:
+      netcaronte:
+        ipv4_address: ${IP}
+networks:
+  netcaronte:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET}
+

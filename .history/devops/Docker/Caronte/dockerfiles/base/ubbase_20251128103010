@@ -1,0 +1,24 @@
+#Imagen base de apache con ubuntu actualizado
+FROM ubuntu
+
+#Instalacion de paquetes ejje
+RUN apt update && apt install -yq --no-install-recommends \
+    nano \
+    curl \
+    net-tools iputils-ping \
+    sudo \
+    openssh-server
+
+# Copoiar los scripts del entrypoiny (sc ----> otra sc personalizada)
+RUN mkdir -p /root/admin/base
+WORKDIR /root/admin/base
+#1 Relativo al directorio base donde se encuentra ibbase --> docker build
+COPY  ./dockerfiles/base/admin/ . 
+# 1 Relativo al ruta del contexto (caronte) en el docker-compose.yml --> docker build
+# Docker compose up -d --build
+# 2 workdir dentro del contenedor
+COPY ./common/id_rsa.pub /root/admin/base/common/id_rsa.pub
+COPY ./dockerfiles/base/admin/start.sh .
+RUN chmod +x ./start.sh
+
+ENTRYPOINT [ "./start.sh" ]
