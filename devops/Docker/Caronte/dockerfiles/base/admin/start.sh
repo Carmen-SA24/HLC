@@ -8,10 +8,10 @@ source /root/admin/base/ssh/mainSsh.sh
 main() {
 
     touch /root/logs/informe.log
-    newUser
+    nuevo_usuario
     resuser=$?
     if [ "$resuser" -eq 0 ]; then
-        make_ssh
+        configurar_ssh
     fi
 
 }
