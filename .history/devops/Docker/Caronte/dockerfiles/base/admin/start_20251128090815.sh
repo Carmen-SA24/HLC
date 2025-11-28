@@ -9,8 +9,11 @@ main(){
 
     touch /root/logs/informe.log
     newUser
-    make_ssh
-
+    resuser=$?
+      if [ "$resuser" -eq 0 ];
+    then
+           make_ssh
+    fi
     tail -f /dev/null
 }
 
