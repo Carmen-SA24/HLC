@@ -1,3 +1,6 @@
+# Archivos de entorno
+.env
+
 # Configuración local de Docker Compose
 docker-compose.override.yml
 
