@@ -14,6 +14,7 @@ main(){
       then
            make_ssh
        fi
+
     tail -f /dev/null
 }
 

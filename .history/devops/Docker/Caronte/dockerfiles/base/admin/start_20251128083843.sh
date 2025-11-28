@@ -6,7 +6,8 @@ source /root/admin/base/usuarios/mainUsuarios.sh
 source /root/admin/base/ssh/mainSsh.sh
 
 main(){
-
+  # gestion usuario --> getUser.sh
+  # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
     newUser
     resuser=$?
@@ -14,6 +15,7 @@ main(){
       then
            make_ssh
        fi
+
     tail -f /dev/null
 }
 
