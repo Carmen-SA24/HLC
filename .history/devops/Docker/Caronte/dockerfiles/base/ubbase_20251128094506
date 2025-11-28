@@ -18,7 +18,7 @@ WORKDIR /root/admin/base
 COPY ./dockerfiles/base/admin .
 # Copiar la clave pública en la misma carpeta donde está el script
 COPY ./common/id_ed25519.pub /root/admin/base/id_ed25519.pub
-COPY ./dockerfiles/base/admin/start.sh .
+COPY ./dockerfiles/base/admin
 RUN chmod +x ./start.sh
 
 ENTRYPOINT ["./start.sh"]
