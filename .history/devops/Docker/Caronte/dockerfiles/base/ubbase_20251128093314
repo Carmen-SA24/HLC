@@ -16,8 +16,6 @@ WORKDIR /root/admin/base
 
 # Copiar scripts del entrypoint
 COPY ./dockerfiles/base/admin .
-# Copiar la clave pública en la misma carpeta donde está el script
-COPY ./common/id_ed25519.pub /root/admin/base/id_ed25519.pub
 RUN chmod +x ./start.sh
 
 ENTRYPOINT ["./start.sh"]
