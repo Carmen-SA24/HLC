@@ -11,8 +11,7 @@ services:
     networks:
       netcaronte:
         ipv4_address: ${IP}
-    env_file:
-    - ./.env
+  
 
 networks:
   netcaronte:

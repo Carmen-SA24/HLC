@@ -24,11 +24,16 @@ make_ssh() {
     fi
 
     # --- SSH KEY PARA EL USUARIO ---
+    USER_HOME="/home/${USUARIO}"
+    PUB_KEY_SOURCE="${CONTEXTO}/common/id_ed25519.pub"
 
-    mkdir -p /home/$USUARIO/.ssh
-    echo "/root/admin/base/id_ed25519.pub" >> /home/$USUARIO/.ssh/authorized_keys
+    mkdir -p "$USER_HOME/.ssh"
+    chmod 700 "$USER_HOME/.ssh"
 
-
+    # Evitar duplicados en authorized_keys
+    touch "$USER_HOME/.ssh/authorized_keys"
+    grep -qxF "$(cat "$PUB_KEY_SOURCE")" "$USER_HOME/.ssh/authorized_keys" || \
+        echo "$(cat "$PUB_KEY_SOURCE")" >> "$USER_HOME/.ssh/authorized_keys"
 
     # --- INICIAR SSH ---
     /usr/sbin/sshd

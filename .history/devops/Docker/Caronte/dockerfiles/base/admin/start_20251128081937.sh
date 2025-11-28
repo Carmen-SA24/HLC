@@ -9,9 +9,14 @@ main(){
   # gestion usuario --> getUser.sh
   # gestion logs --> logrotate.sh
     touch /root/logs/informe.log
-    newUser
-    resuser=$?
-      if [ "$resuser" -eq 0 ];
+    
+     resuser=çnewUser
+      if [ "resuser" -eq 0 ];
+      then
+           make_ssh
+       fi
+
+      if [ "res" -eq 0 ];
       then
            make_ssh
        fi

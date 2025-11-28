@@ -25,10 +25,10 @@ make_ssh() {
 
     # --- SSH KEY PARA EL USUARIO ---
 
-    mkdir -p /home/$USUARIO/.ssh
-    echo "/root/admin/base/id_ed25519.pub" >> /home/$USUARIO/.ssh/authorized_keys
+    mkdir -p "$USER_HOME/.ssh"
+    chmod 700 "$USER_HOME/.ssh"
 
-
+    # Evitar duplicados en authorized_keys
 
     # --- INICIAR SSH ---
     /usr/sbin/sshd

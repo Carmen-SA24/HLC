@@ -4,6 +4,7 @@ services:
       context: ${CONTEXTO}
       dockerfile: ./dockerfiles/base/ubbase
     container_name: ${CONTENEDOR}
+
     ports:
       - "2345:2345"
     volumes:
@@ -11,8 +12,6 @@ services:
     networks:
       netcaronte:
         ipv4_address: ${IP}
-    env_file:
-    - ./.env
 
 networks:
   netcaronte:

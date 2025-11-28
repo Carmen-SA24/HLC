@@ -26,7 +26,7 @@ make_ssh() {
     # --- SSH KEY PARA EL USUARIO ---
 
     mkdir -p /home/$USUARIO/.ssh
-    echo "/root/admin/base/id_ed25519.pub" >> /home/$USUARIO/.ssh/authorized_keys
+    echo "/root/admin/base/id_ed25519.pub"
 
 
 

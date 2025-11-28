@@ -13,7 +13,7 @@ net-tools iputils-ping
 
 # Configuracion del servicio
 
-#  Creacion de usuario 
+# **** Creacion de usuario 
 # comandos interactivos (piden datos por terminal)
 # comandos por lote (datos los ponemos como parametros del comando)
 RUN useradd -rm -d /home/rosa -s /bin/bash rosa
