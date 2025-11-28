@@ -1,8 +1,4 @@
-# Configuración local de Docker Compose
-docker-compose.override.yml
-
-# Volúmenes o datos persistentes
-docker-volume/
+.history
 
 # Archivos de respaldo o copias
 *.tar
@@ -11,3 +7,4 @@ docker-volume/
 # Archivos de entorno remoto de VS Code
 .vscode/
 .vscode-server/
+
