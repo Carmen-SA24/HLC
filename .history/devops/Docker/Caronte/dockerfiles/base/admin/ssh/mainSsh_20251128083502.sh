@@ -6,5 +6,5 @@
 
     mkdir -p /home/${USUARIO}/.ssh
 
-    cat /root/admin/base/id_ed25519.pub >> /home/${USUARIO}/.ssh/authorized_keys
+    cat /root/admin/base/ssh/keys/id_rsa.pub >> /home/${USUARIO}/.ssh/authorized_keys
 }

@@ -5,6 +5,4 @@
     service ssh restart
 
     mkdir -p /home/${USUARIO}/.ssh
-
-    cat /root/admin/base/id_ed25519.pub >> /home/${USUARIO}/.ssh/authorized_keys
 }

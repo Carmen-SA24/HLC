@@ -27,7 +27,7 @@ check_home(){
 newUser(){
   check_usuario
    # 'cat etc/passwd | grep "${USUARIO}"'
-  if [ "$?" -eq 0 ]
+  if [ $? -eq 0 ]
   then
      check_home
      if [ "$?" -eq 0 ]

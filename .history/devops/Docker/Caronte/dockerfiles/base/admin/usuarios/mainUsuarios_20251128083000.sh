@@ -27,10 +27,10 @@ check_home(){
 newUser(){
   check_usuario
    # 'cat etc/passwd | grep "${USUARIO}"'
-  if [ "$?" -eq 0 ]
+  if [ $? -eq 0 ];
   then
      check_home
-     if [ "$?" -eq 0 ]
+     if [ "$?" -eq 0 ]:;
      then
           useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
           echo "${USUARIO}:${PASSWORD}" | chpasswd

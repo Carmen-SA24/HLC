@@ -1,0 +1,30 @@
+make_ssh() {
+
+    # --- CONFIG SSHD ---
+    # cambiar puerto SSH
+    sed -i 's/Port.* /Port '$PORT_SSH' /etc/ssh/sshd_config
+
+    sed -i 's/#PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+    mkdir -p /var/run/sshd
+
+    # --- SUDO SIN CONTRASEÑA ---
+    echo "%sudo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nosudo
+    chmod 0440 /etc/sudoers.d/nosudo
+
+    # --- CREAR USUARIO ---
+    if ! id "$USUARIO" >/dev/null 2>&1; then
+        useradd -m -s /bin/bash "$USUARIO"
+        usermod -aG sudo "$USUARIO"
+    fi
+
+    # --- SSH KEY PARA EL USUARIO ---
+
+    mkdir -p /home/$USUARIO/.ssh
+    echo "/root/admin/base/id_ed25519.pub" >> /home/$USUARIO/.ssh/authorized_keys
+
+
+
+    # --- INICIAR SSH ---
+    /usr/sbin/sshd
+}

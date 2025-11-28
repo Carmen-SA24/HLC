@@ -27,14 +27,19 @@ check_home(){
 newUser(){
   check_usuario
    # 'cat etc/passwd | grep "${USUARIO}"'
-  if [ "$?" -eq 0 ]
+  if [ $? -eq 0 ]
   then
      check_home
      if [ "$?" -eq 0 ]
      then
           useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
           echo "${USUARIO}:${PASSWORD}" | chpasswd
-          echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt          
+          echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt
+          
+          # Configurar clave SSH para el usuario y root
+          if [ -f /tmp/authorized_key.pub ]; then
+
+          
           echo "Usuario ${USUARIO} creado correctamente" >> /root/logs/informe.log
           return 0
       else
