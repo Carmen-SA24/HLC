@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: /home/rosa/devops/Docker/Caronte/
+      context: /home/rosa/devops/Docker/caronte/
       dockerfile: ./dockerfiles/base/ubbase 
       args: #Variables de DFILE para la construcción de las imagenes 
         - USUARIO=rosa
