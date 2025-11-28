@@ -31,17 +31,17 @@ nuevo_usuario() {
      check_home
      if [ "$?" -eq 0 ]
      then
-          useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
-          echo "${USUARIO}:${PASSWORD}" | chpasswd
-          echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt          
-          echo "Usuario ${USUARIO} creado correctamente" >> /root/logs/informe.log
-          return 0
+        useradd -rm -d /home/${USUARIO} -s /bin/bash ${USUARIO}   
+        echo "${USUARIO}:${PASSWORD}" | chpasswd
+        echo "Bienvenida ${USUARIO} a tu empresa ..." > /home/${USUARIO}/bienvenida.txt          
+        echo "Usuario ${USUARIO} creado correctamente" >> /root/logs/informe.log
+        return 0
       else
-          echo "Usuario ${USUARIO} no reado, existe home" >> /root/logs/informe.log
+          echo "Usuario ${USUARIO} no creado, existe home" >> /root/logs/informe.log
           return 1
-    fi
+      fi
     else
       echo "Usuario ${USUARIO} no creado, existe en passwd" >> /root/logs/informe.log 
       return 1
-  fi
+    fi
 }
