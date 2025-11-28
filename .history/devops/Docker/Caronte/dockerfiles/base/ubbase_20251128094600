@@ -21,4 +21,4 @@ COPY ./common/id_ed25519.pub /root/admin/base/id_ed25519.pub
 COPY ./dockerfiles/base/admin/start.sh .
 RUN chmod +x ./start.sh
 
-ENTRYPOINT [ "./start.sh" ]
+ENTRYPOINT ["./start.sh" ]
