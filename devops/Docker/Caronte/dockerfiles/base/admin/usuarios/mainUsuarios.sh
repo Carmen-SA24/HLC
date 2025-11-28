@@ -1,8 +1,7 @@
 #!/bin/bash
 # carga las varialbes de entorno pasadas desde el docker-compose.yml
-set -e
 
-check_usuario(){
+check_usuario() {
   if grep -q "${USUARIO}" /etc/passwd 
    then
        echo "${USUARIO} se encuentra en el sistema" >> /root/logs/informe.log
@@ -13,7 +12,7 @@ check_usuario(){
     fi
 }
 
-check_home(){
+check_home() {
   if [ ! -d "/home/${USUARIO}" ]
    then
        echo "/home/${USUARIO} no existe" >> /root/logs/informe.log
@@ -24,7 +23,7 @@ check_home(){
   fi
 }
 
-newUser(){
+newUser() {
   check_usuario
    # 'cat etc/passwd | grep "${USUARIO}"'
   if [ "$?" -eq 0 ]

@@ -5,7 +5,7 @@ set -e
 source /root/admin/base/usuarios/mainUsuarios.sh
 source /root/admin/base/ssh/mainSsh.sh
 
-main(){
+main() {
     touch /root/logs/informe.log
     newUser
     resuser=$?
