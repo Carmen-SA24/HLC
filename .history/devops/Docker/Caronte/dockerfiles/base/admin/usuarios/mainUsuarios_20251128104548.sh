@@ -1,5 +1,5 @@
 #set -e
-#wfewf
+#
 checkusuario(){
     if grep -q "${USUARIO}" /etc/passwd 
     then

@@ -1,5 +1,5 @@
 #!/bin/bash
-#cacaqwq
+#
 configurar_ssh() {
 
   # Deshabilitar el login de root
