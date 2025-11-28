@@ -15,6 +15,7 @@ services:
         ipv4_address: ${IP}
 networks:
   netcaronte:
+    driver: bridge
     ipam:
       driver: default
       config:
