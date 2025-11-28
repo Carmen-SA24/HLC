@@ -4,8 +4,10 @@ make_ssh() {
     sed -i 's/#PermitRootLogin.*/PermitRootLogin '$ROOT_LOGIN'/' /etc/ssh/sshd_config
 
     service ssh restart
-
+    mkdir -p /run/sshd
     mkdir -p /home/${USUARIO}/.ssh
 
     cat /root/admin/base/id_ed25519.pub >> /home/${USUARIO}/.ssh/authorized_keys
+
+    exec /usr/sbin/sshd -D
 }
