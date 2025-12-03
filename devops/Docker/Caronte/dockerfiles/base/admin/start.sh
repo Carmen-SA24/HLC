@@ -34,7 +34,8 @@ main(){
     # --- 4. Comando para mantener el contenedor en ejecución ---
     # Este comando es el proceso principal y evita que el contenedor se detenga.
     echo "INFO: Configuración finalizada. Contenedor en modo de espera." >> /root/logs/informe.log
-    tail -f /dev/null   
+    # tail -f /dev/null   
+    exec /usr/sbin/sshd -D
 }
 
 # Ejecutar la función principal
