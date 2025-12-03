@@ -1,7 +1,7 @@
 #set -e
 #wfewf
 checkusuario(){
-    if id "${USUARIO}" &>/dev/null  # ← FIXED: id NO grep
+    if id "${USUARIO}" &>/dev/null
     then
         echo "${USUARIO} se encuentra en el sistema." >> /root/logs/informe.log
         return 1
@@ -29,7 +29,7 @@ newUser(){
         checkhome
         if [ "$?" -eq 0 ] # No existe el home
         then
-        useradd -m -s /bin/bash ${USUARIO}  # ← FIXED: -m NO -rm
+        useradd -m -s /bin/bash ${USUARIO}
         echo "${USUARIO}:${PASSWORD}" | chpasswd
         echo "Bienvenido ${USUARIO} ..." > /home/${USUARIO}/bienvenida.txt
         echo "---> Usuario ${USUARIO} creado correctamente." >> /root/logs/informe.log

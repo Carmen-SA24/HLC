@@ -1,5 +1,5 @@
 #!/bin/bash
-# Esta directiva hace que el script se detenga inmediatamente si cualquier comando falla.
+# Esta directiva hace que el script se detenga si cualquier comando falla.
 set -e
 
 # --- 1. Cargar scripts de funciones ---
@@ -13,28 +13,31 @@ main(){
 
     echo "INFO: Iniciando configuración de usuario..." >> /root/logs/informe.log
     
-    # --- 2. Gestión de usuario ---
+    # --- 2. Gestión de usuario (CORREGIDO) ---
+    # Desactivamos el modo estricto un momento para que no se cierre si el usuario ya existe
+    set +e
     newUser
     resuser=$?
+    set -e 
+    # Volvemos a activar el modo estricto
 
-    # --- 3. Configuración condicional (solo si el usuario se creó correctamente) ---
+    # --- 3. Configuración condicional ---
     if [ "$resuser" -eq 0 ]; then
         echo "INFO: Usuario creado correctamente. Configurando sudo..." >> /root/logs/informe.log
         configurar_sudo
     fi
     
-    if [ "$resuser" -eq 0 ]; then
-        echo "INFO: Configurando SSH..." >> /root/logs/informe.log
-        configurar_ssh
-    fi
+    # OJO: He sacado configurar_ssh fuera del IF para que se ejecute siempre
+    # (por si cambiaste el puerto en el .env y quieres que se aplique aunque el usuario ya exista)
+    echo "INFO: Configurando SSH..." >> /root/logs/informe.log
+    configurar_ssh
 
-    # Si tu objetivo era un servidor SSH, usa este comando en su lugar:
-    # /usr/sbin/sshd -D
-
-    # --- 4. Comando para mantener el contenedor en ejecución ---
-    # Este comando es el proceso principal y evita que el contenedor se detenga.
+    # --- 4. Comando final (CORREGIDO) ---
     echo "INFO: Configuración finalizada. Contenedor en modo de espera." >> /root/logs/informe.log
-    # tail -f /dev/null   
+    
+    # ESTA LÍNEA ES LA QUE TE FALTABA PARA QUE NO FALLE:
+    mkdir -p /run/sshd
+
     exec /usr/sbin/sshd -D
 }
 

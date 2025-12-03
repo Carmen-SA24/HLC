@@ -2,22 +2,36 @@ services:
   web:
     build:
       context: /home/rosa/devops/Docker/Caronte/
-      dockerfile: ./dockerfiles/base/ubbase 
-      args: #Variables de DFILE para la construcción de las imagenes 
-        - USUARIO=rosa
+      dockerfile: ./dockerfiles/base/ubbase
+      # He quitado 'args' porque esas variables las necesitas
+      # al EJECUTAR (run), no al construir (build).
+
     container_name: ${CONTAINER_NAME}
-    # environment:
-    #   - USUARIO=jiahao
-    #   - PASSWORD=1234
+
+    # --- CORRECCIÓN IMPORTANTE ---
+    # Pasamos explícitamente las variables para asegurarnos de que
+    # start.sh las lea. Si tu script ssh usa otro nombre, cámbialo aquí.
+    environment:
+      - USUARIO=${USUARIO}
+      - PASSWORD=${PASSWORD}
+      - PORT_SSH=${PORT_SSH}
+    # -----------------------------
+
     ports:
-      - ${PORT_SSH}:${PORT_SSH}
+      # Mapeamos el puerto externo al mismo puerto interno
+      # (Asumiendo que tu script cambia la config de SSH para escuchar en ese puerto)
+      - "${PORT_SSH}:${PORT_SSH}"
+
     env_file:
       - ./.env
+
     volumes:
-      - ./logs:/root/logs 
+      - ./logs:/root/logs
+
     networks:
       netcaronte:
         ipv4_address: ${IP_WEB}
+
 networks:
   netcaronte:
     driver: bridge
