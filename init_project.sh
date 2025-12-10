@@ -45,27 +45,28 @@ else
     npm install
 fi
 
+# --- Construcción Docker ---
 echo "--- Construcción Docker ---"
 echo "Construyendo imagen Docker..."
 
-# Ruta ABSOLUTA al Dockerfile para evitar errores de ruta
-# Estamos en: devops/docker/caronte/proyectos/react-web
-# Dockerfile esta en: devops/docker/caronte/dockerfiles/react-web/Dockerfile
+# TRUCO: Calcular rutas ABSOLUTAS basándonos en dónde está ESTE script (init_project.sh)
+# Asumimos que init_project.sh está en la RAÍZ del proyecto (donde haces git pull)
 
-# Subimos 4 niveles para volver a la raiz (desde dentro de react-web)
-# O mejor, usamos ruta relativa fija sabiendo donde estamos
-DOCKERFILE_PATH="../../../dockerfiles/react-web/Dockerfile"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKERFILE_PATH="$SCRIPT_DIR/devops/docker/caronte/dockerfiles/react-web/Dockerfile"
 
-# Verificamos si existe antes de lanzar el build
+echo "Buscando Dockerfile en: $DOCKERFILE_PATH"
+
 if [ ! -f "$DOCKERFILE_PATH" ]; then
-    echo "ERROR: No se encuentra el Dockerfile en $DOCKERFILE_PATH"
-    echo "Ruta actual: $(pwd)"
-    echo "Contenido de ../../../dockerfiles/react-web:"
-    ls -l "../../../dockerfiles/react-web"
+    echo "ERROR: ¡No se encuentra el Dockerfile!"
+    echo "Verifica que existe en: devops/docker/caronte/dockerfiles/react-web/Dockerfile"
     exit 1
 fi
 
-# Build de la imagen
+# Volvemos a la carpeta del proyecto react para el contexto del build
+cd "$SCRIPT_DIR/devops/docker/caronte/proyectos/react-web" || exit
+
+# Lanzamos el build usando la ruta absoluta calculada
 docker build -t react-nginx-app -f "$DOCKERFILE_PATH" .
 
 if [ $? -eq 0 ]; then
