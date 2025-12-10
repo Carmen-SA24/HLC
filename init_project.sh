@@ -116,9 +116,15 @@ fi
 # Asegurarnos de usar la variable PROJECT_DIR
 cd "$PROJECT_DIR/react-web" || exit
 
+# TRUCO FINAL: El Dockerfile espera 'start.sh' en el contexto (la carpeta actual)
+# pero 'start.sh' está en ../dockerfiles/react-web/
+# Así que lo copiamos aquí temporalmente para que el build funcione
+echo "Copiando start.sh al contexto de build..."
+cp "$DOCKERFILE_DIR/start.sh" .
 
 # Lanzamos el build usando la ruta absoluta calculada
 docker build -t react-nginx-app -f "$DOCKERFILE_PATH" .
+
 
 if [ $? -eq 0 ]; then
     echo "¡Imagen 'react-nginx-app' construida correctamente!"
