@@ -70,6 +70,12 @@ echo "Creando proyecto React en $PROJECT_DIR/react-web..."
 if ! command -v npm &> /dev/null; then
     echo "⚠️  NPM no encontrado. Usando Docker temporalmente para generar los archivos..."
     
+    # LIMPIEZA PREVIA: Si la carpeta existe pero no tiene package.json, está corrupta/vacía. Borrar.
+    if [ -d "react-web" ] && [ ! -f "react-web/package.json" ]; then
+        echo "🗑️  Carpeta 'react-web' detectada incompleta. Borrando para regenerar..."
+        rm -rf react-web
+    fi
+
     # Ejecutamos comando node dentro de un contenedor efímero
     # Mapeamos el directorio actual a /work
     docker run --rm -v "$(pwd):/work" -w /work node:18-alpine \
