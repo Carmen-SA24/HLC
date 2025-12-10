@@ -126,7 +126,25 @@ cd "$PROJECT_DIR/react-web" || exit
 # pero 'start.sh' está en ../dockerfiles/react-web/
 # Así que lo copiamos aquí temporalmente para que el build funcione
 echo "Copiando start.sh al contexto de build..."
+
+# Verificación de origen
+if [ ! -f "$DOCKERFILE_DIR/start.sh" ]; then
+    echo "❌ ERROR CRÍTICO: No encuentro 'start.sh' en $DOCKERFILE_DIR"
+    echo "Contenido de esa carpeta:"
+    ls -F "$DOCKERFILE_DIR"
+    exit 1
+fi
+
 cp "$DOCKERFILE_DIR/start.sh" .
+
+# Verificación de destino (DEBUG)
+if [ ! -f "start.sh" ]; then
+    echo "❌ ERROR CRÍTICO: Falló la copia. 'start.sh' no está en el directorio actual."
+    exit 1
+fi
+
+echo "✅ start.sh copiado correctamente. Contenido del contexto de build:"
+ls -la
 
 # Lanzamos el build usando la ruta absoluta calculada
 docker build -t react-nginx-app -f "$DOCKERFILE_PATH" .
