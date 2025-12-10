@@ -39,8 +39,9 @@ if [[ "$(docker images -q ubbase:latest 2> /dev/null)" == "" ]]; then
     cd "$BASE_IMAGE_DIR" || { echo "Error: No encuentro $BASE_IMAGE_DIR"; exit 1; }
     
     # Construimos la base
-    docker build -t ubbase:latest .
-    if [ $? -ne 0 ]; then echo "❌ Falló el build de la base"; exit 1; fi
+    # NOTA: El archivo Dockerfile se llama 'ubbase', asi que usamos -f
+    docker build -t ubbase:latest -f ubbase .
+    if [ $? -ne 0 ]; then echo "❌ Falló el build de la base (¿Existe el archivo 'ubbase'?)" ; ls -l ; exit 1; fi
     
     # Volvemos donde estábamos
     cd "$CURRENT_LOC"
