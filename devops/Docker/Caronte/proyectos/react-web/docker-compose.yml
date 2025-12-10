@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  react-web:
+    container_name: react-web-container
+    build:
+      context: .
+      dockerfile: ../../dockerfiles/react-web/Dockerfile
+    ports:
+      - "3000:80"
+      - "2222:22"
+    volumes:
+      - ./dist:/var/www/html
+    restart: always
