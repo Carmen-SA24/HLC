@@ -59,9 +59,20 @@ DOCKERFILE_PATH="$SCRIPT_DIR/devops/docker/caronte/dockerfiles/react-web/Dockerf
 
 echo "Buscando Dockerfile en: $DOCKERFILE_PATH"
 
+# DEBUG: Mostrar qué hay realmente para entender por qué falla
+echo "--- DEBUG ---"
+echo "Script dir: $SCRIPT_DIR"
+echo "Contenido de devops/docker/caronte/dockerfiles:"
+ls -F "$SCRIPT_DIR/devops/docker/caronte/dockerfiles"
+echo "----------------"
+
 if [ ! -f "$DOCKERFILE_PATH" ]; then
     echo "ERROR: ¡No se encuentra el Dockerfile!"
     echo "Verifica que existe en: devops/docker/caronte/dockerfiles/react-web/Dockerfile"
+    
+    # Intento de búsqueda automático por si la ruta está mal
+    echo "Buscando 'Dockerfile' en todo el proyecto:"
+    find "$SCRIPT_DIR" -name Dockerfile
     exit 1
 fi
 
