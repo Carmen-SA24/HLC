@@ -13,11 +13,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "Detectando estructura de carpetas..."
 
 # Buscamos la carpeta 'docker' (case insensitive) dentro de devops
-DOCKER_NAME=$(find "$SCRIPT_DIR/devops" -maxdepth 1 -iname "docker" -type d -exec basename {} \;)
+DOCKER_NAME=$(find "$SCRIPT_DIR/devops" -maxdepth 1 -iname "docker" -type d -exec basename {} \; | head -n 1)
 if [ -z "$DOCKER_NAME" ]; then echo "Error: No encuentro 'docker' en devops"; exit 1; fi
 
 # Buscamos la carpeta 'caronte' dentro de la carpeta docker encontrada
-CARONTE_NAME=$(find "$SCRIPT_DIR/devops/$DOCKER_NAME" -maxdepth 1 -iname "caronte" -type d -exec basename {} \;)
+CARONTE_NAME=$(find "$SCRIPT_DIR/devops/$DOCKER_NAME" -maxdepth 1 -iname "caronte" -type d -exec basename {} \; | head -n 1)
 if [ -z "$CARONTE_NAME" ]; then echo "Error: No encuentro 'caronte' en devops/$DOCKER_NAME"; exit 1; fi
 
 # Construimos la base de la ruta
