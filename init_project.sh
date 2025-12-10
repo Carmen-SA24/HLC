@@ -48,11 +48,29 @@ fi
 echo "--- Construcción Docker ---"
 echo "Construyendo imagen Docker..."
 
-# Ruta relativa al Dockerfile desde devops/docker/caronte/proyectos/react-web
-DOCKERFILE_PATH="../../dockerfiles/react-web/Dockerfile"
+# Ruta ABSOLUTA al Dockerfile para evitar errores de ruta
+# Estamos en: devops/docker/caronte/proyectos/react-web
+# Dockerfile esta en: devops/docker/caronte/dockerfiles/react-web/Dockerfile
+
+# Subimos 4 niveles para volver a la raiz (desde dentro de react-web)
+# O mejor, usamos ruta relativa fija sabiendo donde estamos
+DOCKERFILE_PATH="../../../dockerfiles/react-web/Dockerfile"
+
+# Verificamos si existe antes de lanzar el build
+if [ ! -f "$DOCKERFILE_PATH" ]; then
+    echo "ERROR: No se encuentra el Dockerfile en $DOCKERFILE_PATH"
+    echo "Ruta actual: $(pwd)"
+    echo "Contenido de ../../../dockerfiles/react-web:"
+    ls -l "../../../dockerfiles/react-web"
+    exit 1
+fi
 
 # Build de la imagen
 docker build -t react-nginx-app -f "$DOCKERFILE_PATH" .
 
-echo "¡Imagen 'react-nginx-app' construida correctamente!"
+if [ $? -eq 0 ]; then
+    echo "¡Imagen 'react-nginx-app' construida correctamente!"
+else
+    echo "❌ Error al construir la imagen."
+fi
 
