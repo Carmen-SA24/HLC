@@ -5,8 +5,29 @@
 # TRUCO: Calcular rutas ABSOLUTAS al principio, antes de hacer cd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Definir la ruta donde se creará el proyecto
-PROJECT_DIR="devops/docker/caronte/proyectos"
+# DETECCIÓN INTELIGENTE DE RUTAS POR MAYÚSCULAS/MINÚSCULAS
+# En local tienes "devops/docker/caronte" (minúsculas)
+# En el VPS tienes "devops/Docker/Caronte" (mayúsculas)
+# Linux distingue mayúsculas, así que fallaba.
+
+echo "Detectando estructura de carpetas..."
+
+# Buscamos la carpeta 'docker' (case insensitive) dentro de devops
+DOCKER_NAME=$(find "$SCRIPT_DIR/devops" -maxdepth 1 -iname "docker" -type d -exec basename {} \;)
+if [ -z "$DOCKER_NAME" ]; then echo "Error: No encuentro 'docker' en devops"; exit 1; fi
+
+# Buscamos la carpeta 'caronte' dentro de la carpeta docker encontrada
+CARONTE_NAME=$(find "$SCRIPT_DIR/devops/$DOCKER_NAME" -maxdepth 1 -iname "caronte" -type d -exec basename {} \;)
+if [ -z "$CARONTE_NAME" ]; then echo "Error: No encuentro 'caronte' en devops/$DOCKER_NAME"; exit 1; fi
+
+# Construimos la base de la ruta
+BASE_PATH="$SCRIPT_DIR/devops/$DOCKER_NAME/$CARONTE_NAME"
+
+echo "Ruta base detectada: $BASE_PATH"
+
+PROJECT_DIR="$BASE_PATH/proyectos"
+DOCKERFILE_DIR="$BASE_PATH/dockerfiles/react-web"
+
 
 
 # Crear directorio si no existe
@@ -53,31 +74,23 @@ fi
 echo "--- Construcción Docker ---"
 echo "Construyendo imagen Docker..."
 
-# Usamos la variable SCRIPT_DIR que calculamos al principio
-DOCKERFILE_PATH="$SCRIPT_DIR/devops/docker/caronte/dockerfiles/react-web/Dockerfile"
-
+# Usamos la variable detectada dinámicamente
+DOCKERFILE_PATH="$DOCKERFILE_DIR/Dockerfile"
 
 echo "Buscando Dockerfile en: $DOCKERFILE_PATH"
 
-# DEBUG: Mostrar qué hay realmente para entender por qué falla
-echo "--- DEBUG ---"
-echo "Script dir: $SCRIPT_DIR"
-echo "Contenido de devops/docker/caronte/dockerfiles:"
-ls -F "$SCRIPT_DIR/devops/docker/caronte/dockerfiles"
-echo "----------------"
-
 if [ ! -f "$DOCKERFILE_PATH" ]; then
     echo "ERROR: ¡No se encuentra el Dockerfile!"
-    echo "Verifica que existe en: devops/docker/caronte/dockerfiles/react-web/Dockerfile"
-    
-    # Intento de búsqueda automático por si la ruta está mal
-    echo "Buscando 'Dockerfile' en todo el proyecto:"
-    find "$SCRIPT_DIR" -name Dockerfile
+    echo "Ruta esperada: $DOCKERFILE_PATH"
+    ls -F "$BASE_PATH/dockerfiles"
     exit 1
 fi
 
+
 # Volvemos a la carpeta del proyecto react para el contexto del build
-cd "$SCRIPT_DIR/devops/docker/caronte/proyectos/react-web" || exit
+# Asegurarnos de usar la variable PROJECT_DIR
+cd "$PROJECT_DIR/react-web" || exit
+
 
 # Lanzamos el build usando la ruta absoluta calculada
 docker build -t react-nginx-app -f "$DOCKERFILE_PATH" .
