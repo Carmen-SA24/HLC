@@ -34,14 +34,17 @@ echo "Verificando imagen base 'ubbase'..."
 if [[ "$(docker images -q ubbase:latest 2> /dev/null)" == "" ]]; then
     echo "⚠️  Imagen 'ubbase' no encontrada. Construyéndola..."
     
-    # Navegamos a la carpeta de la base
+    # Navegamos a la carpeta RAÍZ de Caronte (BASE_PATH)
+    # Porque el Dockerfile 'ubbase' hace COPY de ./dockerfiles/base/admin, etc.
+    # Necesita el contexto de la raíz del proyecto.
     CURRENT_LOC=$(pwd)
-    cd "$BASE_IMAGE_DIR" || { echo "Error: No encuentro $BASE_IMAGE_DIR"; exit 1; }
+    cd "$BASE_PATH" || { echo "Error: No encuentro $BASE_PATH"; exit 1; }
     
-    # Construimos la base
-    # NOTA: El archivo Dockerfile se llama 'ubbase', asi que usamos -f
-    docker build -t ubbase:latest -f ubbase .
-    if [ $? -ne 0 ]; then echo "❌ Falló el build de la base (¿Existe el archivo 'ubbase'?)" ; ls -l ; exit 1; fi
+    echo "Construyendo ubbase desde: $(pwd)"
+    
+    # Construimos la base apuntando al archivo relativo
+    docker build -t ubbase:latest -f dockerfiles/base/ubbase .
+    if [ $? -ne 0 ]; then echo "❌ Falló el build de la base"; exit 1; fi
     
     # Volvemos donde estábamos
     cd "$CURRENT_LOC"
