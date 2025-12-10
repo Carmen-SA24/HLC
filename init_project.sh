@@ -8,23 +8,42 @@ PROJECT_DIR="devops/docker/caronte/proyectos"
 # Crear directorio si no existe
 mkdir -p "$PROJECT_DIR"
 
+# Crear directorio si no existe
+mkdir -p "$PROJECT_DIR"
+
 # Navegar al directorio
 cd "$PROJECT_DIR" || exit
 
 echo "Creando proyecto React en $PROJECT_DIR/react-web..."
 
-# Crear el proyecto con Vite (usando flag -y para evitar prompts y --template react)
-# Si la carpeta ya existe, npm create vite podría fallar o preguntar.
-if [ -d "react-web" ]; then
-    echo "La carpeta 'react-web' ya existe. Saltando creación."
-else
-    npm create vite@latest react-web -- --template react -y
-fi
+# COMPROBACIÓN: Si no tenemos npm, usamos un contenedor temporal de Node para crear los archivos
+if ! command -v npm &> /dev/null; then
+    echo "⚠️  NPM no encontrado. Usando Docker temporalmente para generar los archivos..."
+    
+    # Ejecutamos comando node dentro de un contenedor efímero
+    # Mapeamos el directorio actual a /work
+    docker run --rm -v "$(pwd):/work" -w /work node:18-alpine \
+        sh -c "if [ ! -d 'react-web' ]; then npm create vite@latest react-web -- --template react -y; fi"
+        
+    echo "✅ Archivos generados con Docker."
+    
+    # Nota: No hacemos npm install aquí para ahorrar tiempo y espacio, 
+    # ya que el Dockerfile final hará su propio npm install.
+    cd react-web || exit
 
-# Instalar dependencias
-cd react-web || exit
-echo "Instalando dependencias..."
-npm install
+else
+    # Si tenemos npm local, lo hacemos normal
+    if [ -d "react-web" ]; then
+        echo "La carpeta 'react-web' ya existe. Saltando creación."
+    else
+        npm create vite@latest react-web -- --template react -y
+    fi
+
+    # Instalar dependencias locales
+    cd react-web || exit
+    echo "Instalando dependencias..."
+    npm install
+fi
 
 echo "--- Construcción Docker ---"
 echo "Construyendo imagen Docker..."
