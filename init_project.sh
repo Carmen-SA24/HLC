@@ -27,6 +27,27 @@ echo "Ruta base detectada: $BASE_PATH"
 
 PROJECT_DIR="$BASE_PATH/proyectos"
 DOCKERFILE_DIR="$BASE_PATH/dockerfiles/react-web"
+BASE_IMAGE_DIR="$BASE_PATH/dockerfiles/base"
+
+# COMPROBACIÓN IMAGEN BASE
+echo "Verificando imagen base 'ubbase'..."
+if [[ "$(docker images -q ubbase:latest 2> /dev/null)" == "" ]]; then
+    echo "⚠️  Imagen 'ubbase' no encontrada. Construyéndola..."
+    
+    # Navegamos a la carpeta de la base
+    CURRENT_LOC=$(pwd)
+    cd "$BASE_IMAGE_DIR" || { echo "Error: No encuentro $BASE_IMAGE_DIR"; exit 1; }
+    
+    # Construimos la base
+    docker build -t ubbase:latest .
+    if [ $? -ne 0 ]; then echo "❌ Falló el build de la base"; exit 1; fi
+    
+    # Volvemos donde estábamos
+    cd "$CURRENT_LOC"
+else
+    echo "✅ Imagen 'ubbase' ya existe."
+fi
+
 
 
 
