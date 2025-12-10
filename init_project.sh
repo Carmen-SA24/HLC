@@ -2,8 +2,12 @@
 
 # Script para automatizar la creación del proyecto React
 
+# TRUCO: Calcular rutas ABSOLUTAS al principio, antes de hacer cd
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Definir la ruta donde se creará el proyecto
 PROJECT_DIR="devops/docker/caronte/proyectos"
+
 
 # Crear directorio si no existe
 mkdir -p "$PROJECT_DIR"
@@ -49,11 +53,9 @@ fi
 echo "--- Construcción Docker ---"
 echo "Construyendo imagen Docker..."
 
-# TRUCO: Calcular rutas ABSOLUTAS basándonos en dónde está ESTE script (init_project.sh)
-# Asumimos que init_project.sh está en la RAÍZ del proyecto (donde haces git pull)
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Usamos la variable SCRIPT_DIR que calculamos al principio
 DOCKERFILE_PATH="$SCRIPT_DIR/devops/docker/caronte/dockerfiles/react-web/Dockerfile"
+
 
 echo "Buscando Dockerfile en: $DOCKERFILE_PATH"
 
