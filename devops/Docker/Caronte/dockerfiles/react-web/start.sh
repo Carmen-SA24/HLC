@@ -18,6 +18,7 @@ fi
 echo "Iniciando Nginx..."
 service nginx start
 
+
 # Iniciamos SSHD en primer plano (para mantener el contenedor vivo)
 # Esto replica el comportamiento de ubbase de mantener el contenedor vivo,
 # pero permitiendo que nginx corra también.
