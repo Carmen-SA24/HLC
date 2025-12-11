@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copiar código y compilar la app
+# Copiar todo mi proyecto (react-web) al contenedor
 COPY . .
 RUN npm run build
 
@@ -16,17 +16,17 @@ FROM ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar Nginx
+# Instalar Nginx (Servidor Web)
 RUN apt-get update && apt-get install -y \
     nginx \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 
-# Limpiar config por defecto
+# Limpiar config por defecto de Nginx
 RUN rm /etc/nginx/sites-enabled/default
 
-# Configuración básica de Nginx
+# Añadir mi configuración personalizada (react.conf)
 RUN echo 'server { \
     listen 80; \
     root /var/www/html; \
