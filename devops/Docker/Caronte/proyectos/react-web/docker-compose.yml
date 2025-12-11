@@ -9,6 +9,4 @@ services:
     ports:
       - "3000:80"
       - "2222:22"
-    volumes:
-      - ./dist:/var/www/html
-    restart: always
+    restart: unless-stopped
