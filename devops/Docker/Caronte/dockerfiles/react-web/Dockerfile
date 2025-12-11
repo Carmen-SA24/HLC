@@ -1,35 +1,32 @@
-# Stage 1: Build the React application
-# We use node:22-alpine to ensure compatibility with Vite v7+
+# Etapa 1: Construcción (Node.js)
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Instalar dependencias
 COPY package*.json ./
 RUN npm install
 
-# Copy source code and build
+# Copiar código y compilar la app
 COPY . .
 RUN npm run build
 
-# Stage 2: Setup the runtime environment
-# We use the user's custom base image 'ubbase'
+# Etapa 2: Imagen Final (Base personalizada)
 FROM ubbase:latest
 
-# Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Nginx (we don't need Node.js here anymore)
+# Instalar Nginx
 RUN apt-get update && apt-get install -y \
     nginx \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 
-# Remove default nginx config
+# Limpiar config por defecto
 RUN rm /etc/nginx/sites-enabled/default
 
-# Create a simple Nginx config for React
+# Configuración básica de Nginx
 RUN echo 'server { \
     listen 80; \
     root /var/www/html; \
@@ -39,13 +36,13 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/conf.d/react.conf
 
-# Copy the built assets from the builder stage
+# Copiar web compilada desde la Etapa 1
 COPY --from=builder /app/dist /var/www/html/
 
-# Expose ports
+# Exponer puertos web y SSH
 EXPOSE 80 22
 
-# Setup startup script
+# Script de arranque
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
