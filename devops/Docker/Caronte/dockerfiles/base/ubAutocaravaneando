@@ -1,0 +1,17 @@
+# Capa 3: Proyectos React/Vue/Angular sobre nginx
+FROM ${INICIALES}ubnginx
+
+# Instalar Node.js 18 LTS y npm
+RUN apt-get update && apt-get install -y curl gnupg software-properties-common
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+RUN node --version && npm --version
+
+# Copiar script de configuración React
+COPY ./dockerfiles/base/admin/react/start.sh /root/admin/react/
+RUN chmod +x /root/admin/react/start.sh
+
+EXPOSE 3000
+WORKDIR /app
+
+ENTRYPOINT ["/root/admin/react/start.sh"]

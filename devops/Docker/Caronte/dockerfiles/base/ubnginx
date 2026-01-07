@@ -1,0 +1,12 @@
+# Capa 2: Nginx sobre imagen base
+FROM ${INICIALES}ubbase
+
+# Instalar nginx
+RUN apt-get update && apt-get install -y nginx
+
+# Configurar permisos del directorio web
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html
+
+EXPOSE 80
+ENTRYPOINT ["${INICIALES}start.sh"]

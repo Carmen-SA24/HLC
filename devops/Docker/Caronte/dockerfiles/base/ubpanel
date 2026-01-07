@@ -1,0 +1,24 @@
+# Panel web unificado de administración (Cockpit)
+FROM ${INICIALES}ubbase
+
+# Instalar Cockpit para gestión web centralizada
+RUN apt-get update && apt-get install -y \
+    cockpit \
+    cockpit-docker \
+    cockpit-podman \
+    cockpit-networkmanager \
+    cockpit-storaged \
+    cockpit-packagekit \
+    && rm -rf /var/lib/apt/lists/*
+
+# Habilitar Cockpit
+RUN systemctl enable cockpit.socket || true
+
+# Crear script de integración con servicios
+COPY ./dockerfiles/base/admin/panel/config.sh /root/admin/panel/
+RUN chmod +x /root/admin/panel/config.sh
+
+# Puertos: Cockpit web(9090), SSH(22)
+EXPOSE 9090 22
+
+ENTRYPOINT ["/root/admin/base/start.sh"]

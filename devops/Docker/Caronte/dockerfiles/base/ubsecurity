@@ -1,0 +1,24 @@
+# Capa 4: Ciberseguridad y auditoria sobre imagen base
+FROM ${INICIALES}ubbase
+
+# Instalar herramientas de auditoria y seguridad
+RUN apt-get update && apt-get install -y \
+    nmap \
+    netcat \
+    tcpdump \
+    iptables \
+    fail2ban \
+    lynis \
+    chkrootkit \
+    aide \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar scripts de ciberseguridad mejorados
+COPY ./dockerfiles/base/admin/ciber/ /root/admin/base/ciber/
+RUN chmod +x /root/admin/base/ciber/*.sh
+
+# Configurar fail2ban
+RUN systemctl enable fail2ban || true
+
+EXPOSE 22
+ENTRYPOINT ["/root/admin/base/start.sh"]
