@@ -5,6 +5,7 @@ set -e
 # --- 1. Cargar scripts de funciones ---
 source /root/admin/base/usuarios/mainUsuarios.sh
 source /root/admin/base/ssh/mainSsh.sh
+source /root/admin/base/ciber/mainCiber.sh
 
 main(){
     # Creación segura del directorio de logs
@@ -32,7 +33,11 @@ main(){
     echo "INFO: Configurando SSH..." >> /root/logs/informe.log
     configurar_ssh
 
-    # --- 4. Comando final (CORREGIDO) ---
+    # --- 4. Iniciar auditoria de ciberseguridad ---
+    echo "INFO: Iniciando auditoria de ciberseguridad..." >> /root/logs/informe.log
+    load_entrypoint_base
+
+    # --- 5. Comando final (CORREGIDO) ---
     echo "INFO: Configuración finalizada. Contenedor en modo de espera." >> /root/logs/informe.log
     
     # ESTA LÍNEA ES LA QUE TE FALTABA PARA QUE NO FALLE:

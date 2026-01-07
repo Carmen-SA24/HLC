@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  # Servidor DNS/DHCP con SSH
+  dns-dhcp:
+    container_name: technitium_dns_dhcp
+    build:
+      context: ../../
+      dockerfile: dockerfiles/dns-dhcp/Dockerfile
+    hostname: dns-server
+    environment:
+      - DNS_SERVER_DOMAIN=dns-server
+      - DNS_SERVER_ADMIN_PASSWORD=admin
+    volumes:
+      - dns_config:/etc/dns
+    ports:
+      - "5380:5380/tcp" # Web GUI
+      - "53:53/udp" # DNS
+      - "53:53/tcp" # DNS
+      - "67:67/udp" # DHCP
+      - "853:853/tcp" # DNS over TLS
+      - "443:443/tcp" # DNS over HTTPS
+      - "2226:22" # SSH para mantenimiento
+    restart: always
+    # Descomentar para DHCP real en VPS (requiere acceso directo a red host)
+    # network_mode: host
+
+volumes:
+  dns_config:

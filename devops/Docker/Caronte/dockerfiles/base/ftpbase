@@ -1,0 +1,12 @@
+# Imagen base con servidor FTP sobre ldapbase
+FROM ldapbase:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar vsftpd (servidor FTP con soporte LDAP)
+RUN apt-get update && apt-get install -y \
+    vsftpd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Heredar entrypoint de ldapbase
+ENTRYPOINT ["/root/admin/base/start.sh"]

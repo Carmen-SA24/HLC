@@ -20,5 +20,6 @@ COPY  ./dockerfiles/base/admin/ .
 COPY ./common/id_ed25519.pub /root/admin/base/common/id_ed25519.pub
 COPY ./dockerfiles/base/admin/start.sh .
 RUN chmod +x ./start.sh
+RUN chmod +x ./ciber/*.sh 2>/dev/null || true
 
 ENTRYPOINT [ "./start.sh" ]

@@ -1,0 +1,13 @@
+# Imagen base con PostgreSQL sobre ldapbase
+FROM ldapbase:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar PostgreSQL y modulo LDAP
+RUN apt-get update && apt-get install -y \
+    postgresql-15 \
+    postgresql-contrib \
+    && rm -rf /var/lib/apt/lists/*
+
+# Heredar entrypoint de ldapbase
+ENTRYPOINT ["/root/admin/base/start.sh"]

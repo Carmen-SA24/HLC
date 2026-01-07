@@ -1,0 +1,18 @@
+# Imagen base con cliente LDAP para autenticacion centralizada
+FROM ubbase:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar cliente LDAP y herramientas de autenticacion
+RUN apt-get update && apt-get install -y \
+    libpam-ldap \
+    libnss-ldap \
+    ldap-utils \
+    nscd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Directorio para configuraciones LDAP personalizadas
+RUN mkdir -p /root/admin/ldap
+
+# Heredar entrypoint de ubbase
+ENTRYPOINT ["/root/admin/base/start.sh"]

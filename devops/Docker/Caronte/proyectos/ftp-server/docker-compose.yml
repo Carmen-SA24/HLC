@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  # Servidor FTP con SSH
+  ftp:
+    container_name: ftp_server
+    build:
+      context: ../../
+      dockerfile: dockerfiles/ftp-server/Dockerfile
+    volumes:
+      - ftp_data:/srv/ftp
+    ports:
+      - "21:21" # FTP
+      - "21000-21010:21000-21010" # FTP pasivo
+      - "2225:22" # SSH para mantenimiento
+    restart: always
+
+  # GUI web para gestionar archivos FTP
+  filebrowser:
+    image: filebrowser/filebrowser
+    container_name: ftp_web_gui
+    volumes:
+      - ftp_data:/srv
+      - ./filebrowser.db:/database.db
+    ports:
+      - "8080:80"
+    restart: always
+
+volumes:
+  ftp_data:
