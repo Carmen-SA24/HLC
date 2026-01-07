@@ -1,5 +1,5 @@
 # Imagen base con Bind9 DNS sobre ldapbase
-FROM ldapbase:latest
+FROM ${INICIALES}ldapbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

@@ -1,5 +1,5 @@
 # Imagen base con cliente LDAP para autenticacion centralizada
-FROM ubbase:latest
+FROM ${INICIALES}ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

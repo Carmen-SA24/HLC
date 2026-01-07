@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: ../../dockerfiles/react-web/Dockerfile
     ports:
-      - "3000:80"
+      - "3010:3000"
+      - "8810:80"
       - "2222:22"
     restart: unless-stopped

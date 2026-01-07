@@ -1,5 +1,5 @@
 # Imagen base con PostgreSQL sobre ldapbase
-FROM ldapbase:latest
+FROM ${INICIALES}ldapbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

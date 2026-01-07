@@ -1,6 +1,6 @@
 # Servidor FTP + GUI web Webmin
 # GUI: Webmin (gestión FTP vía web)
-FROM ftpbase:latest
+FROM ${INICIALES}ftpbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

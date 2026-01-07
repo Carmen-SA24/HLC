@@ -15,9 +15,9 @@ services:
       - "2225:22" # SSH para mantenimiento
     restart: always
 
-  # GUI web para gestionar archivos FTP
-  filebrowser:
-    image: filebrowser/filebrowser
+  # GUI web para gestionar archivos FTP (Webmin)
+  webmin:
+    image: sameersbn/webmin:latest
     container_name: ftp_web_gui
     volumes:
       - ftp_data:/srv

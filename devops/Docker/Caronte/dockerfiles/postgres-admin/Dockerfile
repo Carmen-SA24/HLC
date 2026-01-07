@@ -1,6 +1,6 @@
 # PostgreSQL + GUI web pgAdmin 4
 # GUI: pgAdmin 4 (herramienta oficial de gestión PostgreSQL)
-FROM dbbase:latest
+FROM ${INICIALES}dbbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
