@@ -20,7 +20,9 @@ check_service "FTP GUI (Webmin)" 10000
 check_service "DNS" 53
 check_service "DNS/DHCP GUI (Technitium)" 5380
 check_service "PostgreSQL" 5432
-check_service "PostgreSQL GUI (pgAdmin)" 80
+check_service "PostgreSQL GUI (pgAdmin)" 5050
+check_service "React Nginx" 8810
+check_service "React Dev (Node)" 3010
 check_service "SSH" 22
 
 echo ""
