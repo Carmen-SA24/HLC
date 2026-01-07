@@ -44,7 +44,12 @@ COPY --from=builder /app/dist /var/www/html/
 
 # Copiar código fuente y node_modules para dev server
 WORKDIR /app
+COPY package*.json ./
+COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app /app
+
+# Reinstalar dependencias nativas para Ubuntu
+RUN npm rebuild
 
 # Exponer puertos web y SSH
 EXPOSE 80 22 3000
