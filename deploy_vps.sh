@@ -78,12 +78,19 @@ cd react-web
 docker compose build
 cd ..
 
+# Cockpit Admin Panel
+echo "Construyendo Cockpit..."
+cd cockpit
+docker compose build
+cd ..
+
 echo ""
 echo "=== Levantando servicios ==="
 (cd ftp-server && docker compose up -d) || true
 (cd dns-dhcp && docker compose up -d) || true
 (cd postgres-admin && docker compose up -d) || true
 (cd react-web && docker compose up -d) || true
+(cd cockpit && docker compose up -d) || true
 
 echo ""
 echo "=== Verificando contenedores activos ==="
@@ -93,11 +100,12 @@ echo ""
 echo "=== ✅ Despliegue completado ==="
 echo ""
 echo "Acceso a GUIs web:"
-echo "  - FTP (Webmin):          http://IP_VPS:10000"
-echo "  - DNS/DHCP (Technitium): http://IP_VPS:5380"
-echo "  - PostgreSQL (pgAdmin):  http://IP_VPS:5050"
-echo "  - React Web (Nginx):     http://IP_VPS:8810"
-echo "  - React Dev (Node):      http://IP_VPS:3010"
+echo "  - FTP (Webmin):          http://161.97.152.19:10000 (root/1234)"
+echo "  - DNS/DHCP (Technitium): http://161.97.152.19:5380 (config inicial)"
+echo "  - PostgreSQL (pgAdmin):  http://161.97.152.19:5050 (admin@admin.com/admin)"
+echo "  - React Web (Nginx):     http://161.97.152.19:8810"
+echo "  - React Dev (Node):      http://161.97.152.19:3010"
+echo "  - Admin Panel (Cockpit): http://161.97.152.19:9090 (rosa/1234)"
 echo ""
 echo "Ejecutar health check:"
 echo "  docker exec <container> /root/admin/maintenance.sh check"
