@@ -5,7 +5,6 @@ FROM ${INICIALES}ubbase
 # Instalar Cockpit
 RUN apt-get update && apt-get install -y \
     cockpit \
-    cockpit-docker \
     cockpit-podman \
     cockpit-networkmanager \
     cockpit-storaged \
