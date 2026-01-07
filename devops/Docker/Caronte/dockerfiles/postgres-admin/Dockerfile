@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 RUN /usr/pgadmin4/bin/setup-web.sh --yes || true
 
 # Copiar script de inicio
-COPY start.sh /start.sh
+COPY dockerfiles/postgres-admin/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Puertos: PostgreSQL(5432), pgAdmin web(80), SSH(22)

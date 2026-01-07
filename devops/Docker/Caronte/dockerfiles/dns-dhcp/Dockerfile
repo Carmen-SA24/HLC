@@ -21,7 +21,7 @@ RUN wget https://download.technitium.com/dns/DnsServerPortable.tar.gz \
     && rm DnsServerPortable.tar.gz
 
 # Copiar script de inicio
-COPY start.sh /start.sh
+COPY dockerfiles/dns-dhcp/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Puertos: DNS(53), DHCP(67), GUI web(5380), SSH(22)

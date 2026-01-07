@@ -23,10 +23,10 @@ RUN wget http://prdownloads.sourceforge.net/webadmin/webmin_2.105_all.deb \
     && rm webmin_2.105_all.deb
 
 # Copiar configuración de vsftpd
-COPY vsftpd.conf /etc/vsftpd.conf
+COPY dockerfiles/ftp-server/vsftpd.conf /etc/vsftpd.conf
 
 # Copiar script de inicio
-COPY start.sh /start.sh
+COPY dockerfiles/ftp-server/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Crear directorio FTP

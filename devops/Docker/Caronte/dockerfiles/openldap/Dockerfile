@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 # Directorio para configuraciones personalizadas
 RUN mkdir -p /root/admin/ldap
 
-# Copiar script de inicio personalizado
-COPY start.sh /start.sh
+# Copiar script de inicio
+COPY dockerfiles/openldap/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Puertos: LDAP, LDAPS, SSH
