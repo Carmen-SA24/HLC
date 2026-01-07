@@ -74,10 +74,10 @@ cd ..
 
 echo ""
 echo "=== Levantando servicios ==="
-cd ftp-server && docker compose up -d && cd ..
-cd dns-dhcp && docker compose up -d && cd ..
-cd postgres-admin && docker compose up -d && cd ..
-cd react-web && docker compose up -d && cd ..
+(cd ftp-server && docker compose up -d) || true
+(cd dns-dhcp && docker compose up -d) || true
+(cd postgres-admin && docker compose up -d) || true
+(cd react-web && docker compose up -d) || true
 
 echo ""
 echo "=== Verificando contenedores activos ==="
