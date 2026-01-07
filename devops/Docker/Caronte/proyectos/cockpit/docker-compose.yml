@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  cockpit:
+    container_name: cockpit_panel
+    build:
+      context: ../../
+      dockerfile: dockerfiles/base/psecurity/ubpanel
+    ports:
+      - "9090:9090"
+      - "2227:22"
+    restart: always
+    privileged: true

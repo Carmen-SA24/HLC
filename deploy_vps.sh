@@ -3,12 +3,18 @@
 
 set -e
 
+# Detectar ubicación del script y establecer directorio base
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$SCRIPT_DIR"
+CARONTE_DIR="$BASE_DIR/devops/Docker/Caronte"
+
 echo "=== Actualizando código desde GitHub ==="
+cd "$BASE_DIR"
 git pull origin main
 
 echo ""
 echo "=== Navegando al directorio de trabajo ==="
-cd devops/Docker/Caronte
+cd "$CARONTE_DIR"
 
 echo ""
 echo "=== Cargando variables desde .env ==="
