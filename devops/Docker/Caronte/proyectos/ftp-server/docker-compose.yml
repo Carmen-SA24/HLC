@@ -15,16 +15,5 @@ services:
       - "2225:22" # SSH para mantenimiento
     restart: always
 
-  # GUI web para gestionar archivos FTP (Webmin)
-  webmin:
-    image: sameersbn/webmin:latest
-    container_name: ftp_web_gui
-    volumes:
-      - ftp_data:/srv
-      - ./filebrowser.db:/database.db
-    ports:
-      - "8080:80"
-    restart: always
-
 volumes:
   ftp_data:
