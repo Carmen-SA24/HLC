@@ -17,14 +17,13 @@ Sistema de contenedores Docker con arquitectura en capas para servicios web, bas
 
 ### Concepto de Capas
 
-El proyecto usa **arquitectura en capas** donde cada imagen Docker hereda de la anterior, reutilizando funcionalidad:
+El proyecto usa **arquitectura en capas** donde cada imagen Docker hereda de la anterior, reutilizando funcionalidad. Las capas están **organizadas por carpetas según su propósito**:
 
 ```
-Capa 1: ubbase (Base)
-   ↓ heredan
-Capa 2: Especializaciones (ldapbase, ubnginx, ubsecurity...)
-   ↓ heredan
-Capa 3: Servicios finales (dbbase, ubAutocaravaneando...)
+dockerfiles/base/
+├── Capas fundamentales  → ubbase, ldapbase, dbbase, ftpbase, dnsbase
+├── pbase/              → Capas de PROYECTOS WEB
+└── psecurity/          → Capas de SEGURIDAD y ADMINISTRACIÓN
 ```
 
 **Ventajas:**
@@ -32,8 +31,11 @@ Capa 3: Servicios finales (dbbase, ubAutocaravaneando...)
 - ✅ Actualizaciones centralizadas
 - ✅ Builds más rápidos (capas cacheadas)
 - ✅ Imágenes modulares y reutilizables
+- ✅ **Organización clara por propósito**
 
-### Jerarquía de Capas
+### Jerarquía de Capas por Categoría
+
+#### 📦 CAPAS FUNDAMENTALES (raíz /base/)
 
 ```
 1. ubbase (CAPA BASE COMÚN)
@@ -65,54 +67,84 @@ Capa 3: Servicios finales (dbbase, ubAutocaravaneando...)
    │   └── 3. dnsbase (RED)
    │       → Bind9 DNS
    │       → ISC DHCP
-   │
-   ├── 2. ubnginx (WEB)
-   │   │  → Nginx web server
-   │   │  → Puerto 80
-   │   │
-   │   └── 3. ubAutocaravaneando (PROYECTOS REACT)
-   │       → Node.js 18 + npm
-   │       → Build automático
-   │       → Puertos 3010 (dev), 8810 (prod)
-   │
-   ├── 2. ubsecurity (SEGURIDAD)
-   │   → nmap, fail2ban, lynis
-   │   → Herramientas de auditoría
-   │
-   └── 2. ubpanel (ADMINISTRACIÓN)
-       → Cockpit web panel
-       → Puerto 9090
+```
 
-SERVICIO INDEPENDIENTE:
+#### 🌐 CAPAS DE PROYECTOS WEB (/base/pbase/)
+
+```
+ubbase
+   │
+   └── 2. ubnginx (WEB SERVER)
+       │  📁 Ubicación: dockerfiles/base/pbase/ubnginx
+       │  → Nginx web server
+       │  → Puerto 80
+       │
+       └── 3. ubAutocaravaneando (PROYECTOS REACT)
+           📁 Ubicación: dockerfiles/base/pbase/ubAutocaravaneando
+           → Node.js 18 + npm
+           → Build automático React/Vue/Angular
+           → Puertos 3010 (dev), 8810 (prod)
+```
+
+#### 🔒 CAPAS DE SEGURIDAD Y ADMINISTRACIÓN (/base/psecurity/)
+
+```
+ubbase
+   │
+   ├── 2. ubsecurity (AUDITORÍA)
+   │   📁 Ubicación: dockerfiles/base/psecurity/ubsecurity
+   │   → nmap, fail2ban, lynis
+   │   → Herramientas de pentesting
+   │   → Análisis de vulnerabilidades
+   │
+   └── 2. ubpanel (PANEL ADMINISTRACIÓN)
+       📁 Ubicación: dockerfiles/base/psecurity/ubpanel
+       → Cockpit web panel
+       → Gestión centralizada
+       → Puerto 9090
+```
+
+#### 🌍 SERVICIO INDEPENDIENTE
+
+```
 dns-dhcp (SERVICIO FINAL)
    → Technitium DNS Server
    → GUI integrada puerto 5380
+   → No hereda de ninguna capa base
 ```
 
-### Cómo Funciona
+### Organización de Archivos por Propósito
+
+| Carpeta                    | Propósito                          | Ejemplos                          |
+|----------------------------|------------------------------------|------------------------------------|
+| `base/`                    | Capas fundamentales comunes        | ubbase, ldapbase, dbbase          |
+| `base/pbase/`              | Capas para proyectos web           | ubnginx, ubAutocaravaneando       |
+| `base/psecurity/`          | Capas para seguridad/admin         | ubsecurity, ubpanel               |
+
+### Cómo Funciona la Herencia
 
 1. **ubbase** se construye primero (base común para todos)
-2. **Capas nivel 2** heredan de ubbase (`FROM crsaubbase`)
-3. **Capas nivel 3** heredan de nivel 2 (`FROM crsaldapbase`)
-4. **Servicios finales** heredan y añaden GUIs web
+2. **Capas específicas** heredan según necesidad:
+   - Servicios con autenticación → heredan de `ldapbase`
+   - Proyectos web → heredan de `ubbase` (en pbase/)
+   - Herramientas admin → heredan de `ubbase` (en psecurity/)
+3. **Servicios finales** heredan y añaden GUIs web
 
 **Ejemplo de herencia:**
 ```dockerfile
-# ubbase (nivel 1)
+# ubbase (nivel 1) - /base/ubbase
 FROM ubuntu
-RUN apt install ssh ...
+RUN apt install ssh nano curl...
 
-# ldapbase (nivel 2) hereda de ubbase
-FROM crsaubbase
-RUN apt install ldap ...
+# ubnginx (nivel 2) - /base/pbase/ubnginx
+ARG INICIALES=crsa
+FROM ${INICIALES}ubbase
+RUN apt install nginx
 
-# dbbase (nivel 3) hereda de ldapbase
-FROM crsaldapbase
-RUN apt install postgresql ...
-
-# postgres-admin (servicio final) hereda de dbbase
-FROM crsadbbase
-RUN apt install pgadmin4 ...
+# ubAutocaravaneando (nivel 3) - /base/pbase/ubAutocaravaneando
+ARG INICIALES=crsa
+FROM ${INICIALES}ubnginx
+RUN apt install nodejs npm
 ```
 
 Cada capa **añade funcionalidad** sin modificar las anteriores.
@@ -348,43 +380,48 @@ devops/docker/caronte/
 │   └── id_ed25519.pub           # Clave SSH pública
 │
 ├── dockerfiles/
-│   ├── base/
-│   │   ├── ubbase               # Imagen base Ubuntu
-│   │   ├── ldapbase             # + LDAP
-│   │   ├── dbbase               # + PostgreSQL
-│   │   ├── ftpbase              # + vsftpd
-│   │   ├── dnsbase              # + Bind9
-│   │   ├── ubnginx              # + Nginx
-│   │   ├── ubAutocaravaneando   # + Node.js
-│   │   ├── ubsecurity           # + Herramientas ciber
-│   │   ├── ubpanel              # + Cockpit
-│   │   └── admin/
+│   ├── base/                     # CAPAS BASE
+│   │   ├── ubbase               # ← Imagen base Ubuntu
+│   │   ├── ldapbase             # ← + LDAP
+│   │   ├── dbbase               # ← + PostgreSQL
+│   │   ├── ftpbase              # ← + vsftpd
+│   │   ├── dnsbase              # ← + Bind9
+│   │   │
+│   │   ├── pbase/               # 🌐 PROYECTOS WEB
+│   │   │   ├── ubnginx          # → Nginx servidor web
+│   │   │   └── ubAutocaravaneando # → Node.js + React
+│   │   │
+│   │   ├── psecurity/           # 🔒 SEGURIDAD Y ADMIN
+│   │   │   ├── ubsecurity       # → Herramientas auditoría
+│   │   │   └── ubpanel          # → Panel Cockpit
+│   │   │
+│   │   └── admin/               # Scripts de administración
 │   │       ├── start.sh
 │   │       ├── maintenance.sh
-│   │       ├── ciber/
-│   │       ├── panel/
-│   │       ├── react/
-│   │       ├── ssh/
-│   │       ├── sudo/
-│   │       └── usuarios/
+│   │       ├── ciber/           # Scripts ciberseguridad
+│   │       ├── panel/           # Config panel
+│   │       ├── react/           # Scripts React
+│   │       ├── ssh/             # Config SSH
+│   │       ├── sudo/            # Config sudo
+│   │       └── usuarios/        # Gestión usuarios
 │   │
-│   ├── ftp-server/
+│   ├── ftp-server/              # Servicio FTP final
 │   │   ├── Dockerfile
 │   │   ├── start.sh
 │   │   └── vsftpd.conf
 │   │
-│   ├── dns-dhcp/
+│   ├── dns-dhcp/                # Servicio DNS/DHCP final
 │   │   ├── Dockerfile
 │   │   └── start.sh
 │   │
-│   ├── postgres-admin/
+│   ├── postgres-admin/          # Servicio PostgreSQL final
 │   │   ├── Dockerfile
 │   │   └── start.sh
 │   │
-│   └── react-web/
+│   └── react-web/               # Servicio React final
 │       └── Dockerfile
 │
-└── proyectos/
+└── proyectos/                    # Docker Compose
     ├── ftp-server/
     │   └── docker-compose.yml
     ├── dns-dhcp/
@@ -397,6 +434,17 @@ devops/docker/caronte/
         ├── vite.config.js
         └── src/
 ```
+
+### Explicación de la Organización
+
+| Directorio                  | Propósito                                    |
+|----------------------------|----------------------------------------------|
+| `dockerfiles/base/`        | Capas fundamentales (ubbase, ldapbase, etc.) |
+| `dockerfiles/base/pbase/`  | **Capas de proyectos web** (nginx, react)    |
+| `dockerfiles/base/psecurity/` | **Capas de seguridad y admin**            |
+| `dockerfiles/base/admin/`  | Scripts comunes de administración            |
+| `dockerfiles/<servicio>/`  | Servicios finales con GUIs                   |
+| `proyectos/<servicio>/`    | Docker Compose para cada servicio            |
 
 ---
 
