@@ -15,21 +15,107 @@ Sistema de contenedores Docker con arquitectura en capas para servicios web, bas
 
 ## 🏗️ Arquitectura
 
-### Capas Base (heredables)
+### Concepto de Capas
+
+El proyecto usa **arquitectura en capas** donde cada imagen Docker hereda de la anterior, reutilizando funcionalidad:
 
 ```
-1. ubbase → Ubuntu + SSH + admin scripts + ciberseguridad
-   ├── 2. ldapbase → + cliente LDAP
-   │   ├── 3. dbbase → + PostgreSQL
-   │   ├── 3. ftpbase → + vsftpd
-   │   └── 3. dnsbase → + Bind9 + DHCP
-   │
-   ├── 2. ubnginx → + Nginx (puerto 80)
-   │   └── 3. ubAutocaravaneando → + Node.js (puerto 3000)
-   │
-   ├── 2. ubsecurity → + herramientas auditoría (nmap, fail2ban, lynis)
-   └── 2. ubpanel → + Cockpit web (puerto 9090)
+Capa 1: ubbase (Base)
+   ↓ heredan
+Capa 2: Especializaciones (ldapbase, ubnginx, ubsecurity...)
+   ↓ heredan
+Capa 3: Servicios finales (dbbase, ubAutocaravaneando...)
 ```
+
+**Ventajas:**
+- ✅ No repetir código/configuración
+- ✅ Actualizaciones centralizadas
+- ✅ Builds más rápidos (capas cacheadas)
+- ✅ Imágenes modulares y reutilizables
+
+### Jerarquía de Capas
+
+```
+1. ubbase (CAPA BASE COMÚN)
+   │  → Ubuntu 22.04
+   │  → SSH configurado
+   │  → Scripts de administración
+   │  → Auditoría de ciberseguridad
+   │
+   ├── 2. ldapbase (AUTENTICACIÓN)
+   │   │  → Cliente LDAP
+   │   │  → Autenticación centralizada
+   │   │
+   │   ├── 3. dbbase (BASE DE DATOS)
+   │   │   │  → PostgreSQL
+   │   │   │  → Conectado a LDAP
+   │   │   │
+   │   │   └── 4. postgres-admin (SERVICIO FINAL)
+   │   │       → pgAdmin 4 GUI
+   │   │       → Puerto 5050
+   │   │
+   │   ├── 3. ftpbase (TRANSFERENCIA)
+   │   │   │  → vsftpd
+   │   │   │  → Autenticación LDAP
+   │   │   │
+   │   │   └── 4. ftp-server (SERVICIO FINAL)
+   │   │       → Webmin GUI
+   │   │       → Puerto 10000
+   │   │
+   │   └── 3. dnsbase (RED)
+   │       → Bind9 DNS
+   │       → ISC DHCP
+   │
+   ├── 2. ubnginx (WEB)
+   │   │  → Nginx web server
+   │   │  → Puerto 80
+   │   │
+   │   └── 3. ubAutocaravaneando (PROYECTOS REACT)
+   │       → Node.js 18 + npm
+   │       → Build automático
+   │       → Puertos 3010 (dev), 8810 (prod)
+   │
+   ├── 2. ubsecurity (SEGURIDAD)
+   │   → nmap, fail2ban, lynis
+   │   → Herramientas de auditoría
+   │
+   └── 2. ubpanel (ADMINISTRACIÓN)
+       → Cockpit web panel
+       → Puerto 9090
+
+SERVICIO INDEPENDIENTE:
+dns-dhcp (SERVICIO FINAL)
+   → Technitium DNS Server
+   → GUI integrada puerto 5380
+```
+
+### Cómo Funciona
+
+1. **ubbase** se construye primero (base común para todos)
+2. **Capas nivel 2** heredan de ubbase (`FROM crsaubbase`)
+3. **Capas nivel 3** heredan de nivel 2 (`FROM crsaldapbase`)
+4. **Servicios finales** heredan y añaden GUIs web
+
+**Ejemplo de herencia:**
+```dockerfile
+# ubbase (nivel 1)
+FROM ubuntu
+RUN apt install ssh ...
+
+# ldapbase (nivel 2) hereda de ubbase
+FROM crsaubbase
+RUN apt install ldap ...
+
+# dbbase (nivel 3) hereda de ldapbase
+FROM crsaldapbase
+RUN apt install postgresql ...
+
+# postgres-admin (servicio final) hereda de dbbase
+FROM crsadbbase
+RUN apt install pgadmin4 ...
+```
+
+Cada capa **añade funcionalidad** sin modificar las anteriores.
 
 ### Servicios con GUIs Web
 
