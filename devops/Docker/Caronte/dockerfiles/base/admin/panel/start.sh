@@ -8,7 +8,7 @@ fi
 
 # Iniciar Cockpit sin TLS
 echo "Iniciando Cockpit en puerto 9090..."
-/usr/libexec/cockpit-ws --no-tls &
+/usr/lib/cockpit/cockpit-ws --no-tls &
 
 # Iniciar SSH
 echo "Iniciando SSH..."

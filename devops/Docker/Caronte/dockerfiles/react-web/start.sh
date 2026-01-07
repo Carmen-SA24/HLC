@@ -15,8 +15,10 @@ service nginx start
 # Iniciar servidor de desarrollo si existe package.json
 if [ -f "/app/package.json" ]; then
     echo "Iniciando servidor de desarrollo en puerto 3000..."
+    mkdir -p /var/log
     sleep 2
     cd /app && nohup npm run dev -- --host 0.0.0.0 --port 3000 > /var/log/react-dev.log 2>&1 &
+    echo "Servidor dev iniciado con PID $!"
 fi
 
 # Iniciar SSHD (Primer plano - Mantiene contenedor vivo)
