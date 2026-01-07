@@ -1,8 +1,8 @@
-# Capa 4: Ciberseguridad y auditoria sobre imagen base
+# Herramientas de ciberseguridad y auditoría
 ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
-# Instalar herramientas de auditoria y seguridad
+# Instalar herramientas de seguridad
 RUN apt-get update && apt-get install -y \
     nmap \
     netcat-openbsd \

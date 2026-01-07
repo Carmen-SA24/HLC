@@ -1,4 +1,4 @@
-# Capa 3: Proyectos React/Vue/Angular sobre nginx
+# Node.js 18 + npm para proyectos React/Vue/Angular
 ARG INICIALES=crsa
 FROM ${INICIALES}ubnginx
 

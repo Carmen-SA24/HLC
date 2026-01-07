@@ -1,4 +1,4 @@
-# Imagen base con Bind9 DNS sobre ldapbase
+# Servidor DNS y DHCP con autenticación LDAP
 ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 

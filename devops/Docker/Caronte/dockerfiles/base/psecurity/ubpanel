@@ -1,8 +1,8 @@
-# Panel web unificado de administración (Cockpit)
+# Panel web de administración Cockpit
 ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
-# Instalar Cockpit para gestión web centralizada
+# Instalar Cockpit
 RUN apt-get update && apt-get install -y \
     cockpit \
     cockpit-docker \

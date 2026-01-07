@@ -1,4 +1,4 @@
-# Imagen base con servidor FTP sobre ldapbase
+# Servidor FTP con autenticación LDAP
 ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 

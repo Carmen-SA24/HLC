@@ -1,11 +1,11 @@
-# Capa 2: Nginx sobre imagen base
+# Servidor web Nginx
 ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
-# Instalar nginx
+# Instalar Nginx
 RUN apt-get update && apt-get install -y nginx
 
-# Configurar permisos del directorio web
+# Configurar permisos
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html
 

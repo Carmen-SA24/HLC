@@ -1,4 +1,4 @@
-# Imagen base con PostgreSQL sobre ldapbase
+# PostgreSQL con autenticación LDAP
 ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 
