@@ -47,10 +47,10 @@ WORKDIR /app
 COPY --from=builder /app /app
 
 # Exponer puertos web y SSH
-EXPOSE 80 22
+EXPOSE 80 22 3000
 
 # Script de arranque
-COPY start.sh /start.sh
+COPY dockerfiles/react-web/start.sh /start.sh
 RUN chmod +x /start.sh
 
 ENTRYPOINT ["/start.sh"]
