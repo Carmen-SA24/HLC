@@ -5,7 +5,7 @@ FROM ${INICIALES}ubbase
 # Instalar herramientas de auditoria y seguridad
 RUN apt-get update && apt-get install -y \
     nmap \
-    netcat \
+    netcat-openbsd \
     tcpdump \
     iptables \
     fail2ban \
