@@ -3,7 +3,7 @@
 
 echo "=== Deteniendo servicios ==="
 
-cd devops/docker/caronte/proyectos
+cd devops/Docker/Caronte/proyectos
 
 cd ftp-server && docker compose down && cd ..
 cd dns-dhcp && docker compose down && cd ..

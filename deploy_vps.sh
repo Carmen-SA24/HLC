@@ -8,7 +8,7 @@ git pull origin main
 
 echo ""
 echo "=== Navegando al directorio de trabajo ==="
-cd devops/docker/caronte
+cd devops/Docker/Caronte
 
 echo ""
 echo "=== Definir tus iniciales ==="
