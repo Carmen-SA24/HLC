@@ -12,6 +12,11 @@ fi
 echo "Iniciando Nginx..."
 service nginx start
 
+# Iniciar servidor de desarrollo si existe package.json
+if [ -f "/app/package.json" ]; then
+    echo "Iniciando servidor de desarrollo en puerto 3000..."
+    cd /app && npm run dev -- --host 0.0.0.0 --port 3000 &
+fi
 
 # Iniciar SSHD (Primer plano - Mantiene contenedor vivo)
 echo "Iniciando SSHD..."

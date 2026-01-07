@@ -5,13 +5,13 @@ FROM ${INICIALES}ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar .NET Runtime 8.0 requerido por Technitium
+# Instalar .NET Runtime 9.0 requerido por Technitium
 RUN apt-get update && apt-get install -y wget apt-transport-https \
     && wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
-    && apt-get install -y aspnetcore-runtime-8.0 \
+    && apt-get install -y aspnetcore-runtime-9.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Technitium DNS Server con GUI web integrada

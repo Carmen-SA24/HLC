@@ -12,6 +12,7 @@ services:
     ports:
       - "21:21" # FTP
       - "21000-21010:21000-21010" # FTP pasivo
+      - "10000:10000" # Webmin GUI
       - "2225:22" # SSH para mantenimiento
     restart: always
 
