@@ -5,7 +5,7 @@ FROM ${INICIALES}ubnginx
 # Instalar Node.js 18 LTS y npm
 RUN apt-get update && apt-get install -y curl gnupg software-properties-common
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get install -y nodejs
+RUN apt-get install -y nodejs npm
 RUN node --version && npm --version
 
 # Copiar script de configuración React
