@@ -42,7 +42,7 @@ main(){
 
     # Iniciar Webmin en segundo plano
     echo "INFO: Iniciando Webmin..." >> /root/logs/informe.log
-    /etc/webmin/start &
+    service webmin start
 
     # Mantener SSH en primer plano
     exec /usr/sbin/sshd -D

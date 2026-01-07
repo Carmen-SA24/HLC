@@ -16,9 +16,12 @@ FROM ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar Nginx (Servidor Web)
+# Instalar Nginx y Node.js para servidor dev
 RUN apt-get update && apt-get install -y \
     nginx \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
@@ -38,6 +41,10 @@ RUN echo 'server { \
 
 # Copiar web compilada desde la Etapa 1
 COPY --from=builder /app/dist /var/www/html/
+
+# Copiar código fuente y node_modules para dev server
+WORKDIR /app
+COPY --from=builder /app /app
 
 # Exponer puertos web y SSH
 EXPOSE 80 22
