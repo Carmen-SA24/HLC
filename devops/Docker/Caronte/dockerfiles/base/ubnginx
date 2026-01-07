@@ -1,4 +1,5 @@
 # Capa 2: Nginx sobre imagen base
+ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
 # Instalar nginx

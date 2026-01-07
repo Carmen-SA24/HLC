@@ -1,4 +1,5 @@
 # Imagen base con PostgreSQL sobre ldapbase
+ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

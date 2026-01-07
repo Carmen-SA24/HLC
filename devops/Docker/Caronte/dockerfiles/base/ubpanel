@@ -1,4 +1,5 @@
 # Panel web unificado de administración (Cockpit)
+ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
 # Instalar Cockpit para gestión web centralizada

@@ -1,4 +1,5 @@
 # Imagen base con cliente LDAP para autenticacion centralizada
+ARG INICIALES=crsa
 FROM ${INICIALES}ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

@@ -1,4 +1,5 @@
 # Imagen base con servidor FTP sobre ldapbase
+ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

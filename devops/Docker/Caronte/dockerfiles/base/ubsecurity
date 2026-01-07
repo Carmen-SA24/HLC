@@ -1,4 +1,5 @@
 # Capa 4: Ciberseguridad y auditoria sobre imagen base
+ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 
 # Instalar herramientas de auditoria y seguridad

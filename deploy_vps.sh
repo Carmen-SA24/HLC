@@ -11,26 +11,34 @@ echo "=== Navegando al directorio de trabajo ==="
 cd devops/Docker/Caronte
 
 echo ""
-echo "=== Definir tus iniciales ==="
-read -p "Introduce tus iniciales (ej: crsa): " INICIALES_INPUT
-INICIALES=$(echo "$INICIALES_INPUT" | tr '[:upper:]' '[:lower:]')
-export INICIALES
-echo "Usando iniciales: $INICIALES"
+echo "=== Cargando variables desde .env ==="
+if [ -f .env ]; then
+    source .env
+    # Convertir iniciales a minúsculas
+    INICIALES=$(echo "$INICIALES" | tr '[:upper:]' '[:lower:]')
+    export INICIALES
+    echo "✓ Variables cargadas: INICIALES=$INICIALES, PROYECTO=$PROYECTO"
+else
+    echo "⚠ No se encontró .env, introduce manualmente:"
+    read -p "Iniciales (ej: crsa): " INICIALES
+    INICIALES=$(echo "$INICIALES" | tr '[:upper:]' '[:lower:]')
+    export INICIALES
+fi
 
 echo ""
 echo "=== Construyendo imágenes base ==="
-docker build -f dockerfiles/base/ubbase -t ${INICIALES}ubbase .
-docker build -f dockerfiles/base/ldapbase -t ${INICIALES}ldapbase .
-docker build -f dockerfiles/base/dbbase -t ${INICIALES}dbbase .
-docker build -f dockerfiles/base/ftpbase -t ${INICIALES}ftpbase .
-docker build -f dockerfiles/base/dnsbase -t ${INICIALES}dnsbase .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ubbase -t ${INICIALES}ubbase .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ldapbase -t ${INICIALES}ldapbase .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/dbbase -t ${INICIALES}dbbase .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ftpbase -t ${INICIALES}ftpbase .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/dnsbase -t ${INICIALES}dnsbase .
 
 echo ""
 echo "=== Construyendo capas especializadas ==="
-docker build -f dockerfiles/base/ubnginx -t ${INICIALES}ubnginx .
-docker build -f dockerfiles/base/ubAutocaravaneando -t ${INICIALES}ubAutocaravaneando .
-docker build -f dockerfiles/base/ubsecurity -t ${INICIALES}ubsecurity .
-docker build -f dockerfiles/base/ubpanel -t ${INICIALES}ubpanel .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ubnginx -t ${INICIALES}ubnginx .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ubAutocaravaneando -t ${INICIALES}ubAutocaravaneando .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ubsecurity -t ${INICIALES}ubsecurity .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/ubpanel -t ${INICIALES}ubpanel .
 
 echo ""
 echo "=== Verificando imágenes creadas ==="

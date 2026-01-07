@@ -1,5 +1,6 @@
 # Servidor FTP + GUI web Webmin
 # GUI: Webmin (gestión FTP vía web)
+ARG INICIALES=crsa
 FROM ${INICIALES}ftpbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

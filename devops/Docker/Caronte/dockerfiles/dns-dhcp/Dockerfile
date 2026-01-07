@@ -1,6 +1,7 @@
 # Servidor DNS + DHCP + GUI web Technitium
 # GUI: Technitium DNS Server (incluye interfaz web integrada)
-FROM ubbase:latest
+ARG INICIALES=crsa
+FROM ${INICIALES}ubbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

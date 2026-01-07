@@ -1,4 +1,5 @@
 # Imagen base con Bind9 DNS sobre ldapbase
+ARG INICIALES=crsa
 FROM ${INICIALES}ldapbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

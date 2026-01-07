@@ -1,5 +1,6 @@
 # PostgreSQL + GUI web pgAdmin 4
 # GUI: pgAdmin 4 (herramienta oficial de gestión PostgreSQL)
+ARG INICIALES=crsa
 FROM ${INICIALES}dbbase:latest
 
 ENV DEBIAN_FRONTEND=noninteractive

@@ -1,4 +1,5 @@
 # Capa 3: Proyectos React/Vue/Angular sobre nginx
+ARG INICIALES=crsa
 FROM ${INICIALES}ubnginx
 
 # Instalar Node.js 18 LTS y npm
