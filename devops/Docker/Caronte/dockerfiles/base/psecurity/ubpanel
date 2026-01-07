@@ -14,11 +14,13 @@ RUN apt-get update && apt-get install -y \
 # Habilitar Cockpit
 RUN systemctl enable cockpit.socket || true
 
-# Crear script de integración con servicios
+# Crear scripts de configuración
+RUN mkdir -p /root/admin/panel
 COPY ./dockerfiles/base/admin/panel/config.sh /root/admin/panel/
-RUN chmod +x /root/admin/panel/config.sh
+COPY ./dockerfiles/base/admin/panel/start.sh /start.sh
+RUN chmod +x /root/admin/panel/config.sh /start.sh
 
 # Puertos: Cockpit web(9090), SSH(22)
 EXPOSE 9090 22
 
-ENTRYPOINT ["/root/admin/base/start.sh"]
+ENTRYPOINT ["/start.sh"]

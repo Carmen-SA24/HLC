@@ -40,9 +40,9 @@ main(){
     # Iniciar vsftpd en segundo plano
     service vsftpd start
 
-    # Iniciar Webmin en segundo plano
+    # Iniciar Webmin en segundo plano (usa su propio script)
     echo "INFO: Iniciando Webmin..." >> /root/logs/informe.log
-    service webmin start
+    /etc/webmin/miniserv.pl /etc/webmin &
 
     # Mantener SSH en primer plano
     exec /usr/sbin/sshd -D
