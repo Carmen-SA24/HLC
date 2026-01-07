@@ -50,7 +50,7 @@ COPY --from=builder /app /app
 EXPOSE 80 22 3000
 
 # Script de arranque
-COPY dockerfiles/react-web/start.sh /start.sh
+COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
 ENTRYPOINT ["/start.sh"]
