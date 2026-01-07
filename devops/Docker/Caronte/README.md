@@ -79,8 +79,8 @@ ubbase
        │  → Nginx web server
        │  → Puerto 80
        │
-       └── 3. ubAutocaravaneando (PROYECTOS REACT)
-           📁 Ubicación: dockerfiles/base/pbase/ubAutocaravaneando
+       └── 3. ubreact (PROYECTOS REACT)
+           📁 Ubicación: dockerfiles/base/pbase/ubreact
            → Node.js 18 + npm
            → Build automático React/Vue/Angular
            → Puertos 3010 (dev), 8810 (prod)
@@ -141,7 +141,7 @@ ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
 RUN apt install nginx
 
-# ubAutocaravaneando (nivel 3) - /base/pbase/ubAutocaravaneando
+# ubreact (nivel 3) - /base/pbase/ubreact
 ARG INICIALES=crsa
 FROM ${INICIALES}ubnginx
 RUN apt install nodejs npm

@@ -36,7 +36,7 @@ docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/dnsbase -t $
 echo ""
 echo "=== Construyendo capas especializadas ==="
 docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/pbase/ubnginx -t ${INICIALES}ubnginx .
-docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/pbase/ubAutocaravaneando -t ${INICIALES}ubautocaravaneando .
+docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/pbase/ubreact -t ${INICIALES}ubreact .
 docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/psecurity/ubsecurity -t ${INICIALES}ubsecurity .
 docker build --build-arg INICIALES=${INICIALES} -f dockerfiles/base/psecurity/ubpanel -t ${INICIALES}ubpanel .
 
