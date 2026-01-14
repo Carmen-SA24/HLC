@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  webtaller:
+    container_name: ptaller_web
+    build:
+      context: ../
+      dockerfile: deploy/dockerfile
+      # args comentados por si se necesitan después
+      # args:
+      #   PROYECTO: ptaller
+      #   USUARIO: ${USUARIO:-admin}
+      #   TIPO: ${TIPO:-estudiante}
+    ports:
+      - "8080:80"
+    restart: always

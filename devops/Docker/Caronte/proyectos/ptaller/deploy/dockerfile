@@ -1,0 +1,12 @@
+FROM httpd:2.4
+
+# Argumentos comentados por si se necesitan después
+# ARG PROYECTO
+# ARG USUARIO
+# ARG TIPO
+
+# Copiar el index.html al directorio de Apache
+COPY ./src/index.html /usr/local/apache2/htdocs/
+
+# Exponer puerto 80
+EXPOSE 80
