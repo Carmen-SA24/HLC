@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ptaller-deployment
+  labels:
+    app: ptaller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ptaller
+  template:
+    metadata:
+      labels:
+        app: ptaller
+    spec:
+      containers:
+        - name: ptaller
+          image: carmen24/ptaller:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ptaller-service
+spec:
+  selector:
+    app: ptaller
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30001
+  type: NodePort
