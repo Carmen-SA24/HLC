@@ -6,7 +6,8 @@ services:
     image: carmen24/ptaller:latest
     build:
       context: ../
-      dockerfile: deploy/dockerfile
+      dockerfile: ./build_img/dockerfile
+      image: carmen24/ptaller:latest
       # args comentados por si se necesitan después
       # args:
       #   PROYECTO: ptaller

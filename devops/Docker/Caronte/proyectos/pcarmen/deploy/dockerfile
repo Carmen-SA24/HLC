@@ -1,0 +1,20 @@
+FROM ubsecurity:latest
+
+# Variables de entorno fijas
+ENV USUARIO=rosa
+ENV PASSWORD=1234
+ENV PORT_SSH=22
+
+# Instalar Nginx
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+
+# Copiar web e index
+COPY ./src/index.html /var/www/html/index.html
+
+# Copiar script de arranque
+COPY ./deploy/start-carmen.sh /start-carmen.sh
+RUN chmod +x /start-carmen.sh
+
+EXPOSE 80 22
+
+ENTRYPOINT ["/start-carmen.sh"]

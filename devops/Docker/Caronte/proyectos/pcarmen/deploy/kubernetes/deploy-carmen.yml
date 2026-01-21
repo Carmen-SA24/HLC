@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carmen-deployment
+  namespace: proyectocarmen
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webcarmen
+  template:
+    metadata:
+      labels:
+        app: webcarmen
+    spec:
+      containers:
+        - name: webcarmen
+          image: carmen24/pcarmen:latest
+          ports:
+            - containerPort: 80
