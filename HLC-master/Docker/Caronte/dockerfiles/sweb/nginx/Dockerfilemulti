@@ -1,0 +1,31 @@
+ARG AUTOR
+FROM ${AUTOR}/ubuntubase AS base
+
+ENV USUARIO="pepe"
+ENV PASSWORD="abc"
+ARG CONTEXT
+ARG TZ
+
+
+# RUN apt update && apt install -yq --no-install-recommends 
+# Segunda etapa: Basada en Nginx
+
+FROM nginx:latest
+ARG PROYECTO
+
+# Copiar contenido de la primera etapa a la segunda
+COPY --from=base /root/admin /root/admin
+RUN mkdir /root/admin/nginx
+COPY ./dockerfiles/sweb/nginx /root/admin/nginx
+RUN chmod +x /root/admin/nginx/admin/start.sh
+
+# Copiar configuraciones personalizadas de Nginx
+COPY ./proyectos/${PROYECTO}/deploy/config/default.conf /etc/nginx/conf.d/default.conf
+COPY ./proyectos/${PROYECTO}/deploy/html /var/www/html
+RUN chmod -R 755 /var/www/html
+RUN mkdir -p /var/log/nginx
+EXPOSE 80
+
+
+WORKDIR /root/admin/nginx
+ENTRYPOINT ["./admin/start.sh"]

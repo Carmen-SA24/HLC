@@ -16,5 +16,13 @@ spec:
       containers:
         - name: webcarmen
           image: carmen24/pcarmen:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

@@ -1,0 +1,26 @@
+services:
+  servidor:
+    # platform: linux/amd64
+    build:
+      context: ${CONTEXTO}
+      dockerfile: ./dockerfiles/sweb/nginx/Dockerfile
+    image: morgadoberruezo/nginx
+    container_name: ${CONTENEDOR}
+    hostname: ${HOSTNAME}
+    env_file:
+      - ./.env
+    ports:
+      - "${PORT_WEB}:80"
+    volumes:
+      - ./logs:/root/logs
+      # - ./html:/var/www/html
+    networks:
+      netcarontewebnginx:
+        ipv4_address: ${IP}
+
+networks:
+  netcarontewebnginx:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET}

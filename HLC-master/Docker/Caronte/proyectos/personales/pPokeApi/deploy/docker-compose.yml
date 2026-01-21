@@ -1,0 +1,12 @@
+services:
+  web:
+    build: 
+      context: ${CONTEXTO}
+      dockerfile: deploy/Dockerfile
+      args: #variables en DFILE para la construccion (build) de la imagen
+        - PROYECTO=${PROYECTO}
+        - PASSWORD=1234
+    container_name: ctportfolio
+    ports:
+      - "8810:80"
+

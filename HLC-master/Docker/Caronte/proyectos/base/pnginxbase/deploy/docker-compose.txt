@@ -1,0 +1,18 @@
+services:
+  web:
+    build: 
+      context: ${CONTEXTO}
+      dockerfile: ./dockerfiles/sweb/nginx/Dockerfile
+      args: #variables en DFILE para la construccion (build) de la imagen
+        - PROYECTO=${PROYECTO}
+        - PASSWORD=1234
+    image: morgadoberruezo/ubnginx
+    container_name: ctnginx
+    volumes:
+      - ./logs:/root/logs
+    env_file:
+      - .env
+    ports:
+      - "8810:80"
+      - "3010:3000"
+

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webtaller-deployment
+  namespace: proyectotaller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webtaller
+  template:
+    metadata:
+      labels:
+        app: webtaller
+    spec:
+      containers:
+        - name: webtaller
+          image: morgadoberruezo/ubjambbptaller:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: webtaller-config
+          ports:
+            - containerPort: 80
+          resources:
+              requests:
+                cpu: "100m"
+                memory: "128Mi"
+              limits:
+                cpu: "500m"
+                memory: "256Mi"
+        # 🔹 Montaje del ConfigMap como fichero
+          # volumeMounts:
+          #   - name: webtaller-config-volume
+          #     mountPath: /etc/webtaller
+          #     readOnly: true
+      # 🔹 Definición del volumen desde el ConfigMap
+      # volumes:
+      #   - name: webtaller-config-volume
+      #     configMap:
+      #       name: webtaller-config

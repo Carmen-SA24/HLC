@@ -1,0 +1,20 @@
+services:
+  web:
+    build: 
+      context: ${CONTEXTO}
+      dockerfile: ./dockerfiles/JS/react/Dockerfile
+      args: #variables en DFILE para la construccion (build) de la imagen
+        - PROYECTO=${PROYECTO}
+        - USUARIO=${USUARIO}
+        - TIPO=${TIPO}
+        
+    image: morgadoberruezo/ubreact
+    container_name: ctreact
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/root/logs
+    ports:
+      - "8810:80"
+      - "3010:3000"
+

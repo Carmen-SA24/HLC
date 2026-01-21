@@ -1,0 +1,22 @@
+services:
+  web:
+    build: 
+      context: ${CONTEXTO}
+      dockerfile: ./dockerfiles/base/ubbase
+    image: morgadoberruezo/ubbase
+    container_name: ${CONTENEDOR}
+    env_file:
+      - ./.env
+    volumes:
+      - ./logs:/root/logs
+    networks:
+      netcarontebase:
+        ipv4_address: ${IP}
+
+networks:
+  netcarontebase:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET}
+

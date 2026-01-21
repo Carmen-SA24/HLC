@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webtaller
+  namespace: proyectotaller
+spec:
+  containers:
+    - name: pod-webtaller
+      image: morgadoberruezo/ubjambbptaller:latest
+      ports:
+        - containerPort: 80

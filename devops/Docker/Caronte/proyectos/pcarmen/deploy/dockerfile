@@ -1,3 +1,17 @@
+# --- ETAPA 1: Construcción (Node 22) ---
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Copiar dependencias (Están dentro de src)
+COPY src/package*.json ./
+RUN npm install
+
+# Copiar el código fuente (Todo lo que está en src)
+COPY src/ .
+RUN npm run build
+
+# --- ETAPA 2: Runtime (Ubsecurity + Nginx) ---
 FROM ubsecurity:latest
 
 # Variables de entorno fijas
@@ -8,13 +22,14 @@ ENV PORT_SSH=22
 # Instalar Nginx
 RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
-# Copiar web e index
-COPY ./src/index.html /var/www/html/index.html
+# Copiar web estática exportada (Desde el builder, carpeta out)
+COPY --from=builder /app/out /var/www/html/
 
 # Copiar script de arranque
 COPY ./deploy/start-carmen.sh /start-carmen.sh
 RUN chmod +x /start-carmen.sh
 
+# Exponer puertos
 EXPOSE 80 22
 
 ENTRYPOINT ["/start-carmen.sh"]

@@ -1,0 +1,27 @@
+/* [project]/proyectos/nextjs/styles/Home.module.css [client] (css) */
+.Home-module__J96icW__container {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0 .5rem;
+  display: flex;
+}
+
+.Home-module__J96icW__main {
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 5rem 0;
+  display: flex;
+}
+
+.Home-module__J96icW__title {
+  text-align: center;
+  margin: 0;
+  font-size: 4rem;
+  line-height: 1.15;
+}
+
+/*# sourceMappingURL=proyectos_nextjs_styles_Home_module_css_65f1660e._.single.css.map*/

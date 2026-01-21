@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 9, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/proyectos/nextjs/styles/Home.module.css [ssr] (css module)"],"sourcesContent":["__turbopack_context__.v({\n  \"container\": \"Home-module__J96icW__container\",\n  \"main\": \"Home-module__J96icW__main\",\n  \"title\": \"Home-module__J96icW__title\",\n});\n"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA"}},
+    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/salyr/Desktop/grado/2DO/OPTATIVA/reactpro/proyectos/nextjs/pages/_app.tsx"],"sourcesContent":["import '../styles/globals.css';\r\nimport '../styles/Home.module.css';\r\nimport type { AppProps } from 'next/app';\r\n\r\nfunction MyApp({ Component, pageProps }: AppProps) {\r\n  return <Component {...pageProps} />;\r\n}\r\n\r\nexport default MyApp;"],"names":[],"mappings":";;;;;AACA;;;;AAGA,SAAS,MAAM,EAAE,SAAS,EAAE,SAAS,EAAY;IAC/C,qBAAO,qKAAC;QAAW,GAAG,SAAS;;;;;;AACjC;uCAEe"}}]
+}
