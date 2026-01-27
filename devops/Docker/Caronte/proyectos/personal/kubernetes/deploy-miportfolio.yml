@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: carmen-deployment
-  namespace: miportafolio
+  namespace: miportfolio-helm
 spec:
   replicas: 2
   selector:
