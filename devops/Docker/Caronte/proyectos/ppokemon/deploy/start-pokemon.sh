@@ -4,4 +4,3 @@ cd /app && npm start &
 
 # Iniciar script base de seguridad
 exec /root/admin/base/start.sh
-git add -A
