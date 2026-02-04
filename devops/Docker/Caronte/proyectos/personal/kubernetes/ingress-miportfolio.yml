@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: carmen-ingress
-  namespace: miportfolio-helm
+  name: miportfolio-ingress
+  namespace: { { .Release.Namespace } }
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -14,7 +14,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: carmen-service
+                name: miportfolio
                 port:
                   number: 80
     - host: www.webmiportfolio.es
@@ -24,6 +24,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: carmen-service
+                name: miportfolio
                 port:
                   number: 80
