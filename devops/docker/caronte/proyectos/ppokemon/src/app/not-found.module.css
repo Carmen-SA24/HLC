@@ -1,0 +1,22 @@
+/* Estilos para la página de error 404 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.image {
+  max-width: 600px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.button {
+  border-radius: 50px;
+  padding: 10px 20px;
+}

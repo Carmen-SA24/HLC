@@ -1,0 +1,37 @@
+.container {
+    padding: 40px;
+    background-color: #fff;
+    color: #000;
+    min-height: 100vh;
+}
+
+.title {
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.separator {
+    border-color: #333;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.list {
+    margin-top: 20px;
+    line-height: 2.5;
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.link {
+    text-decoration: none;
+    color: #3b82f6;
+    text-transform: capitalize;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.link:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+}

@@ -1,0 +1,23 @@
+.footer {
+  background-color: #0f172a; /* Slate 900 - Darker than header */
+  color: #f1f5f9;
+  padding: 3rem 0;
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.copy {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.powered {
+  font-size: 0.8rem;
+  color: #64748b; /* Slate 500 */
+}

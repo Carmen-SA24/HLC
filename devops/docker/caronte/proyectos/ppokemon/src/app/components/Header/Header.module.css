@@ -1,0 +1,65 @@
+.banner {
+  width: 100%;
+  background: #f8f9fa;
+  display: block;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 200px; /* Altura fija reducida */
+}
+
+.bannerImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Recorta para llenar sin deformar */
+  object-position: center;
+  display: block;
+}
+
+.navbarProfessional {
+  background-color: #0f172a; /* Deep Slate Blue */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.flags {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: 16px;
+}
+
+.flagButton {
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: none;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border 0.2s;
+}
+
+.flagButtonActive {
+  border: 2px solid #ffc107;
+}
+
+.flagImg {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  background: transparent;
+}
+
+.logoContainer {
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+}
+
+.logoScaler {
+  transform: scale(0.6);
+  transform-origin: top left;
+}

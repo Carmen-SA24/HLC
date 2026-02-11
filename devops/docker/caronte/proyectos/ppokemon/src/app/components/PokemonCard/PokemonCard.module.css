@@ -1,0 +1,71 @@
+
+.card {
+  transition: transform 0.3s ease;
+  background-color: #4338ca; /* Indigo 700 main */
+  border: none;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.imageContainer {
+  background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  padding: 20px;
+  border-radius: 50%;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.pokemonImage {
+  object-fit: contain;
+  height: 220px;
+  width: auto;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+}
+
+.name {
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.id {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: monospace;
+  font-size: 1.2rem;
+}
+
+.buttonProfessional {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  padding: 10px 30px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.buttonProfessional:hover {
+  background: #ffffff;
+  color: #4338ca; /* Indigo 700 matches card bg */
+  border-color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.modalImage {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+}
+
+.statBar {
+  height: 10px;
+}

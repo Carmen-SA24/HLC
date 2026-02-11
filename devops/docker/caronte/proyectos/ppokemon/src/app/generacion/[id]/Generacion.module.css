@@ -1,0 +1,18 @@
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+}
+
+.loadingImage {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+}
+
+.errorImage {
+    max-width: 600px;
+    width: 100%;
+    margin-bottom: 20px;
+}

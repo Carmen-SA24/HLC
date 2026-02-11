@@ -1,0 +1,75 @@
+/* Estilos para la página de Contacto */
+.container {
+    padding: 2rem;
+}
+
+.introBox {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.introText {
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+.formCard {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+}
+
+.formLabel {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.formControl {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.formControl:focus {
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+    outline: none;
+}
+
+.textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.submitButton {
+    background-color: #4338ca; /* Indigo 700 */
+    color: white;
+    font-weight: 600;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.submitButton:hover {
+    background-color: #3730a3; /* Indigo 800 */
+}
+
+.submitButton:active {
+    transform: scale(0.98);
+}
