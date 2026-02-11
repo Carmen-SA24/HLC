@@ -27,6 +27,7 @@ dockerfiles/base/
 ```
 
 **Ventajas:**
+
 - ✅ No repetir código/configuración
 - ✅ Actualizaciones centralizadas
 - ✅ Builds más rápidos (capas cacheadas)
@@ -74,16 +75,24 @@ dockerfiles/base/
 ```
 ubbase
    │
-   └── 2. ubnginx (WEB SERVER)
-       │  📁 Ubicación: dockerfiles/base/pbase/ubnginx
-       │  → Nginx web server
-       │  → Puerto 80
+   └── 2. ubsecurity (CIBERSEGURIDAD)
+       │  📁 Ubicación: dockerfiles/base/psecurity/ubsecurity
+       │  → nmap, fail2ban, lynis
+       │  → Herramientas de pentesting
+       │  → Análisis de vulnerabilidades
        │
-       └── 3. ubreact (PROYECTOS REACT)
-           📁 Ubicación: dockerfiles/base/pbase/ubreact
-           → Node.js 18 + npm
-           → Build automático React/Vue/Angular
-           → Puertos 3010 (dev), 8810 (prod)
+       └── 3. ubnginx (WEB SERVER)
+           │  📁 Ubicación: dockerfiles/base/pbase/ubnginx
+           │  → Nginx web server
+           │  → Puerto 80
+           │  → Hereda herramientas de seguridad
+           │
+           └── 4. ubreact (PROYECTOS REACT)
+               📁 Ubicación: dockerfiles/base/pbase/ubreact
+               → Node.js 18 + npm
+               → Build automático React/Vue/Angular
+               → Puertos 3010 (dev), 8810 (prod)
+               → Hereda Nginx + Seguridad
 ```
 
 #### 🔒 CAPAS DE SEGURIDAD Y ADMINISTRACIÓN (/base/psecurity/)
@@ -115,33 +124,40 @@ dns-dhcp (SERVICIO FINAL)
 
 ### Organización de Archivos por Propósito
 
-| Carpeta                    | Propósito                          | Ejemplos                          |
-|----------------------------|------------------------------------|------------------------------------|
-| `base/`                    | Capas fundamentales comunes        | ubbase, ldapbase, dbbase          |
-| `base/pbase/`              | Capas para proyectos web           | ubnginx, ubAutocaravaneando       |
-| `base/psecurity/`          | Capas para seguridad/admin         | ubsecurity, ubpanel               |
+| Carpeta           | Propósito                   | Ejemplos                    |
+| ----------------- | --------------------------- | --------------------------- |
+| `base/`           | Capas fundamentales comunes | ubbase, ldapbase, dbbase    |
+| `base/pbase/`     | Capas para proyectos web    | ubnginx, ubAutocaravaneando |
+| `base/psecurity/` | Capas para seguridad/admin  | ubsecurity, ubpanel         |
 
 ### Cómo Funciona la Herencia
 
 1. **ubbase** se construye primero (base común para todos)
 2. **Capas específicas** heredan según necesidad:
    - Servicios con autenticación → heredan de `ldapbase`
-   - Proyectos web → heredan de `ubbase` (en pbase/)
+   - Capa de seguridad → hereda de `ubbase` (ubsecurity)
+   - Proyectos web → heredan de `ubsecurity` (en pbase/)
    - Herramientas admin → heredan de `ubbase` (en psecurity/)
 3. **Servicios finales** heredan y añaden GUIs web
 
-**Ejemplo de herencia:**
+**Ejemplo de herencia correcta (proyectos web):**
+
 ```dockerfile
 # ubbase (nivel 1) - /base/ubbase
 FROM ubuntu
 RUN apt install ssh nano curl...
 
-# ubnginx (nivel 2) - /base/pbase/ubnginx
+# ubsecurity (nivel 2) - /base/psecurity/ubsecurity
 ARG INICIALES=crsa
 FROM ${INICIALES}ubbase
+RUN apt install nmap fail2ban lynis...
+
+# ubnginx (nivel 3) - /base/pbase/ubnginx
+ARG INICIALES=crsa
+FROM ${INICIALES}ubsecurity
 RUN apt install nginx
 
-# ubreact (nivel 3) - /base/pbase/ubreact
+# ubreact (nivel 4) - /base/pbase/ubreact
 ARG INICIALES=crsa
 FROM ${INICIALES}ubnginx
 RUN apt install nodejs npm
@@ -151,14 +167,14 @@ Cada capa **añade funcionalidad** sin modificar las anteriores.
 
 ### Servicios con GUIs Web
 
-| Servicio       | GUI          | Puerto | Acceso                     |
-|----------------|--------------|--------|----------------------------|
-| FTP            | Webmin       | 10000  | http://IP_VPS:10000        |
-| DNS + DHCP     | Technitium   | 5380   | http://IP_VPS:5380         |
-| PostgreSQL     | pgAdmin 4    | 5050   | http://IP_VPS:5050         |
-| React Nginx    | -            | 8810   | http://IP_VPS:8810         |
-| React Dev      | Node         | 3010   | http://IP_VPS:3010         |
-| Panel Central  | Cockpit      | 9090   | http://IP_VPS:9090         |
+| Servicio      | GUI        | Puerto | Acceso              |
+| ------------- | ---------- | ------ | ------------------- |
+| FTP           | Webmin     | 10000  | http://IP_VPS:10000 |
+| DNS + DHCP    | Technitium | 5380   | http://IP_VPS:5380  |
+| PostgreSQL    | pgAdmin 4  | 5050   | http://IP_VPS:5050  |
+| React Nginx   | -          | 8810   | http://IP_VPS:8810  |
+| React Dev     | Node       | 3010   | http://IP_VPS:3010  |
+| Panel Central | Cockpit    | 9090   | http://IP_VPS:9090  |
 
 ---
 
@@ -195,11 +211,7 @@ SUBNET=172.20.0.0/16
 ### En VPS
 
 ```bash
-# 1. Clonar repositorio
-git clone https://github.com/Carmen-SA24/HLC.git
-cd HLC
-
-# 2. Dar permisos a scripts
+# 1. Dar permisos a scripts
 chmod +x deploy_vps.sh check_services.sh stop_services.sh
 
 # 3. Desplegar todo automáticamente
@@ -207,6 +219,7 @@ chmod +x deploy_vps.sh check_services.sh stop_services.sh
 ```
 
 El script automáticamente:
+
 - Carga variables desde `.env`
 - Construye todas las imágenes base
 - Construye capas especializadas
@@ -235,6 +248,7 @@ cd ../react-web && docker compose up -d
 ## 🌐 Servicios Disponibles
 
 ### 1. FTP Server
+
 - **Base:** ftpbase (vsftpd)
 - **GUI:** Webmin - Puerto 10000
 - **Características:**
@@ -243,6 +257,7 @@ cd ../react-web && docker compose up -d
   - Soporte LDAP
 
 ### 2. DNS + DHCP
+
 - **Software:** Technitium DNS Server
 - **GUI:** Puerto 5380
 - **Características:**
@@ -252,6 +267,7 @@ cd ../react-web && docker compose up -d
   - Estadísticas en tiempo real
 
 ### 3. PostgreSQL
+
 - **Versión:** PostgreSQL 16
 - **GUI:** pgAdmin 4 - Puerto 5050
 - **Características:**
@@ -261,6 +277,7 @@ cd ../react-web && docker compose up -d
   - Monitoreo
 
 ### 4. React Web
+
 - **Framework:** React + Vite
 - **Puertos:**
   - 3010: Desarrollo (npm start)
@@ -268,6 +285,7 @@ cd ../react-web && docker compose up -d
 - **Build automático:** Se genera en `/var/www/html`
 
 ### 5. Panel Central
+
 - **Software:** Cockpit
 - **Puerto:** 9090
 - **Características:**
@@ -437,14 +455,14 @@ devops/docker/caronte/
 
 ### Explicación de la Organización
 
-| Directorio                  | Propósito                                    |
-|----------------------------|----------------------------------------------|
-| `dockerfiles/base/`        | Capas fundamentales (ubbase, ldapbase, etc.) |
-| `dockerfiles/base/pbase/`  | **Capas de proyectos web** (nginx, react)    |
-| `dockerfiles/base/psecurity/` | **Capas de seguridad y admin**            |
-| `dockerfiles/base/admin/`  | Scripts comunes de administración            |
-| `dockerfiles/<servicio>/`  | Servicios finales con GUIs                   |
-| `proyectos/<servicio>/`    | Docker Compose para cada servicio            |
+| Directorio                    | Propósito                                    |
+| ----------------------------- | -------------------------------------------- |
+| `dockerfiles/base/`           | Capas fundamentales (ubbase, ldapbase, etc.) |
+| `dockerfiles/base/pbase/`     | **Capas de proyectos web** (nginx, react)    |
+| `dockerfiles/base/psecurity/` | **Capas de seguridad y admin**               |
+| `dockerfiles/base/admin/`     | Scripts comunes de administración            |
+| `dockerfiles/<servicio>/`     | Servicios finales con GUIs                   |
+| `proyectos/<servicio>/`       | Docker Compose para cada servicio            |
 
 ---
 
@@ -461,5 +479,6 @@ devops/docker/caronte/
 ## 👤 Autor
 
 **Carmen Salir Rosas**
+
 - Proyecto: Autocaravaneando
 - Iniciales: CRSA
