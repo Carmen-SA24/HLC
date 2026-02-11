@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { .Values.app.name } }
+  name: {{ .Values.app.name }}
   labels:
-    app: { { .Values.app.name } }
+    app: {{ .Values.app.name }}
 spec:
-  replicas: { { .Values.app.container.replicas } }
+  replicas: {{ .Values.app.container.replicas }}
   selector:
     matchLabels:
-      app: { { .Values.app.name } }
+      app: {{ .Values.app.name }}
   template:
     metadata:
       labels:
-        app: { { .Values.app.name } }
+        app: {{ .Values.app.name }}
     spec:
       containers:
-        - name: { { .Values.app.container.name } }
+        - name: {{ .Values.app.container.name }}
           image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
-          imagePullPolicy: { { .Values.app.image.pullPolicy } }
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: { { .Values.app.container.port } }
+              containerPort: {{ .Values.app.container.port } }
               protocol: TCP
