@@ -20,5 +20,5 @@ spec:
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.app.container.port } }
+              containerPort: {{ .Values.app.container.port }}
               protocol: TCP
