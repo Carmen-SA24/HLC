@@ -11,5 +11,8 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+      {{- if .Values.app.service.nodePort }}
+      nodePort: {{ .Values.app.service.nodePort }}
+      {{- end }}
   selector:
     app: {{ .Values.app.name }}
