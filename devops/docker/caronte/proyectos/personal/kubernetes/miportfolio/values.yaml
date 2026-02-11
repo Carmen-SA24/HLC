@@ -6,7 +6,7 @@ app:
     pullPolicy: Always
   container:
     name: miportfolio
-    port: 3000
+    port: 80
     replicas: 2
   service:
     type: ClusterIP
