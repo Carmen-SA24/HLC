@@ -2,11 +2,82 @@
 
 Esta guía documenta los pasos, estructura de archivos y comandos necesarios para desplegar una aplicación Fullstack (Backend NestJS + Base de Datos PostgreSQL) en Kubernetes utilizando Helm.
 
-Está basada en la estructura del proyecto `miportfolio` corregida y los ejemplos de PostgreSQL del profesor.
+Está basada en la estructura estándar de Helm y las mejores prácticas para conectar una aplicación stateless con una base de datos stateful.
 
 ---
 
-## 1. Estructura del Proyecto (Chart de Helm)
+## 0. Prerrequisitos (Antes de Helm)
+
+Antes de desplegar, necesitas tener tu aplicación NestJS empaquetada como imagen Docker.
+
+1.  **Crear el archivo `Dockerfile`:**
+    En la raíz de tu proyecto NestJS (`src/`), crea un archivo llamado `Dockerfile` con este contenido (ejemplo estándar):
+
+    ```dockerfile
+    # Etapa 1: Build
+    FROM node:18-alpine AS builder
+    WORKDIR /app
+    COPY package*.json ./
+    RUN npm install
+    COPY . .
+    RUN npm run build
+
+    # Etapa 2: Run
+    FROM node:18-alpine
+    WORKDIR /app
+    COPY --from=builder /app/dist ./dist
+    COPY --from=builder /app/node_modules ./node_modules
+    CMD ["node", "dist/main"]
+    ```
+
+2.  **Construir la imagen:**
+    (En tu PC Local, desde la carpeta raíz del proyecto)
+
+    ```bash
+    docker build -t tu-usuario/tienda-backend:latest .
+    ```
+
+3.  **Subir la imagen a Docker Hub:**
+    (En tu PC Local)
+    ```bash
+    docker push tu-usuario/tienda-backend:latest
+    ```
+
+> **Nota:** Helm no "ve" tu código fuente de NestJS. Solo necesita que esta imagen Docker exista y sea pública (o tengas credenciales configuradas).
+
+---
+
+## 1. Ubicación de Archivos
+
+Para mantener el orden, se recomienda esta estructura de carpetas en tu repositorio:
+
+```text
+/
+├── src/                    # Tu Código Fuente de NestJS (Package.json, etc.)
+└── deploy/                 # Carpeta para archivos de infraestructura
+    └── kubernetes/
+        └── tienda-virtual/ # <--- AQUÍ VA TU CHART DE HELM (Lo que describe esta guía)
+            ├── Chart.yaml
+            ├── values.yaml
+            └── templates/
+```
+
+- **El código NestJS (`src/`)** se usa para construir la imagen Docker (Paso 0).
+- **El Chart Helm (`deploy/...`)** se usa para desplegar esa imagen en Kubernetes (Pasos siguientes).
+
+### 📍 Ubicación Recomendada en tu PC:
+
+Para seguir la estructura de tu proyecto `HLC`:
+
+1.  **Código Fuente (NestJS):**
+    `c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\personal\tienda-virtual\`
+
+2.  **Archivos de Helm (Despliegue):**
+    `c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\personal\kubernetes\tienda-virtual\`
+
+---
+
+## 2. Estructura del Chart (Detalle)
 
 Para un nuevo proyecto (ej: `tienda-virtual`), debes crear una carpeta con la siguiente estructura:
 
