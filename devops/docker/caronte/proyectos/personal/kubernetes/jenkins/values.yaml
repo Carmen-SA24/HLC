@@ -8,9 +8,8 @@ controller:
     username: admin
     password: admin123
   persistence:
-    enabled: true
-    size: 8Gi
-    storageClass: microk8s-hostpath
+    enabled: false
+installPlugins: []
   serviceType: ClusterIP
   sidecars:
     configAutoReload:
