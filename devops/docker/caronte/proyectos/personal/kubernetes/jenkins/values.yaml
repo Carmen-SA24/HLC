@@ -29,13 +29,7 @@ controller:
       - secretName: jenkins-tls
         hosts:
           - jenkins.carmen.es
-  installPlugins:
-    - configuration-as-code:1963.v24e046127a_3f
-    - kubernetes:4306.vc91e951ea_eb_d
-    - workflow-aggregator:600.vb_57cdd26fdd7
-    - credentials:1453.v9b_a_29777a_b_fd
-    - github:1.40.0
-    - git:5.7.0
+  installPlugins: []  # <--- VACÍO 
 
 # BLOQUES OBLIGATORIOS PARA TU VPS (Evitan el error Nil Pointer)
 service:
