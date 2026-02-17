@@ -21,14 +21,14 @@ controller:
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostName: jenkins.jamorgado.es
+    hostName: jenkins.carmen.es
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
     tls:
       - secretName: jenkins-tls
         hosts:
-          - jenkins.jamorgado.es
+          - jenkins.carmen.es
   additionalPlugins: []
   installPlugins:
     - configuration-as-code
