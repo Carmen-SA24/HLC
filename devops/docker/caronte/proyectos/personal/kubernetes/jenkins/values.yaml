@@ -1,26 +1,28 @@
-autoscaling:
-  enabled: false
 jenkins:
   controller:
-    runAsUser: 0
-    fsGroup: 0
-
+    image:
+      repository: jenkins/jenkins
+      tag: "2.541.1-lts-jdk21"
+    runAsUser: 1000
+    fsGroup: 1000
     admin:
       username: admin
       password: admin123
-      
     persistence:
       enabled: true
       size: 8Gi
-      storageClass: microk8s-hostpath
-
+      storageClass: microk8s-hostpath # <- clave
     serviceType: ClusterIP
-
+    sidecars:
+      configAutoReload:
+        enabled: true
+        image:
+          repository: kiwigrid/k8s-sidecar
+          tag: "1.27.4"
     ingress:
       enabled: true
       ingressClassName: nginx
       hostName: jenkins.carmen.es
-
     installPlugins:
       - configuration-as-code:1963.v24e046127a_3f
       - kubernetes
