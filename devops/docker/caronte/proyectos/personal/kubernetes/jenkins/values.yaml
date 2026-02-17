@@ -13,6 +13,8 @@ controller:
     storageClass: microk8s-hostpath   # 👈 clave
 autoscaling:
   enabled: false
+serviceAccount:
+  create: false
   serviceType: ClusterIP
   sidecars:
     configAutoReload:
