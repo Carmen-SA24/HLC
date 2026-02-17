@@ -39,84 +39,87 @@ deploy/kubernetes/nestasir/
 
 ---
 
-## 🎯 Despliegue en 4 Pasos
+## 🎯 Comandos Ejecutados en el Despliegue Exitoso
 
-### 1️⃣ En tu PC (PowerShell) - Preparar y Subir
-
-```powershell
-# Ir al proyecto
-cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
-
-# Instalar dependencias
-npm install
-
-# Construir imagen Docker
-docker build -t carmen24/nestasir:latest .
-
-# Login Docker Hub (te pedirá usuario y contraseña)
-docker login
-
-# Subir imagen a Docker Hub
-docker push carmen24/nestasir:latest
-```
-
-### 2️⃣ Subir Cambios a Git (PowerShell)
+### ✅ 1️⃣ Local (PowerShell) - Solo Git 
 
 ```powershell
-# Ir a la raíz del proyecto HLC
-cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC
+# Navegar al proyecto
+cd C:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
 
-# Ver archivos modificados
-git status
-
-# Agregar todos los cambios del proyecto nestasir
-git add devops/docker/caronte/proyectos/nestasir/
-
-# Hacer commit
-git commit -m "feat: Despliegue NestJS + PostgreSQL con Helm"
-
-# Subir al repositorio remoto
+# Subir cambios a Git
+git add .
+git commit -m "Add NestJS PostgreSQL deployment with Helm"
 git push origin main
 ```
 
-**✅ Verificar que se subió:**
-```powershell
-# Ver último commit
-git log --oneline -1
-```
-
-### 3️⃣ En el VPS - Desplegar con Helm
+### ✅ 2️⃣ VPS (SSH) - Git, Docker y Helm
 
 ```bash
 # Conectar al servidor VPS
-ssh usuario@161.97.152.19
+ssh rosa@161.97.152.19
 
-# Navegar al proyecto (ajustar la ruta según tu VPS)
-cd ~/HLC/devops/docker/caronte/proyectos/nestasir
-# O si tu ruta es diferente:
-# cd ~/devops/docker/caronte/proyectos/nestasir
+# Navegar al proyecto
+cd ~/devops/docker/caronte/proyectos/nestasir
 
 # Actualizar código desde Git
 git pull origin main
 
-# Ver que los archivos llegaron
-ls -la deploy/kubernetes/nestasir/
+# Construir imagen Docker (tardó ~14 minutos)
+docker build -t carmen24/nestasir:latest .
+
+# Login Docker Hub (ya estaba autenticado)
+docker login
+
+# Subir imagen a Docker Hub
+docker push carmen24/nestasir:latest
 
 # Desplegar con Helm
-helm upgrade --install nestasir ./deploy/kubernetes/nestasir \
-  -n nestasir-ns \
-  --create-namespace
+helm upgrade --install nestasir ./deploy/kubernetes/nestasir -n nestasir-ns --create-namespace
 
 # Verificar despliegue
 kubectl get pods -n nestasir-ns
-
-# Esperar hasta que ambos pods estén Running (puede tardar 1-2 minutos)
-# Resultado esperado:
-# nestasir-backend-xxxxx-xxxx    1/1     Running   0          2m
-# nestasir-db-0                  1/1     Running   0          2m
+kubectl get svc -n nestasir-ns
 ```
 
-> **📍 Nota:** Ajusta la ruta `cd ~/HLC/devops/...` según donde tengas clonado tu repositorio en el VPS.
+**Resultado esperado:**
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+nestasir-backend-95f8f9f68-jtdlr   1/1     Running   0          2m
+nestasir-db-0                      1/1     Running   0          2m
+
+NAME               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+nestasir-backend   NodePort    10.152.183.99    <none>        3001:30091/TCP   2m
+nestasir-db        ClusterIP   10.152.183.173   <none>        5432/TCP         2m
+```
+
+### ✅ 3️⃣ Verificación del Despliegue
+
+```bash
+# Una vez que ambos pods estén Running, probar la API
+curl http://localhost:30091/usuario
+
+# Debe devolver: []
+
+# Crear un usuario de prueba
+curl -X POST http://localhost:30091/usuario \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Test Usuario","email":"test@test.com","password":"123456"}'
+
+# Verificar que se creó
+curl http://localhost:30091/usuario
+
+# Ver logs de la aplicación si hay problemas
+kubectl logs -f deployment/nestasir-backend -n nestasir-ns
+```
+
+---
+
+## 🎯 Resumen de Archivos Importantes
+
+### Rutas de directorios:
+- **Local**: `C:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir`
+- **VPS**: `~/devops/docker/caronte/proyectos/nestasir`
 
 ### 4️⃣ En el VPS - Verificar que Funciona
 
@@ -138,31 +141,36 @@ curl http://localhost:30091/usuario
 curl http://161.97.152.19:30091/usuario
 ```
 
-### 4️⃣ Probar API
+### 4️⃣ Probar API - Comandos Ejecutados Exitosamente en VPS
 
-**Desde el VPS:**
 ```bash
-# Crear un usuario
+# ✅ EJECUTADO: Crear usuario Carmen Test
 curl -X POST http://localhost:30091/usuario \
   -H "Content-Type: application/json" \
-  -d '{"nombre":"Juan Pérez","email":"juan@test.com","password":"123456"}'
+  -d '{"nombre":"Carmen Test","email":"carmen@test.com","password":"123456"}'
 
-# Listar todos los usuarios
+# ✅ RESPUESTA OBTENIDA:
+# {"id":1,"nombre":"Carmen Test","email":"carmen@test.com","password":"123456","activo":true,"fechaCreacion":"2026-02-17T11:10:59.859Z","fechaActualizacion":"2026-02-17T11:10:59.859Z"}
+
+# ✅ EJECUTADO: Listar usuarios
 curl http://localhost:30091/usuario
+# RESPUESTA: [{"id":1,"nombre":"Carmen Test","email":"carmen@test.com","password":"123456","activo":true,"fechaCreacion":"2026-02-17T11:10:59.859Z","fechaActualizacion":"2026-02-17T11:10:59.859Z"}]
 
-# Obtener usuario por ID
+# ✅ EJECUTADO: Obtener por ID 
 curl http://localhost:30091/usuario/1
+# RESPUESTA: {"id":1,"nombre":"Carmen Test","email":"carmen@test.com","password":"123456","activo":true,"fechaCreacion":"2026-02-17T11:10:59.859Z","fechaActualizacion":"2026-02-17T11:10:59.859Z"}
 
-# Buscar por email
-curl http://localhost:30091/usuario/email/juan@test.com
+# ✅ EJECUTADO: Buscar por email
+curl http://localhost:30091/usuario/email/carmen@test.com
+# RESPUESTA: {"id":1,"nombre":"Carmen Test","email":"carmen@test.com","password":"123456","activo":true,"fechaCreacion":"2026-02-17T11:10:59.859Z","fechaActualizacion":"2026-02-17T11:10:59.859Z"}
 ```
 
-**Desde tu PC (PowerShell):**
+**Desde tu PC (PowerShell) - OPCIONAL:**
 ```powershell
-# Crear usuario
+# Crear usuario (alternativa desde PC)
 $body = @{
-    nombre = "Juan Pérez"
-    email = "juan@test.com"
+    nombre = "Usuario desde PC"
+    email = "pc@test.com"
     password = "123456"
 } | ConvertTo-Json
 
@@ -177,7 +185,99 @@ Invoke-RestMethod -Uri "http://161.97.152.19:30091/usuario"
 
 ---
 
-## 📊 Comandos Útiles de Monitoreo
+## �️ Gestión de Base de Datos vía Web (pgAdmin)
+
+Para gestionar la BD vía web, te agrego **pgAdmin** (interfaz web de PostgreSQL). Ejecuta estos comandos en la VPS:
+
+```bash
+# 1. Crear pgAdmin
+kubectl create deployment pgadmin --image=dpage/pgadmin4:latest -n nestasir-ns
+
+# 2. Configurar credenciales (email: admin@admin.com, password: admin123)
+kubectl set env deployment/pgadmin PGADMIN_DEFAULT_EMAIL=admin@admin.com PGADMIN_DEFAULT_PASSWORD=admin123 -n nestasir-ns
+
+# 3. Exponer pgAdmin en puerto 30092
+kubectl expose deployment pgadmin --port=80 --target-port=80 --type=NodePort -n nestasir-ns
+
+# 4. Editar el servicio para asignar puerto específico
+kubectl patch svc pgadmin -n nestasir-ns -p '{"spec":{"ports":[{"port":80,"targetPort":80,"nodePort":30092}]}}'
+
+# 5. Verificar que todo esté corriendo
+kubectl get pods -n nestasir-ns
+kubectl get svc -n nestasir-ns
+```
+
+### 🌐 Acceder a pgAdmin:
+
+**URL**: `http://161.97.152.19:30092`
+
+**Credenciales**:
+- Email: `admin@admin.com`
+- Password: `admin123`
+
+### 🔌 Conectar a tu BD:
+
+Una vez dentro de pgAdmin:
+1. Clic derecho en "Servers" → "Create" → "Server"
+2. **General Tab**: Name = `NestAsir DB`
+3. **Connection Tab**:
+   - Host: `nestasir-db.nestasir-ns.svc.cluster.local`
+   - Port: `5432`
+   - Database: `nestasir_db`
+   - Username: `admin`
+   - Password: `password_segura_123`
+4. Clic "Save"
+
+---
+
+## 🔄 Escalado y Réplicas
+
+### Escalado Horizontal en la Misma VPS:
+
+```bash
+# Ver el deployment actual
+kubectl get deployment -n nestasir-ns
+
+# Escalar a 3 réplicas del backend
+kubectl scale deployment nestasir-backend --replicas=3 -n nestasir-ns
+
+# Ver las réplicas corriendo
+kubectl get pods -n nestasir-ns
+
+# Resultado: tendrás 3 pods del backend + 1 PostgreSQL
+# nestasir-backend-xxxxx-xxx1   1/1   Running
+# nestasir-backend-xxxxx-xxx2   1/1   Running  
+# nestasir-backend-xxxxx-xxx3   1/1   Running
+# nestasir-db-0                 1/1   Running
+```
+
+### Réplicas desde Otra Máquina:
+
+Si tienes otra máquina con acceso al mismo cluster Kubernetes:
+
+```bash
+# 1. Clonar el repositorio en la otra máquina
+git clone tu-repositorio-github
+cd ruta/al/proyecto/nestasir
+
+# 2. Desplegar otra instancia con Helm
+helm upgrade --install nestasir-replica ./deploy/kubernetes/nestasir -n nestasir-replica --create-namespace
+
+# 3. O gestionar las réplicas existentes remotamente
+kubectl scale deployment nestasir-backend --replicas=5 -n nestasir-ns
+```
+
+### Ventajas del Despliegue Kubernetes + Helm:
+
+✅ **Alta disponibilidad** - Si un pod falla, otros continúan  
+✅ **Escalado horizontal** - Agregar/quitar réplicas al instante  
+✅ **Load balancing** - Tráfico distribuido automáticamente entre réplicas  
+✅ **Persistencia** - PostgreSQL con almacenamiento persistente  
+✅ **Gestión declarativa** - Helm mantiene el estado deseado
+
+---
+
+## �📊 Comandos Útiles de Monitoreo
 
 ### Ver Estado del Despliegue
 ```bash
@@ -309,67 +409,61 @@ kubectl delete namespace nestasir-ns
 
 ---
 
-## ✅ Checklist de Despliegue
+## ✅ Checklist del Despliegue Exitoso
 
-### Paso 1 - En tu PC (Local):
+### Paso 1 - Local (PowerShell) - Solo Git:
 ```powershell
-cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
+cd C:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
 ```
-- [ ] `npm install` ejecutado
-- [ ] `docker build -t carmen24/nestasir:latest .` exitoso
-- [ ] `docker login` completado
-- [ ] `docker push carmen24/nestasir:latest` exitoso
+- [✓] `git add .` ejecutado
+- [✓] `git commit -m "Add NestJS PostgreSQL deployment with Helm"` exitoso
+- [✓] `git push origin main` exitoso
 
-### Paso 2 - Git (Local):
-```powershell
-cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC
-```
-- [ ] `git add devops/docker/caronte/proyectos/nestasir/`
-- [ ] `git commit -m "feat: Deploy NestJS + PostgreSQL"`
-- [ ] `git push origin main` exitoso
-
-### Paso 3 - VPS (SSH):
+### Paso 2 - VPS (SSH) - Git, Docker y Helm:
 ```bash
-ssh usuario@161.97.152.19
-cd ~/HLC/devops/docker/caronte/proyectos/nestasir
+ssh rosa@161.97.152.19
+cd ~/devops/docker/caronte/proyectos/nestasir
 ```
-- [ ] `git pull origin main` exitoso
-- [ ] `helm upgrade --install nestasir ./deploy/kubernetes/nestasir -n nestasir-ns --create-namespace` ejecutado
-- [ ] `kubectl get pods -n nestasir-ns` → ambos pods en estado **Running**
-- [ ] `kubectl logs -f deployment/nestasir-backend -n nestasir-ns` → sin errores
+- [✓] `git pull origin main` exitoso
+- [✓] `docker build -t carmen24/nestasir:latest .` exitoso (~14 minutos)
+- [✓] `docker login` completado (ya autenticado)
+- [✓] `docker push carmen24/nestasir:latest` exitoso
+- [✓] `helm upgrade --install nestasir ./deploy/kubernetes/nestasir -n nestasir-ns --create-namespace` ejecutado
+- [✓] `kubectl get pods -n nestasir-ns` → ambos pods **Running**
+- [✓] `kubectl get svc -n nestasir-ns` → NodePort 30091 activo
 
-### Paso 4 - Verificación:
-- [ ] `curl http://localhost:30091/usuario` → responde `[]` o lista de usuarios
-- [ ] Crear usuario → responde con el usuario creado
-- [ ] La aplicación es accesible desde `http://161.97.152.19:30091`
+### Paso 3 - Verificación:
+- [✓] `curl http://localhost:30091/usuario` → responde `[]`
+- [✓] Crear usuario con curl → respuesta exitosa
+- [✓] Aplicación accesible desde `http://161.97.152.19:30091`
 
 ---
 
-## 🚀 Resumen Ejecutivo (Copiar y Pegar)
+## 🚀 Comandos Ejecutados con Éxito (Copiar y Pegar)
 
-### En Local (PowerShell):
+### En Local (PowerShell) - Solo Git:
 ```powershell
-cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
-npm install
-docker build -t carmen24/nestasir:latest .
-docker login
-docker push carmen24/nestasir:latest
-cd ..\..\..\..\..\..
-git add devops/docker/caronte/proyectos/nestasir/
-git commit -m "feat: Deploy NestJS + PostgreSQL"
+cd C:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
+git add .
+git commit -m "Add NestJS PostgreSQL deployment with Helm"
 git push origin main
 ```
 
-### En VPS (SSH):
+### En VPS (SSH) - Git, Docker y Helm:
 ```bash
-ssh usuario@161.97.152.19
-cd ~/HLC/devops/docker/caronte/proyectos/nestasir
+ssh rosa@161.97.152.19
+cd ~/devops/docker/caronte/proyectos/nestasir
 git pull origin main
+docker build -t carmen24/nestasir:latest .
+docker login
+docker push carmen24/nestasir:latest
 helm upgrade --install nestasir ./deploy/kubernetes/nestasir -n nestasir-ns --create-namespace
 kubectl get pods -n nestasir-ns
-kubectl logs -f deployment/nestasir-backend -n nestasir-ns
+kubectl get svc -n nestasir-ns
 curl http://localhost:30091/usuario
 ```
+
+> 🎉 **¡DESPLIEGUE EXITOSO!** Tu API NestJS con PostgreSQL está funcionando en http://161.97.152.19:30091
 
 ---
 
