@@ -14,17 +14,32 @@ controller:
   serviceType: ClusterIP
   sidecars:
     configAutoReload:
-      enabled: false
+      enabled: true
+      image:
+        repository: kiwigrid/k8s-sidecar
+        tag: "1.27.4"
   ingress:
     enabled: true
     ingressClassName: nginx
     hostName: jenkins.carmen.es
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    tls:
+      - secretName: jenkins-tls
+        hosts:
+          - jenkins.carmen.es
   installPlugins:
     - configuration-as-code:1963.v24e046127a_3f
     - kubernetes
-    - git
     - workflow-aggregator
     - credentials
+    - github
+    - git
+
+# BLOQUES OBLIGATORIOS PARA TU VPS (Evitan el error Nil Pointer)
+service:
+  port: 8080
 
 autoscaling:
   enabled: false
