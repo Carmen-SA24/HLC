@@ -40,3 +40,12 @@ installPlugins:
   - credentials
   - github
   - git
+
+# Esto es lo que falta para evitar el error de "nil pointer"
+autoscaling:
+  enabled: false
+
+# Por seguridad, añade este bloque también si el chart lo pide
+rbac:
+  create: true
+  readSecrets: true
