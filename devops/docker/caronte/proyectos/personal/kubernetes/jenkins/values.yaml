@@ -15,10 +15,7 @@ jenkins:
     serviceType: ClusterIP
     sidecars:
       configAutoReload:
-        enabled: true
-        image:
-          repository: kiwigrid/k8s-sidecar
-          tag: "1.27.4"
+        enabled: false
     ingress:
       enabled: true
       ingressClassName: nginx
