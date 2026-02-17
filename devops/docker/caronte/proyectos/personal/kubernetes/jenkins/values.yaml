@@ -11,35 +11,34 @@ controller:
     enabled: true
     size: 8Gi
     storageClass: microk8s-hostpath   # 👈 clave
-autoscaling:
-  enabled: false
-serviceAccount:
-  create: false
 service:
   port: 8080
-  serviceType: ClusterIP
-  sidecars:
-    configAutoReload:
-      enabled: true
-      image:
-        repository: kiwigrid/k8s-sidecar
-        tag: "1.27.4"
-  ingress:
+serviceType: ClusterIP
+sidecars:
+  configAutoReload:
     enabled: true
-    ingressClassName: nginx
-    hostName: jenkins.carmen.es
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    tls:
-      - secretName: jenkins-tls
-        hosts:
-          - jenkins.carmen.es
-  additionalPlugins: []
-  installPlugins:
-    - configuration-as-code
-    - kubernetes
+    image:
+      repository: kiwigrid/k8s-sidecar
+      tag: "1.27.4"
     - workflow-aggregator
+  enabled: true
+  ingressClassName: nginx
+  hostName: jenkins.carmen.es
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    - secretName: jenkins-tls
+      hosts:
+        - jenkins.carmen.es
+additionalPlugins: []
+installPlugins:
+  - configuration-as-code
+  - kubernetes
+  - workflow-aggregator
+  - credentials
+  - github
+  - git
     - credentials
     - github
     - git
