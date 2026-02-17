@@ -1,56 +1,28 @@
-controller:
-  image:
-    repository: jenkins/jenkins
-    tag: "2.541.1-lts-jdk21"
-  runAsUser: 1000
-  fsGroup: 1000
-  admin:
-    username: admin
-    password: admin123
-  persistence:
-    enabled: true
-    size: 8Gi
-    storageClass: microk8s-hostpath
-  serviceType: ClusterIP
-  servicePort: 8080
+jenkins:
+  controller:
+    runAsUser: 0
+    fsGroup: 0
 
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    hostName: jenkins.carmen.es
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    tls:
-      - secretName: jenkins-tls
-        hosts:
-          - jenkins.carmen.es
+    admin:
+      username: admin
+      password: admin123
+      
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: microk8s-hostpath
 
-sidecars:
-  configAutoReload:
-    enabled: true
-    image:
-      repository: kiwigrid/k8s-sidecar
-      tag: "1.27.4"
+    serviceType: ClusterIP
 
-installPlugins:
-  - configuration-as-code
-  - kubernetes
-  - workflow-aggregator
-  - credentials
-  - github
-  - git
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostName: jenkins.carmen.es
 
-# --- BLOQUES FALTANTES PARA EVITAR ERRORES ---
+    installPlugins:
+      - configuration-as-code:1963.v24e046127a_3f
+      - kubernetes
+      - git
+      - workflow-aggregator
+      - credentials
 
-serviceAccount:
-  create: true
-  name: ""
-  annotations: {}
-
-rbac:
-  create: true
-  readSecrets: true
-
-autoscaling:
-  enabled: false
