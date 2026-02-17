@@ -1,149 +1,267 @@
 # Guía de Despliegue: NestJS + PostgreSQL con Helm Kubernetes
 
-Esta guía documenta los pasos, estructura de archivos y comandos necesarios para desplegar una aplicación Fullstack (Backend NestJS + Base de Datos PostgreSQL) en Kubernetes utilizando Helm.
+Esta guía documenta los pasos completos, estructura de archivos y comandos necesarios para desplegar una aplicación Backend NestJS con Base de Datos PostgreSQL en Kubernetes utilizando Helm.
 
-Está basada en la estructura estándar de Helm y las mejores prácticas para conectar una aplicación stateless con una base de datos stateful.
-
----
-
-## 0. Prerrequisitos (Antes de Helm)
-
-Antes de desplegar, necesitas tener tu aplicación NestJS empaquetada como imagen Docker.
-
-1.  **Crear el archivo `Dockerfile`:**
-    En la raíz de tu proyecto NestJS (`src/`), crea un archivo llamado `Dockerfile` con este contenido (ejemplo estándar):
-
-    ```dockerfile
-    # Etapa 1: Build
-    FROM node:18-alpine AS builder
-    WORKDIR /app
-    COPY package*.json ./
-    RUN npm install
-    COPY . .
-    RUN npm run build
-
-    # Etapa 2: Run
-    FROM node:18-alpine
-    WORKDIR /app
-    COPY --from=builder /app/dist ./dist
-    COPY --from=builder /app/node_modules ./node_modules
-    CMD ["node", "dist/main"]
-    ```
-
-2.  **Construir la imagen:**
-    (En tu PC Local, desde la carpeta raíz del proyecto)
-
-    ```bash
-    docker build -t tu-usuario/tienda-backend:latest .
-    ```
-
-3.  **Subir la imagen a Docker Hub:**
-    (En tu PC Local)
-    ```bash
-    docker push tu-usuario/tienda-backend:latest
-    ```
-
-> **Nota:** Helm no "ve" tu código fuente de NestJS. Solo necesita que esta imagen Docker exista y sea pública (o tengas credenciales configuradas).
+**Proyecto:** `nestasir` - API REST con módulo de Usuarios (CRUD completo)  
+**Base de Datos:** PostgreSQL 15 con persistencia (StatefulSet)  
+**Tecnologías:** NestJS + TypeORM + Docker + Kubernetes + Helm
 
 ---
 
-## 1. Ubicación de Archivos
 
-Para mantener el orden, se recomienda esta estructura de carpetas en tu repositorio:
+## 📋 Tabla de Contenidos
+
+1. [Estructura Completa del Proyecto](#estructura-completa-del-proyecto)
+2. [Prerrequisitos](#prerrequisitos)
+3. [PARTE A: Configuración Local (Tu PC)](#parte-a-configuración-local-tu-pc)
+4. [PARTE B: Configuración de la Aplicación NestJS](#parte-b-configuración-de-la-aplicación-nestjs)
+5. [PARTE C: Configuración de Helm](#parte-c-configuración-de-helm)
+6. [PARTE D: Despliegue en VPS](#parte-d-despliegue-en-vps)
+7. [Verificación y Pruebas](#verificación-y-pruebas)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## 📁 Estructura Completa del Proyecto
 
 ```text
-/
-├── src/                    # Tu Código Fuente de NestJS (Package.json, etc.)
-└── deploy/                 # Carpeta para archivos de infraestructura
-    └── kubernetes/
-        └── tienda-virtual/ # <--- AQUÍ VA TU CHART DE HELM (Lo que describe esta guía)
-            ├── Chart.yaml
-            ├── values.yaml
-            └── templates/
-```
-
-- **El código NestJS (`src/`)** se usa para construir la imagen Docker (Paso 0).
-- **El Chart Helm (`deploy/...`)** se usa para desplegar esa imagen en Kubernetes (Pasos siguientes).
-
-### 📍 Ubicación Recomendada en tu PC:
-
-Para seguir la estructura de tu proyecto `HLC`:
-
-1.  **Código Fuente (NestJS):**
-    `c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\personal\tienda-virtual\`
-
-2.  **Archivos de Helm (Despliegue):**
-    `c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\personal\kubernetes\tienda-virtual\`
-
----
-
-## 2. Estructura del Chart (Detalle)
-
-Para un nuevo proyecto (ej: `tienda-virtual`), debes crear una carpeta con la siguiente estructura:
-
-```text
-tienda-virtual/
-├── Chart.yaml              # Metadatos del chart (Nombre, Versión)
-├── values.yaml             # Configuración GLOBAL (Variables para App y BD)
-└── templates/              # Plantillas YAML (.tpl, .yaml)
-    ├── _helpers.tpl        # (Opcional) Funciones auxiliares de Helm
-    ├── deployment.yaml     # [APP] Definición de Pods para NestJS
-    ├── service.yaml        # [APP] Servicio NodePort para exponer NestJS
-    ├── statefulset-postgres.yaml # [BD] Base de Datos con persistencia
-    ├── service-postgres.yaml     # [BD] Servicio interno para la BD
-    └── secret-postgres.yaml      # [BD] Secretos (Contraseña BD)
+nestasir/
+├── 📦 Código Fuente NestJS
+│   ├── src/
+│   │   ├── app.module.ts              ✅ TypeORM configurado para PostgreSQL
+│   │   ├── main.ts                    ✅ Puerto 3001, validación global
+│   │   ├── app.controller.ts
+│   │   ├── app.service.ts
+│   │   ├── products/                  (módulo existente)
+│   │   └── usuario/                   ✅ NUEVO - Módulo completo CRUD
+│   │       ├── entities/
+│   │       │   └── usuario.entity.ts  (Entity de TypeORM)
+│   │       ├── dto/
+│   │       │   ├── create-usuario.dto.ts
+│   │       │   └── update-usuario.dto.ts
+│   │       ├── usuario.controller.ts  (10 endpoints REST)
+│   │       ├── usuario.service.ts     (lógica de negocio)
+│   │       └── usuario.module.ts
+│   │
+│   ├── package.json                   ✅ Dependencias actualizadas
+│   ├── .env                           ✅ Variables de entorno PostgreSQL
+│   ├── Dockerfile                     ✅ Multistage build optimizado
+│   └── .dockerignore                  ✅
+│
+└── 🚀 Despliegue Kubernetes
+    └── deploy/
+        ├── README.md                  ✅ Documentación de despliegue
+        └── kubernetes/
+            └── nestasir/              ✅ Helm Chart completo
+                ├── Chart.yaml
+                ├── values.yaml        (configuración centralizada)
+                └── templates/
+                    ├── deployment.yaml          (NestJS App)
+                    ├── service.yaml             (NodePort 30091)
+                    ├── statefulset-postgres.yaml (PostgreSQL + PVC)
+                    ├── service-postgres.yaml    (ClusterIP interno)
+                    └── secret-postgres.yaml     (Contraseña BD)
 ```
 
 ---
 
-## 2. Archivo de Configuración: `values.yaml`
+## 🔧 Prerrequisitos
 
-Este es el archivo central donde defines puertos, imágenes y contraseñas.
-Debes editarlo para cada proyecto nuevo.
+### En tu PC Local (Windows):
+- ✅ Node.js 18+ instalado
+- ✅ Docker Desktop instalado y ejecutándose
+- ✅ Cuenta de Docker Hub
+- ✅ Git instalado
+- ✅ VS Code (recomendado)
 
-```yaml
-# --- Configuración de la Aplicación (NestJS) ---
-app:
-  name: tienda-backend
-  image:
-    repository: tu-usuario/tienda-backend
-    tag: latest
-    pullPolicy: Always
-  container:
-    name: tienda-backend
-    port: 3000 # Puerto interno de NestJS
-    replicas: 1
-  service:
-    type: NodePort # Para acceso desde fuera
-    port: 3000
-    nodePort: 30090 # Puerto externo fijo (ej: 30090)
-  ingress:
-    host: mitienda.es
-    port: 80
-
-# --- Configuración de la Base de Datos (PostgreSQL) ---
-postgres:
-  name: tienda-db
-  image:
-    repository: postgres
-    tag: "15-alpine"
-    pullPolicy: IfNotPresent
-  service:
-    port: 5432
-  auth:
-    username: admin
-    password: password_segura_123
-    database: tienda_db
-  persistence:
-    size: 2Gi
-    storageClassName: "microk8s-hostpath" # O el que use tu cluster
-```
+### En tu VPS:
+- ✅ Kubernetes/MicroK8s instalado
+- ✅ Helm 3.x instalado
+- ✅ Acceso SSH al servidor
+- ✅ Git instalado
 
 ---
 
-## 3. Plantillas (Templates)
+## 🖥️ PARTE A: Configuración Local (Tu PC)
 
-Copia estos archivos en la carpeta `templates/`.
+### Paso 1: Instalar Dependencias de Node.js
+
+Abre **PowerShell** y ejecuta:
+
+```powershell
+# Navegar al proyecto
+cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
+
+# Instalar todas las dependencias (incluye TypeORM, PostgreSQL, validadores)
+npm install
+
+# Si hay vulnerabilidades, ejecutar:
+npm audit fix
+```
+
+**Dependencias clave instaladas:**
+- `@nestjs/typeorm` - Integración TypeORM con NestJS
+- `typeorm` - ORM para bases de datos
+- `pg` - Driver de PostgreSQL
+- `class-validator` - Validación de DTOs
+- `class-transformer` - Transformación de datos
+- `@nestjs/config` - Gestión de variables de entorno
+- `@nestjs/mapped-types` - DTOs parciales
+
+---
+
+## 📝 PARTE B: Configuración de la Aplicación NestJS
+
+### Paso 2: Verificar Configuración de TypeORM
+
+El archivo `src/app.module.ts` ya está configurado para PostgreSQL:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { UsuarioModule } from './usuario/usuario.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',                              // ← PostgreSQL (antes era MySQL)
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'), // ← Puerto PostgreSQL
+      username: process.env.DB_USER || 'admin',
+      password: process.env.DB_PASSWORD || 'password',
+      database: process.env.DB_NAME || 'nestasir_db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true, // ⚠️ Solo en desarrollo - Crea tablas automáticamente
+    }),
+    UsuarioModule,  // ← Módulo de usuarios agregado
+  ],
+})
+export class AppModule {}
+```
+
+**Variables de entorno que lee la app:**
+- `DB_HOST` - Nombre del servicio de PostgreSQL en Kubernetes
+- `DB_PORT` - Puerto de PostgreSQL (5432)
+- `DB_USER` - Usuario de la base de datos
+- `DB_PASSWORD` - Contraseña (desde Kubernetes Secret)
+- `DB_NAME` - Nombre de la base de datos
+
+### Paso 3: Entender el Módulo de Usuario
+
+**Entity (`src/usuario/entities/usuario.entity.ts`):**
+```typescript
+@Entity()
+export class Usuario {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar', length: 50 })
+  nombre: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  password: string;
+
+  @Column({ default: true })
+  activo: boolean;
+
+  @CreateDateColumn()
+  fechaCreacion: Date;
+
+  @UpdateDateColumn()
+  fechaActualizacion: Date;
+}
+```
+
+**Endpoints disponibles:**
+- `GET /usuario` - Listar todos
+- `GET /usuario/:id` - Obtener por ID
+- `GET /usuario/email/:email` - Buscar por email
+- `POST /usuario` - Crear nuevo
+- `PATCH /usuario/:id` - Actualizar parcial
+- `PUT /usuario/:id` - Actualizar completo
+- `PUT /usuario/:id/activate` - Activar usuario
+- `PUT /usuario/:id/deactivate` - Desactivar usuario
+- `DELETE /usuario/:id` - Eliminar
+
+### Paso 4: Archivo de Variables de Entorno Local
+
+Ya existe el archivo `.env` para desarrollo local:
+
+```env
+# Configuración de Base de Datos PostgreSQL
+DB_TYPE=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=admin
+DB_PASSWORD=password
+DB_NAME=nestasir_db
+
+# Puerto de la aplicación
+PORT=3001
+```
+
+> **Nota:** En Kubernetes estas variables se pasan desde el Deployment, no desde el archivo `.env`
+
+---
+
+## 🐳 PARTE C: Construcción de Imagen Docker
+
+### Paso 5: Verificar Dockerfile
+
+El archivo `Dockerfile` usa multistage build para optimizar:
+
+```dockerfile
+# Etapa 1: Build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Etapa 2: Run
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY package*.json ./
+EXPOSE 3001
+CMD ["node", "dist/main"]
+```
+
+### Paso 6: Construir y Subir Imagen a Docker Hub
+
+**⚠️ IMPORTANTE:** Antes de ejecutar, edita `deploy/kubernetes/nestasir/values.yaml` y cambia `tu-usuario` por tu usuario real de Docker Hub.
+
+```powershell
+# Asegurarse de estar en la raíz del proyecto
+cd c:\Users\salyr\Desktop\grado\2DO\OPTATIVA\HLC\devops\docker\caronte\proyectos\nestasir
+
+# Construir la imagen (cambiar tu-usuario por tu usuario de Docker Hub)
+docker build -t tu-usuario/nestasir:latest .
+
+# Login en Docker Hub (te pedirá usuario y contraseña)
+docker login
+
+# Subir la imagen
+docker push tu-usuario/nestasir:latest
+
+# Verificar que se subió correctamente
+docker images | findstr nestasir
+```
+
+**Ejemplo con usuario real:**
+```powershell
+docker build -t salyrdev/nestasir:latest .
+docker push salyrdev/nestasir:latest
+```
+
+---
 
 ### A) `templates/statefulset-postgres.yaml` (Base de Datos)
 

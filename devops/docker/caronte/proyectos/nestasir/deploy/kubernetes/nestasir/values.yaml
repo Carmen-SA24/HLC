@@ -1,0 +1,32 @@
+# --- Configuración de la Aplicación (NestJS) ---
+app:
+  name: nestasir-backend
+  image:
+    repository: carmen24/nestasir
+    tag: latest
+    pullPolicy: Always
+  container:
+    name: nestasir-backend
+    port: 3001 # Puerto interno de NestJS
+    replicas: 1
+  service:
+    type: NodePort # Para acceso desde fuera
+    port: 3001
+    nodePort: 30091 # Puerto externo fijo (ej: 30091)
+
+# --- Configuración de la Base de Datos (PostgreSQL) ---
+postgres:
+  name: nestasir-db
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  auth:
+    username: admin
+    password: password_segura_123
+    database: nestasir_db
+  persistence:
+    size: 2Gi
+    storageClassName: "microk8s-hostpath" # O el que use tu cluster

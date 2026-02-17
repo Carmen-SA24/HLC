@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.app.container.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      containers:
+        - name: {{ .Values.app.container.name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.container.port }}
+              name: http
+          # --- CONEXIÓN A BASE DE DATOS ---
+          env:
+            - name: DB_TYPE
+              value: "postgres"
+            - name: DB_HOST
+              value: {{ .Values.postgres.name }} # Nombre del Service de BD
+            - name: DB_PORT
+              value: "{{ .Values.postgres.service.port }}"
+            - name: DB_USER
+              value: {{ .Values.postgres.auth.username | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.app.container.name }}-postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: DB_NAME
+              value: {{ .Values.postgres.auth.database | quote }}
+            - name: PORT
+              value: "{{ .Values.app.container.port }}"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.app.container.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.app.container.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 5
