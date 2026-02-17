@@ -1,0 +1,38 @@
+jenkins:
+  controller:
+    # image:
+    #   repository: jenkins/jenkins
+    #   tag: "2.541.1-lts-jdk21"
+      # tag: "2.479.3-lts-jdk17"
+    runAsUser: 0
+    fsGroup: 0
+    admin:
+      username: admin
+      password: admin123
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: microk8s-hostpath   # 👈 clave
+    serviceType: ClusterIP
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostName: jenkins.jamorgado.es
+    # CRÍTICO: Deshabilita JCasC completamente
+    # JCasC:
+    #   enabled: false
+    #   defaultConfig: false
+    #   configScripts: {}
+    
+    # CRÍTICO: Deshabilita el sidecar
+    # sidecars:
+    #   configAutoReload:
+    #     enabled: false
+
+    installPlugins:
+      - configuration-as-code:1963.v24e046127a_3f
+      - kubernetes:4306.vc91e951ea_eb_d
+      - workflow-aggregator
+      - git:5.2.1
+      - credentials
+      - github
