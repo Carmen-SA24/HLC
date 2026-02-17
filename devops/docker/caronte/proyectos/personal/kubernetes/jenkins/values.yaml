@@ -1,3 +1,5 @@
+autoscaling:
+  enabled: false
 jenkins:
   controller:
     runAsUser: 0
