@@ -41,11 +41,16 @@ installPlugins:
   - github
   - git
 
-# Esto es lo que falta para evitar el error de "nil pointer"
-autoscaling:
-  enabled: false
+# --- BLOQUES FALTANTES PARA EVITAR ERRORES ---
 
-# Por seguridad, añade este bloque también si el chart lo pide
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
 rbac:
   create: true
   readSecrets: true
+
+autoscaling:
+  enabled: false
