@@ -29,7 +29,9 @@ controller:
       - secretName: jenkins-tls
         hosts:
           - jenkins.carmen.es
-  installPlugins: []  # <--- VACÍO 
+  installPlugins: false
+  initializeOnce: false
+  overwritePlugins: false
 
 # BLOQUES OBLIGATORIOS PARA TU VPS (Evitan el error Nil Pointer)
 service:
