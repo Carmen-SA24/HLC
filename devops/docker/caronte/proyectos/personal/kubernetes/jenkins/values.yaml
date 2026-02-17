@@ -11,8 +11,8 @@ controller:
     enabled: true
     size: 8Gi
     storageClass: microk8s-hostpath   # 👈 clave
-  autoscaling:
-    enabled: false
+autoscaling:
+  enabled: false
   serviceType: ClusterIP
   sidecars:
     configAutoReload:
