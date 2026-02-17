@@ -30,7 +30,7 @@ controller:
         hosts:
           - jenkins.carmen.es
   installPlugins:
-    - configuration-as-code:1963.v24e046127a_3f
+    - configuration-as-code
     - kubernetes
     - workflow-aggregator
     - credentials
