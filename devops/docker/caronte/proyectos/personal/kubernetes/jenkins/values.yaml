@@ -1,7 +1,7 @@
 controller:
   image:
-      repository: jenkins/jenkins
-      tag: "2.541.1-lts-jdk21"
+    repository: jenkins/jenkins
+    tag: "2.541.1-lts-jdk21"
   runAsUser: 1000
   fsGroup: 1000
   admin:
@@ -10,28 +10,29 @@ controller:
   persistence:
     enabled: true
     size: 8Gi
-    storageClass: microk8s-hostpath   # 👈 clave
-service:
-  port: 8080
-serviceType: ClusterIP
+    storageClass: microk8s-hostpath
+  serviceType: ClusterIP
+  servicePort: 8080
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostName: jenkins.carmen.es
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    tls:
+      - secretName: jenkins-tls
+        hosts:
+          - jenkins.carmen.es
+
 sidecars:
   configAutoReload:
     enabled: true
     image:
       repository: kiwigrid/k8s-sidecar
       tag: "1.27.4"
-    - workflow-aggregator
-  enabled: true
-  ingressClassName: nginx
-  hostName: jenkins.carmen.es
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  tls:
-    - secretName: jenkins-tls
-      hosts:
-        - jenkins.carmen.es
-additionalPlugins: []
+
 installPlugins:
   - configuration-as-code
   - kubernetes
@@ -39,6 +40,3 @@ installPlugins:
   - credentials
   - github
   - git
-    - credentials
-    - github
-    - git
