@@ -9,7 +9,6 @@ controller:
     password: admin123
   persistence:
     enabled: false
-installPlugins: []
   serviceType: ClusterIP
   sidecars:
     configAutoReload:
@@ -19,4 +18,3 @@ installPlugins: []
     ingressClassName: nginx
     hostName: jenkins.carmen.es
   installPlugins: []
-
