@@ -16,5 +16,5 @@ controller:
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostName: jenkins.carmen.es
+    hostName: jenkins.carmenasir.es
   installPlugins: []
