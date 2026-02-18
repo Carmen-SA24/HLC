@@ -245,3 +245,96 @@ kubectl delete namespace proyectocarmen
 
 - Se eliminaron los Ingress y el namespace del proyecto antiguo para evitar conflictos de dominio.
 - Si quieres que Jenkins responda también en `carmenasir.es` o `www.carmenasir.es`, indícalo y actualizo el bloque para añadir esos hosts al Ingress.
+
+---
+
+## INSTALACIÓN MANUAL DE PLUGINS Y PRIMER ACCESO
+
+Dado que la instalación inicial se realizó con `installPlugins: null` para evitar errores de timeout, es necesario instalar los plugins fundamentales manualmente desde la interfaz web.
+
+### 1. Actualizar la lista de Plugins
+
+Si al entrar en la sección de plugins no aparecen resultados, puede ser necesario forzar la actualización del `Update Center`:
+
+1. Acceder a: `http://jenkins.carmenasir.es/pluginManager/advanced`
+2. Ir a la parte inferior, sección **"Dirección para la actualización"** (Update Site), y pulsar el botón **"Enviar"** (Submit).
+3. Como visualmente no ocurre nada confirmando la actualización, acceder manualmente a esta URL para forzar la comprobación:
+   `http://jenkins.carmenasir.es/pluginManager/checkUpdatesServer`
+4. Finalmente, pulsar el botón azul **"Retry using POST"** cuando aparezca la pantalla de aviso.
+
+### 2. Instalar Plugins Esenciales
+
+1. Ir a **Administrar Jenkins** > **Plugins** > **Available plugins**.
+2. Buscar, marcar e instalar los siguientes plugins:
+   - `Configuration as Code`
+   - `Kubernetes`
+   - `Pipeline` (o workflow-aggregator)
+   - `GitHub`
+   - `Git`
+3. Pulsar el botón **Install**.
+4. Esperar a que termine la instalación. Si el proceso tarda más de 5 minutos o parece quedarse congelado, **recargar la página manualmente** (F5).
+
+### 3. Login y Seguridad
+
+Una vez reiniciado Jenkins tras la instalación de plugins, el sistema activará la seguridad configurada.
+
+- **URL:** http://jenkins.carmenasir.es
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
+
+> Si te solicita login, significa que la seguridad está correctamente activada y el usuario administrador fue creado exitosamente por el chart de Helm.
+
+---
+
+## CONFIGURACIÓN DE CREDENCIALES (DOCKER HUB Y GITHUB)
+
+Para que Jenkins pueda construir tus imágenes Docker y subir cambios a GitHub, necesitas configurar tus credenciales.
+
+**⚠️ ADVERTENCIA:** Nunca subas el archivo `tokens.txt` a GitHub. Úsalo solo en local y asegúrate de añadirlo a tu `.gitignore` si es necesario.
+
+### 1. Obtener y guardar Tokens (LOCAL)
+
+1.  **Docker Hub Token:**
+    - Ve a [Docker Hub Settings](https://hub.docker.com/settings/security).
+    - Crea un nuevo Access Token.
+    - Copia el token.
+2.  **GitHub Token:**
+    - Ve a GitHub > Settings > Developer settings > Personal access tokens > Tokens (classic).
+    - Genera un nuevo token con permisos `repo` (y `workflow` si usas Actions).
+    - Copia el token.
+3.  **Guardar en local (Opcional):**
+    - Crea un archivo `tokens_privados.txt` (fuera del repositorio o ignorado por git).
+    - Guarda ahí tus tokens para no perderlos:
+      ```text
+      DOCKER_USER: <tu-usuario-docker>
+      DOCKER_TOKEN: <tu-token-docker-dckr_...>
+      GITHUB_USER: <tu-usuario-github>
+      GITHUB_TOKEN: <tu-token-github-ghp_...>
+      ```
+
+### 2. Añadir Credenciales en Jenkins
+
+1.  Accede a tu Jenkins: [http://jenkins.carmenasir.es](http://jenkins.carmenasir.es)
+2.  Ve a **Panel de Control** > **Administrar Jenkins** > **Credentials**.
+3.  Haz clic en el enlace **(global)** debajo de "Domains".
+4.  Haz clic en **"Add Credentials"**.
+
+#### A) Credencial para Docker Hub
+
+- **Kind:** Username with password
+- **Scope:** Global
+- **Username:** `tu-usuario-dockerhub` (ej: carmen_sa24)
+- **Password:** `tu-token-dockerhub` (empieza por `dckr_...`)
+- **ID:** `dockerhub-credentials` (importante usar este ID)
+- **Description:** Credenciales Docker Hub
+
+#### B) Credencial para GitHub
+
+- **Kind:** Username with password
+- **Scope:** Global
+- **Username:** `tu-usuario-github`
+- **Password:** `tu-token-github` (empieza por `ghp_...` o similar)
+- **ID:** `github-credentials` (importante usar este ID)
+- **Description:** Credenciales GitHub (Token)
+
+---
