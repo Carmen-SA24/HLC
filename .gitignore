@@ -5,6 +5,7 @@
 .vscode-server/
 
 .history
+.cache
 
 # ===========================
 # TOKENS Y CREDENCIALES - NUNCA subir a GitHub
