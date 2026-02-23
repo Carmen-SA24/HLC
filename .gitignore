@@ -5,3 +5,13 @@
 .vscode-server/
 
 .history
+
+# ===========================
+# TOKENS Y CREDENCIALES - NUNCA subir a GitHub
+# ===========================
+devops/docker/caronte/common/tokens.txt
+**/tokens.txt
+**/tokens_privados.txt
+
+# Claves privadas SSH
+devops/docker/caronte/common/id_ed25519

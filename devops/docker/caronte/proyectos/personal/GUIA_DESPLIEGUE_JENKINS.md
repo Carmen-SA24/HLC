@@ -290,51 +290,112 @@ Una vez reiniciado Jenkins tras la instalación de plugins, el sistema activará
 
 Para que Jenkins pueda construir tus imágenes Docker y subir cambios a GitHub, necesitas configurar tus credenciales.
 
-**⚠️ ADVERTENCIA:** Nunca subas el archivo `tokens.txt` a GitHub. Úsalo solo en local y asegúrate de añadirlo a tu `.gitignore` si es necesario.
+> **⚠️ ADVERTENCIA:** El archivo `tokens.txt` está en `.gitignore`. **Nunca se sube a GitHub.** Úsalo solo en local.
 
-### 1. Obtener y guardar Tokens (LOCAL)
+El archivo de tokens está en:
 
-1.  **Docker Hub Token:**
-    - Ve a [Docker Hub Settings](https://hub.docker.com/settings/security).
-    - Crea un nuevo Access Token.
-    - Copia el token.
-2.  **GitHub Token:**
-    - Ve a GitHub > Settings > Developer settings > Personal access tokens > Tokens (classic).
-    - Genera un nuevo token con permisos `repo` (y `workflow` si usas Actions).
-    - Copia el token.
-3.  **Guardar en local (Opcional):**
-    - Crea un archivo `tokens_privados.txt` (fuera del repositorio o ignorado por git).
-    - Guarda ahí tus tokens para no perderlos:
-      ```text
-      DOCKER_USER: <tu-usuario-docker>
-      DOCKER_TOKEN: <tu-token-docker-dckr_...>
-      GITHUB_USER: <tu-usuario-github>
-      GITHUB_TOKEN: <tu-token-github-ghp_...>
-      ```
+```
+devops/docker/caronte/common/tokens.txt
+```
 
-### 2. Añadir Credenciales en Jenkins
+Ábrelo y rellena tus datos reales. Los valores de este proyecto son:
 
-1.  Accede a tu Jenkins: [http://jenkins.carmenasir.es](http://jenkins.carmenasir.es)
-2.  Ve a **Panel de Control** > **Administrar Jenkins** > **Credentials**.
-3.  Haz clic en el enlace **(global)** debajo de "Domains".
-4.  Haz clic en **"Add Credentials"**.
+```text
+DOCKER_USER=carmen24
+DOCKER_TOKEN=dckr_pat_...       ← ver tokens.txt en local
+GITHUB_USER=Carmen-SA24
+GITHUB_TOKEN=ghp_...            ← ver tokens.txt en local
+```
+
+---
+
+### PASO 2 — Obtener el Token de Docker Hub
+
+1. Accede directamente a: [https://app.docker.com/settings/personal-access-tokens/create](https://app.docker.com/settings/personal-access-tokens/create)
+   - O navega desde Docker Hub → avatar (arriba a la derecha) → **Account settings** → **Personal access tokens** → **Generate new token**
+
+2. Rellena el formulario con estos valores exactos:
+   - **Access token description:** `jenkins-access`
+   - **Expiration date:** `None` _(sin caducidad — válido para proyectos de clase)_
+   - **Access permissions:** `Read, Write, Delete`
+
+3. Haz clic en **"Generate"**
+
+4. En la pantalla **"Copy access token"** verás **dos elementos** — no los confundas:
+   - 🔵 Comando: `docker login -u carmen24` → solo para terminal, **NO es el token**
+   - ✅ El token real: empieza por `dckr_pat_...` → **este es el que debes copiar**
+
+   > ⚠️ El token **solo se muestra una vez**. Si cierras la pantalla sin copiarlo, tendrás que generar uno nuevo.
+
+5. Pégalo en `tokens.txt` en la línea `DOCKER_TOKEN=`
+
+---
+
+### PASO 3 — Obtener el Token de GitHub
+
+1. Accede a: [https://github.com/settings/tokens](https://github.com/settings/tokens)
+2. Haz clic en **"Generate new token (classic)"**
+3. Dale un nombre (ej: `jenkins-pipeline`)
+4. **Permisos necesarios:**
+   - ✅ `repo` — acceso completo a repositorios privados y públicos
+   - ✅ `workflow` — si usas GitHub Actions junto a Jenkins
+5. Haz clic en **"Generate token"**
+6. **Copia el token** y pégalo en `tokens.txt` como `GITHUB_TOKEN=`
+
+---
+
+### PASO 4 — Añadir las Credenciales en Jenkins
+
+Accede a [http://jenkins.carmenasir.es](http://jenkins.carmenasir.es) con admin/admin123.
 
 #### A) Credencial para Docker Hub
 
-- **Kind:** Username with password
-- **Scope:** Global
-- **Username:** `tu-usuario-dockerhub` (ej: carmen_sa24)
-- **Password:** `tu-token-dockerhub` (empieza por `dckr_...`)
-- **ID:** `dockerhub-credentials` (importante usar este ID)
-- **Description:** Credenciales Docker Hub
+1. Ve a: **Panel de Control → Administrar Jenkins → Credentials**
+2. Haz clic en **(global)** bajo "Domains"
+3. Haz clic en **"Add Credentials"**
+4. Rellena el formulario:
+   - **Kind:** `Username with password`
+   - **Scope:** `Global`
+   - **Username:** el valor de `DOCKER_USER` del `tokens.txt`
+   - **Password:** el valor de `DOCKER_TOKEN` del `tokens.txt`
+   - **ID:** `dockerhub-credentials` ← **Importante, no cambiar este ID**
+   - **Description:** `Credenciales Docker Hub`
+5. Haz clic en **"Create"**
 
 #### B) Credencial para GitHub
 
-- **Kind:** Username with password
-- **Scope:** Global
-- **Username:** `tu-usuario-github`
-- **Password:** `tu-token-github` (empieza por `ghp_...` o similar)
-- **ID:** `github-credentials` (importante usar este ID)
-- **Description:** Credenciales GitHub (Token)
+1. En la misma pantalla, haz clic de nuevo en **"Add Credentials"**
+2. Rellena el formulario:
+   - **Kind:** `Username with password`
+   - **Scope:** `Global`
+   - **Username:** el valor de `GITHUB_USER` del `tokens.txt`
+   - **Password:** el valor de `GITHUB_TOKEN` del `tokens.txt`
+   - **ID:** `github-credentials` ← **Importante, no cambiar este ID**
+   - **Description:** `Credenciales GitHub (Token PAT)`
+3. Haz clic en **"Create"**
+
+---
+
+### Verificación Final
+
+Para confirmar que las credenciales están correctamente configuradas:
+
+1. Ve a **Administrar Jenkins → Credentials → (global)**
+2. Debes ver dos entradas:
+   - `dockerhub-credentials` — Username with password
+   - `github-credentials` — Username with password
+
+Si alguna falta, repite el paso correspondiente.
+
+---
+
+### Resumen de lo realizado
+
+| Servicio   | Usuario       | Token generado                                              | Guardado en         |
+| ---------- | ------------- | ----------------------------------------------------------- | ------------------- |
+| Docker Hub | `carmen24`    | `dckr_pat_...` (sin expiración, permisos Read/Write/Delete) | `common/tokens.txt` |
+| GitHub     | `Carmen-SA24` | `ghp_...` (token classic, permisos repo+workflow)           | `common/tokens.txt` |
+
+> Los tokens **no se registran en esta guía** por seguridad. Consúltalos siempre en `devops/docker/caronte/common/tokens.txt` (solo en local, está en `.gitignore`).
 
 ---
