@@ -399,3 +399,108 @@ Si alguna falta, repite el paso correspondiente.
 > Los tokens **no se registran en esta guía** por seguridad. Consúltalos siempre en `devops/docker/caronte/common/tokens.txt` (solo en local, está en `.gitignore`).
 
 ---
+
+> **Nota:** La persistencia está desactivada (`persistence: false`). Si el pod de Jenkins se reinicia, las credenciales añadidas manualmente se perderán y habrá que volver a crearlas siguiendo los pasos anteriores.
+
+---
+
+## CONFIGURACIÓN DEL WEBHOOK EN GITHUB
+
+El webhook permite que GitHub **avise automáticamente a Jenkins** cada vez que se hace un `git push` al repositorio. Así Jenkins sabe cuándo lanzar el pipeline.
+
+### Pasos para añadir el webhook
+
+1. Ir al repositorio en GitHub (ej: `https://github.com/Carmen-SA24/miportfolio_nextjs`)
+2. **Settings** → **Webhooks** → **"Add webhook"**
+3. Rellenar el formulario:
+
+| Campo                | Valor                                            |
+| -------------------- | ------------------------------------------------ |
+| **Payload URL**      | `http://jenkins.carmenasir.es/github-webhook/`   |
+| **Content type**     | `application/json`                               |
+| **Secret**           | _(dejar vacío)_                                  |
+| **SSL verification** | `Enable SSL verification` _(no afecta con HTTP)_ |
+| **Which events?**    | `Just the push event`                            |
+| **Active**           | ✅ marcado                                       |
+
+4. Clic en **"Add webhook"**
+
+> ⚠️ **Importante:** La URL debe terminar en `/github-webhook/` con la barra final. Sin ella, Jenkins no reconocerá la petición.
+
+### Verificación del webhook
+
+1. En la página de Webhooks del repo, haz clic en el webhook recién creado.
+2. Ve a la pestaña **"Recent Deliveries"**.
+3. Si el ping inicial falló (punto naranja 🟡), haz clic en **"Redeliver"** para reenviar.
+4. Si aparece un ✅ verde, la conexión funciona correctamente.
+
+> **Nota:** Si abres `http://jenkins.carmenasir.es/github-webhook/` en el navegador, aparecerá un error "Oops!" — esto es **normal**. El endpoint solo acepta peticiones POST (las que envía GitHub), no GET (las del navegador).
+
+---
+
+## CREACIÓN DEL PIPELINE EN JENKINS
+
+### PASO 1 — Crear el Folder
+
+Los pipelines se organizan dentro de carpetas (Folders) en Jenkins.
+
+1. En la página principal de Jenkins, clic en **"+ Nueva Tarea"**
+2. **Nombre:** `caronte`
+3. **Tipo:** `Folder`
+4. Clic en **OK**
+5. En la pantalla de configuración del folder, no cambiar nada → clic en **"Save"**
+
+### PASO 2 — Crear el Pipeline dentro del Folder
+
+1. Dentro del folder `caronte`, clic en **"+ New Item"** o **"Create a job"**
+2. **Nombre:** `miportfolio`
+3. **Tipo:** `Pipeline`
+4. Clic en **OK**
+
+### PASO 3 — Configurar el Pipeline
+
+#### Sección General
+
+- ✅ Marcar **"GitHub project"**
+- **Project url:** `https://github.com/Carmen-SA24/miportfolio_nextjs`
+
+#### Sección Triggers
+
+- ✅ Marcar **"GitHub hook trigger for GITScm polling"**
+
+#### Sección Pipeline
+
+| Campo                | Valor                                                   |
+| -------------------- | ------------------------------------------------------- |
+| **Definition**       | `Pipeline script from SCM`                              |
+| **SCM**              | `Git`                                                   |
+| **Repository URL**   | `https://github.com/Carmen-SA24/miportfolio_nextjs.git` |
+| **Credentials**      | `github-credentials` (Credenciales GitHub)              |
+| **Branch Specifier** | `*/master`                                              |
+| **Script Path**      | `Jenkinsfile`                                           |
+
+5. Clic en **"Save"**
+
+### Resultado
+
+El pipeline queda organizado así en Jenkins:
+
+```
+Jenkins
+└── 📁 caronte (Folder)
+    └── 🔧 miportfolio (Pipeline)
+```
+
+### Flujo completo con el webhook
+
+```
+1. Se hace git push al repo miportfolio_nextjs
+2. GitHub envía un webhook POST a Jenkins
+3. Jenkins clona el repo
+4. Jenkins busca el Jenkinsfile en la raíz del repo
+5. Ejecuta los pasos definidos en el Jenkinsfile
+```
+
+> **Siguiente paso:** Crear el `Jenkinsfile` en la raíz del repositorio `miportfolio_nextjs` con los pasos del pipeline (build, push a Docker Hub, deploy en Kubernetes).
+
+---
