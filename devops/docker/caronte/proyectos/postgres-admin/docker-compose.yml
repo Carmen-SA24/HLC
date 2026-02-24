@@ -6,7 +6,7 @@ services:
     container_name: postgres_db
     build:
       context: ../../
-      dockerfile: dockerfiles/postgres-admin/Dockerfile
+      dockerfile: dockerfiles/sgbd/postgres/Dockerfile
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin123

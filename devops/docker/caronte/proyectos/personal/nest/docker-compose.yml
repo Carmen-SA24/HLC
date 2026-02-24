@@ -1,0 +1,45 @@
+services:
+  # --- Servicio PostgreSQL (postgres-alpine) ---
+  postgres:
+    image: postgres:alpine
+    hostname: ct${INICIALES}postgres
+    container_name: ct${INICIALES}postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME} 
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${PORT_POSTGRES:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Servicio NestJS ---
+  nestasir:
+    build:
+      context: ${CONTEXTO}
+      dockerfile: ./dockerfiles/js/nest/Dockerfile
+      args:
+        - INICIALES=${INICIALES}
+        - PROYECTO=${PROYECTO}
+        - TIPO=${TIPO}
+    image: ${FIRMA}/ub${INICIALES}${PROYECTO}
+    hostname: ct${INICIALES}${PROYECTO}
+    container_name: ct${INICIALES}${PROYECTO}
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/root/logs
+    ports:
+      - "${PORT_NODE}:3001"
+      - "${PORT_SSH}:22"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

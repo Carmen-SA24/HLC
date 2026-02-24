@@ -1,0 +1,31 @@
+app:
+  name: nestasir
+  image:
+    repository: carmensalirrosas/nestasir
+    tag: latest
+    pullPolicy: Always
+  container:
+    name: nestasir
+    port: 3001
+    replicas: 1
+  service:
+    type: NodePort
+    port: 3001
+    nodePort: 30091
+
+postgres:
+  name: nestasir-postgres
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  auth:
+    database: nestasir_db
+    username: admin
+    password: password
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClassName: "microk8s-hostpath"
