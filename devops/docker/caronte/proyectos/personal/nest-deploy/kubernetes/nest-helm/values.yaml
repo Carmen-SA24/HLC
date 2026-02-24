@@ -1,7 +1,7 @@
 app:
   name: nestapi
   image:
-    repository: carmensalirrosas/nestapi
+    repository: carmen24/nestapi
     tag: latest
     pullPolicy: Always
   container:
