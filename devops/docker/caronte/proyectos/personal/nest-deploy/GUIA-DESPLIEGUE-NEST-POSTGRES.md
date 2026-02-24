@@ -79,7 +79,8 @@ helm upgrade --install nest ./nest-helm -n nest --create-namespace
 
 - **Ver logs de NestJS**: `docker compose logs -f nestapi`
 - **Ver estado en Kubernetes**: `kubectl get all -n nest`
-- **Acceso a la API**: `http://161.97.152.19:3015`
+- **Acceso a la API (Docker Compose)**: `http://161.97.152.19:3015`
+- **Acceso a la API (Kubernetes)**: `http://161.97.152.19:30095`
   - `/` -> Debería mostrar `Hello World!` (mensaje de bienvenida).
   - `/pokemon` -> Lista de Pokémon en formato JSON.
   - `/peliculas` -> Lista de Películas en formato JSON.

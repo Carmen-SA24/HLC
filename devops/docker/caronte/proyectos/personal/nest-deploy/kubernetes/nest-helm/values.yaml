@@ -11,7 +11,7 @@ app:
   service:
     type: NodePort
     port: 3001
-    nodePort: 30091
+    nodePort: 30095
 
 postgres:
   name: nestapi-postgres
