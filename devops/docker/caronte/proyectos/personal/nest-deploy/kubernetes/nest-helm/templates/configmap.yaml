@@ -1,15 +1,15 @@
-apiVersion: v1
+﻿apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-{{ .Values.app.name }}
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
 data:
-  DB_HOST: { { .Values.postgres.name | quote } }
-  DB_PORT: { { .Values.postgres.service.port | quote } }
-  DB_NAME: { { .Values.postgres.auth.database | quote } }
-  DB_USERNAME: { { .Values.postgres.auth.username | quote } }
-  DB_PASSWORD: { { .Values.postgres.auth.password | quote } }
-  PORT: { { .Values.app.container.port | quote } }
-  USUARIO: { { .Values.app.container.user | quote } }
-  PORT_SSH: { { .Values.app.container.sshPort | quote } }
+  DB_HOST: {{ .Values.postgres.name | quote }}
+  DB_PORT: {{ .Values.postgres.service.port | quote }}
+  DB_NAME: {{ .Values.postgres.auth.database | quote }}
+  DB_USERNAME: {{ .Values.postgres.auth.username | quote }}
+  DB_PASSWORD: {{ .Values.postgres.auth.password | quote }}
+  PORT: {{ .Values.app.container.port | quote }}
+  USUARIO: {{ .Values.app.container.user | quote }}
+  PORT_SSH: {{ .Values.app.container.sshPort | quote }}
   DB_SYNC: "true"
