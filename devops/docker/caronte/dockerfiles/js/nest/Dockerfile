@@ -23,7 +23,11 @@ ARG PROYECTO=nestapi
 COPY ./proyectos/${PROYECTO}/package*.json /app/
 COPY ./proyectos/${PROYECTO}/tsconfig*.json /app/
 COPY ./proyectos/${PROYECTO}/nest-cli.json /app/
+
+# Instalar dependencias y compilar (AQUÍ ES DONDE AHORRAMOS TIEMPO LUEGO)
+RUN npm install
 COPY ./proyectos/${PROYECTO}/src /app/src
+RUN npm run build
 
 # Copiar script de inicio (entrypoint)
 RUN mkdir -p /root/admin/JS/nest
