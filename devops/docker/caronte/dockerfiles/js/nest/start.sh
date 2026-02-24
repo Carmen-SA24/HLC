@@ -42,12 +42,15 @@ main(){
         npm install
     fi
 
-    echo "INFO: Compilando NestJS..." >> /root/logs/informe.log
-    npm run build 2>/dev/null || true
+    if [ ! -d "dist" ]; then
+        echo "INFO: Compilando NestJS..." >> /root/logs/informe.log
+        npm run build
+    fi
 
     echo "INFO: Iniciando NestJS en puerto ${PORT:-3001}..." >> /root/logs/informe.log
-    nohup node dist/main > /root/logs/nestjs.log 2>&1 &
-    echo "INFO: NestJS iniciado con PID $!" >> /root/logs/informe.log
+    # Arrancamos en primer plano para que los logs se vean en Kubernetes
+    echo "INFO: Ejecutando: node dist/main" >> /root/logs/informe.log
+    node dist/main
 
     # --- 6. Mantener contenedor vivo con SSH ---
     mkdir -p /run/sshd
