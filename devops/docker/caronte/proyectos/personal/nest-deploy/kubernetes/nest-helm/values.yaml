@@ -1,11 +1,11 @@
 app:
-  name: nestasir
+  name: nestapi
   image:
-    repository: carmensalirrosas/nestasir
+    repository: carmensalirrosas/nestapi
     tag: latest
     pullPolicy: Always
   container:
-    name: nestasir
+    name: nestapi
     port: 3001
     replicas: 1
   service:
@@ -14,7 +14,7 @@ app:
     nodePort: 30091
 
 postgres:
-  name: nestasir-postgres
+  name: nestapi-postgres
   image:
     repository: postgres
     tag: "15-alpine"
@@ -22,7 +22,7 @@ postgres:
   service:
     port: 5432
   auth:
-    database: nestasir_db
+    database: nestapi_db
     username: admin
     password: password
   persistence:

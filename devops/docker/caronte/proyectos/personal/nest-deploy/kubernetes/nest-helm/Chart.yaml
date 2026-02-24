@@ -1,4 +1,4 @@
 apiVersion: v2
-name: nest
+name: nest-helm
 description: A Helm chart for Kubernetes
 version: 0.1.0
