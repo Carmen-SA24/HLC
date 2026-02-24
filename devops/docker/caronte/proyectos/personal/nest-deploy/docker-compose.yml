@@ -27,9 +27,9 @@ services:
         - INICIALES=${INICIALES}
         - PROYECTO=${PROYECTO}
         - TIPO=${TIPO}
-    image: ${FIRMA}/ub${INICIALES}${PROYECTO}
-    hostname: ct${INICIALES}${PROYECTO}
-    container_name: ct${INICIALES}${PROYECTO}
+    image: ${FIRMA}/${PROYECTO}:latest
+    hostname: ${PROYECTO}
+    container_name: ct_${PROYECTO}
     env_file:
       - .env
     volumes:
