@@ -18,10 +18,9 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /app
 WORKDIR /app
 
-# Copiar el proyecto NestJS (src compilado)
-ARG PROYECTO=nestasir
-ARG TIPO=personal
-COPY ./proyectos/${TIPO}/${PROYECTO}/src /app
+# Copiar el proyecto NestJS
+ARG PROYECTO=nestapi
+COPY ./proyectos/${PROYECTO}/src /app
 
 # Copiar script de inicio (entrypoint)
 RUN mkdir -p /root/admin/JS/nest
