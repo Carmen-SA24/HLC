@@ -19,7 +19,7 @@ RUN mkdir -p /app
 WORKDIR /app
 
 # Copiar el proyecto NestJS
-ARG PROYECTO=nestapi
+ARG PROYECTO=nestapi  
 COPY ./proyectos/${PROYECTO}/package*.json /app/
 COPY ./proyectos/${PROYECTO}/tsconfig*.json /app/
 COPY ./proyectos/${PROYECTO}/nest-cli.json /app/
