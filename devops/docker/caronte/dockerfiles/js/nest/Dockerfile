@@ -20,7 +20,10 @@ WORKDIR /app
 
 # Copiar el proyecto NestJS
 ARG PROYECTO=nestapi
-COPY ./proyectos/${PROYECTO}/src /app
+COPY ./proyectos/${PROYECTO}/package*.json /app/
+COPY ./proyectos/${PROYECTO}/tsconfig*.json /app/
+COPY ./proyectos/${PROYECTO}/nest-cli.json /app/
+COPY ./proyectos/${PROYECTO}/src /app/src
 
 # Copiar script de inicio (entrypoint)
 RUN mkdir -p /root/admin/JS/nest
