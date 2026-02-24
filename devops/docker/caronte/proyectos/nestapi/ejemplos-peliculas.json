@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "title": "La La Land",
+    "director": "Steve McQueen",
+    "year": 2010,
+    "length_minutes": 81
+  },
+  {
+    "id": 2,
+    "title": "Zootopia",
+    "director": "Steve McQueen",
+    "year": 2014,
+    "length_minutes": 95
+  },
+  {
+    "id": 3,
+    "title": "Deadpool",
+    "director": "Steve McQueen",
+    "year": 2016,
+    "length_minutes": 93
+  },
+  {
+    "id": 4,
+    "title": "Monsters, Inc.",
+    "director": "Pete Docter",
+    "year": 2015,
+    "length_minutes": 92
+  },
+  {
+    "id": 5,
+    "title": "Finding Nemo",
+    "director": "Andrew Stanton",
+    "year": 2013,
+    "length_minutes": 107
+  },
+  {
+    "id": 6,
+    "title": "The Nice Guys",
+    "director": "Richard Linklater",
+    "year": 1996,
+    "length_minutes": 116
+  },
+  {
+    "id": 7,
+    "title": "Bee Movie",
+    "director": "Steve McQueen",
+    "year": 2016,
+    "length_minutes": 117
+  },
+  {
+    "id": 8,
+    "title": "Begin Again",
+    "director": "Richard Linklater",
+    "year": 2017,
+    "length_minutes": 115
+  },
+  {
+    "id": 9,
+    "title": "WALL-E",
+    "director": "Andrew Stanton",
+    "year": 1999,
+    "length_minutes": 104
+  },
+  {
+    "id": 10,
+    "title": "Up",
+    "director": "Joel Coen",
+    "year": 2009,
+    "length_minutes": 101
+  },
+  {
+    "id": 11,
+    "title": "Boss Baby",
+    "director": "Lee Unkrich",
+    "year": 2010,
+    "length_minutes": 120
+  },
+  {
+    "id": 12,
+    "title": "X-Men Apocalypse",
+    "director": "Steve McQueen",
+    "year": 1998,
+    "length_minutes": 120
+  },
+  {
+    "id": 13,
+    "title": "Moana",
+    "director": "Brenda Chapman",
+    "year": 2012,
+    "length_minutes": 103
+  },
+  {
+    "id": 14,
+    "title": "Frozen",
+    "director": "Dan Scanlon",
+    "year": 2013,
+    "length_minutes": 110
+  }
+]

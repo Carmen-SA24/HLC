@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "nombre": "Bulbasaur",
+    "tipo": "Planta/Veneno",
+    "hp": 45,
+    "ataque": 49,
+    "defensa": 49,
+    "sp_atk": 65,
+    "sp_def": 65,
+    "velocidad": 45
+  },
+  {
+    "id": 2,
+    "nombre": "Charmander",
+    "tipo": "Fuego",
+    "hp": 39,
+    "ataque": 52,
+    "defensa": 43,
+    "sp_atk": 60,
+    "sp_def": 50,
+    "velocidad": 65
+  },
+  {
+    "id": 3,
+    "nombre": "Squirtle",
+    "tipo": "Agua",
+    "hp": 44,
+    "ataque": 48,
+    "defensa": 65,
+    "sp_atk": 50,
+    "sp_def": 64,
+    "velocidad": 43
+  },
+  {
+    "id": 4,
+    "nombre": "Pikachu",
+    "tipo": "Eléctrico",
+    "hp": 35,
+    "ataque": 55,
+    "defensa": 40,
+    "sp_atk": 50,
+    "sp_def": 50,
+    "velocidad": 90
+  },
+  {
+    "id": 5,
+    "nombre": "Butterfree",
+    "tipo": "Bicho/Volador",
+    "hp": 60,
+    "ataque": 45,
+    "defensa": 50,
+    "sp_atk": 90,
+    "sp_def": 80,
+    "velocidad": 70
+  },
+  {
+    "id": 6,
+    "nombre": "Ivysaur",
+    "tipo": "Planta/Veneno",
+    "hp": 60,
+    "ataque": 62,
+    "defensa": 63,
+    "sp_atk": 80,
+    "sp_def": 80,
+    "velocidad": 60
+  },
+  {
+    "id": 7,
+    "nombre": "Venusaur",
+    "tipo": "Planta/Veneno",
+    "hp": 80,
+    "ataque": 82,
+    "defensa": 83,
+    "sp_atk": 100,
+    "sp_def": 100,
+    "velocidad": 80
+  },
+  {
+    "id": 8,
+    "nombre": "Charmeleon",
+    "tipo": "Fuego",
+    "hp": 58,
+    "ataque": 64,
+    "defensa": 58,
+    "sp_atk": 80,
+    "sp_def": 65,
+    "velocidad": 80
+  },
+  {
+    "id": 9,
+    "nombre": "Charizard",
+    "tipo": "Fuego/Volador",
+    "hp": 78,
+    "ataque": 84,
+    "defensa": 78,
+    "sp_atk": 109,
+    "sp_def": 85,
+    "velocidad": 100
+  },
+  {
+    "id": 10,
+    "nombre": "Wartortle",
+    "tipo": "Agua",
+    "hp": 59,
+    "ataque": 63,
+    "defensa": 80,
+    "sp_atk": 65,
+    "sp_def": 80,
+    "velocidad": 58
+  },
+  {
+    "id": 11,
+    "nombre": "Blastoise",
+    "tipo": "Agua",
+    "hp": 79,
+    "ataque": 83,
+    "defensa": 100,
+    "sp_atk": 85,
+    "sp_def": 105,
+    "velocidad": 78
+  },
+  {
+    "id": 12,
+    "nombre": "Caterpie",
+    "tipo": "Bicho",
+    "hp": 45,
+    "ataque": 30,
+    "defensa": 35,
+    "sp_atk": 20,
+    "sp_def": 20,
+    "velocidad": 45
+  },
+  {
+    "id": 13,
+    "nombre": "Metapod",
+    "tipo": "Bicho",
+    "hp": 50,
+    "ataque": 20,
+    "defensa": 55,
+    "sp_atk": 25,
+    "sp_def": 25,
+    "velocidad": 30
+  },
+  {
+    "id": 14,
+    "nombre": "Weedle",
+    "tipo": "Bicho/Veneno",
+    "hp": 40,
+    "ataque": 35,
+    "defensa": 30,
+    "sp_atk": 20,
+    "sp_def": 20,
+    "velocidad": 50
+  },
+  {
+    "id": 15,
+    "nombre": "Kakuna",
+    "tipo": "Bicho/Veneno",
+    "hp": 45,
+    "ataque": 25,
+    "defensa": 50,
+    "sp_atk": 25,
+    "sp_def": 25,
+    "velocidad": 35
+  }
+]
