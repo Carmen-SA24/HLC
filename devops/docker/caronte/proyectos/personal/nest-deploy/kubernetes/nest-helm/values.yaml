@@ -11,9 +11,20 @@ app:
     sshPort: "2228"
     replicas: 1
   service:
-    type: NodePort
+    type: ClusterIP
     port: 3001
-    nodePort: 30095
+
+ingress:
+  enabled: true
+  className: nginx
+  host: api.carmenasir.com
+  path: /
+  tls:
+    enabled: false
+    secretName: ""
+  certManager:
+    enabled: false
+    clusterIssuer: letsencrypt-prod
 
 postgres:
   name: nestapi-postgres
@@ -31,3 +42,14 @@ postgres:
     enabled: true
     size: 2Gi
     storageClassName: "microk8s-hostpath"
+
+seed:
+  enabled: false
+  # SQL statements to run as seed. Can be large; keep here for convenience or mount via ConfigMap/file.
+  sql: |-
+    -- Ejemplo: crear tabla y fila de prueba
+    CREATE TABLE IF NOT EXISTS public.example_seed (
+      id serial PRIMARY KEY,
+      name text NOT NULL
+    );
+    INSERT INTO public.example_seed (name) VALUES ('seeded');
