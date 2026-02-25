@@ -214,7 +214,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: carmenasir.com
+    - host: pokemon.carmenasir.com
       http:
         paths:
           - path: /
@@ -242,8 +242,7 @@ spec:
 
 **Registros A creados:**
 
-- `carmenasir.com` → `161.97.152.19`
-- `www.carmenasir.com` → `161.97.152.19`
+- `pokemon.carmenasir.com` → `161.97.152.19`
 
 **TTL:** 3600 segundos (1 hora)
 
@@ -307,7 +306,7 @@ Respuesta HTML renderizada
 
 1. Usuario escribe `www.carmenasir.com`
 2. DNS resuelve a `161.97.152.19`
-3. Ingress lee `Host: carmenasir.com` → enruta a `pokemon-service`
+3. Ingress lee `Host: pokemon.carmenasir.com` → enruta a `pokemon-service`
 4. Service balancea entre 2 pods
 5. Next.js procesa la petición con SSR
 6. Usuario recibe HTML renderizado
@@ -328,8 +327,7 @@ curl -H "Host: carmenasir.com" http://161.97.152.19
 
 ### **Desde el navegador:**
 
-- http://carmenasir.com
-- http://www.carmenasir.com
+- http://pokemon.carmenasir.com
 
 ---
 
@@ -389,7 +387,7 @@ curl -H "Host: carmenasir.com" http://161.97.152.19
 | **Réplicas**             | 2                        |
 | **Puerto Interno**       | 3000 (Next.js)           |
 | **NodePort**             | 30083                    |
-| **Dominio**              | carmenasir.com           |
+| **Dominio**              | pokemon.carmenasir.com   |
 | **IP VPS**               | 161.97.152.19            |
 | **CPU Request/Limit**    | 100m / 500m              |
 | **Memory Request/Limit** | 128Mi / 256Mi            |
@@ -398,7 +396,7 @@ curl -H "Host: carmenasir.com" http://161.97.152.19
 
 ## 10. Estado Final
 
-✅ **Desplegado y accesible en:** http://carmenasir.com  
+✅ **Desplegado y accesible en:** http://pokemon.carmenasir.com  
 ✅ **Alta disponibilidad:** 2 réplicas activas  
 ✅ **Seguridad:** Capa ubsecurity heredada  
 ✅ **SSR:** Next.js con renderizado del lado del servidor

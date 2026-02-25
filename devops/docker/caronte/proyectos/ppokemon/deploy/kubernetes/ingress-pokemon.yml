@@ -7,17 +7,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: carmenasir.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: pokemon-service
-                port:
-                  number: 80
-    - host: www.carmenasir.com
+    - host: pokemon.carmenasir.com
       http:
         paths:
           - path: /
