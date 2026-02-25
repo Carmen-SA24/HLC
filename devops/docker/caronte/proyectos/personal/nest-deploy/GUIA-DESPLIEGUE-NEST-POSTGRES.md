@@ -171,4 +171,212 @@ Este método es útil para realizar consultas rápidas o borrar datos.
 
 ---
 
+## � Guía de Inserción de Datos (Postman)
+
+Una vez que la API esté desplegada, sigue estos pasos para cargar información en la base de datos PostgreSQL:
+
+### 1. Configuración de la Petición
+
+- **Método**: `POST`
+- **URL**: `http://161.97.152.19:30095/pokemon` ó `http://161.97.152.19:30095/peliculas`
+  - Si usas el dominio: `https://api.carmenasir.com/pokemon`
+
+### 2. Configuración del Cuerpo (Body)
+
+En Postman, selecciona debajo de la barra de direcciones:
+
+1. Pestaña **Body**
+2. Opción **raw**
+3. Tipo **JSON** (menú desplegable a la derecha)
+
+### 3. Ejemplo de JSON para insertar
+
+**Pokémon:**
+
+```json
+{
+  "nombre": "Pikachu",
+  "tipo": "Eléctrico",
+  "hp": 90,
+  "ataque": 110,
+  "defensa": 70,
+  "sp_atk": 100,
+  "sp_def": 80,
+  "velocidad": 120
+}
+```
+
+**Película:**
+
+```json
+{
+  "title": "Inception",
+  "director": "Christopher Nolan",
+  "year": 2010,
+  "length_minutes": 148
+}
+```
+
+### 4. Verificación
+
+1. Haz clic en **Send**.
+2. Si recibes un status **`201 Created`**, los datos han viajado desde tu PC hasta el servidor y se han guardado en PostgreSQL.
+3. Para confirmar, realiza una petición **`GET`** a la misma URL y verás los datos listados.
+
+### ⚠️ Notas importantes
+
+- **Sincronización**: `synchronize: true` está activo via `DB_SYNC=true` en el ConfigMap → las tablas se crean solas al iniciar el servidor.
+- **Variables de Entorno**: La conexión a Postgres se configura a través del ConfigMap de Kubernetes (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`).
+
+---
+
+## ⚡ Guía Rápida: Postman
+
+Postman funciona como un navegador pero muestra los datos del servidor en lugar de una web.
+
+**GET** (ver datos):
+
+```
+GET http://161.97.152.19:30095/pokemon
+```
+
+→ Dale a **Send** y verás el listado en JSON.
+
+**POST** (insertar datos):
+
+```
+POST http://161.97.152.19:30095/pokemon
+Body → raw → JSON
+```
+
+**Códigos de respuesta:**
+
+| Código             | Significado                             |
+| ------------------ | --------------------------------------- |
+| `201 Created`      | ✅ Dato guardado en Postgres            |
+| `200 OK`           | ✅ Datos recibidos correctamente        |
+| `400 Bad Request`  | ❌ JSON mal formado o campo inválido    |
+| `404 Not Found`    | ❌ URL mal escrita                      |
+| `500 Server Error` | ❌ Error en el código o BD no conectada |
+
+---
+
+## �🔍 Verificación
+
+### 0. Persistencia de la Base de Datos (StatefulSet + Volumen)
+
+PostgreSQL **no usa un Deployment** sino un **StatefulSet**, porque necesita que los datos sobrevivan a reinicios.
+
+```
+StatefulSet (statefull-nestapi-postgres)
+    └── Pod postgres
+          └── volumeMount → /var/lib/postgresql/data   ← datos de la BD
+                └── PVC (PersistentVolumeClaim, 2Gi)   ← volumen de Kubernetes
+                      └── StorageClass: microk8s-hostpath ← disco real del nodo
+```
+
+**Verificar el volumen y el StatefulSet:**
+
+```bash
+# Ver el StatefulSet corriendo
+kubectl get statefulset -n nest
+
+# Ver el PVC (PersistentVolumeClaim) creado automáticamente
+kubectl get pvc -n nest
+
+# Ver el PV (PersistentVolume) real en el nodo
+kubectl get pv
+```
+
+**Salida esperada:**
+
+```
+NAME                          STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS        AGE
+data-statefull-nestapi-...    Bound    pvc-...  2Gi        RWO            microk8s-hostpath   Xm
+```
+
+> ✅ El estado `Bound` confirma que el volumen está montado y los datos **persisten aunque el pod se reinicie**.
+
+---
+
+### 1. Ver la Jerarquía de Imágenes
+
+La imagen de NestJS hereda en cadena:
+
+```
+ubuntu:latest
+    └── crsaubbase:latest       ← crea usuario del sistema + SSH
+          └── crsaubsecurity:latest  ← ciberseguridad + auditoría
+                └── carmen24/nestapi:latest  ← Node.js 22 + NestJS ← NUESTRA IMAGEN
+```
+
+Esto está declarado en el `Dockerfile`:
+
+```dockerfile
+FROM ${INICIALES}ubsecurity:latest   # hereda de crsaubsecurity
+```
+
+---
+
+### 2. Acceder al Pod con `kubectl exec`
+
+```bash
+# Paso 1: ver el pod corriendo
+kubectl get pods -n nest
+
+# Paso 2: entrar al pod (sustituir <POD_NAME> por el nombre real)
+kubectl exec -it <POD_NAME> -n nest -- /bin/bash
+
+# Atajo directo (obtiene el nombre automáticamente):
+POD_NAME=$(kubectl get pods -n nest -l app=nestapi -o jsonpath="{.items[0].metadata.name}")
+kubectl exec -it $POD_NAME -n nest -- /bin/bash
+```
+
+---
+
+### 3. Dentro del Pod: Verificar el Usuario Creado
+
+Una vez dentro del pod (`kubectl exec`), ejecutar:
+
+```bash
+# Verificar que el usuario 'rosa' existe
+id rosa
+
+# Ver su entrada en /etc/passwd
+grep rosa /etc/passwd
+
+# Comprobar que tiene permisos sudo
+sudo -l -U rosa
+```
+
+**Salida esperada de `id rosa`:**
+
+```
+uid=1001(rosa) gid=1001(rosa) groups=1001(rosa),27(sudo)
+```
+
+---
+
+### 4. Dentro del Pod: Verificar que SSH está Activo
+
+```bash
+# Ver que el proceso sshd está corriendo
+ps aux | grep sshd
+
+# Ver que escucha en el puerto 22
+ss -tlnp | grep 22
+```
+
+---
+
+### 5. Dentro del Pod: Verificar que NestJS Responde
+
+```bash
+# Petición de prueba desde dentro del propio pod
+curl http://localhost:3001
+curl http://localhost:3001/pokemon
+```
+
+---
+
 🏁 **Despliegue finalizado con éxito por Carmen y Antigravity.**
