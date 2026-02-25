@@ -53,7 +53,11 @@ main(){
     node dist/main &
 
     # --- 6. Mantener contenedor vivo con SSH ---
+    echo "INFO: Lanzando servidor SSH..." >> /root/logs/informe.log
     mkdir -p /run/sshd
+    service ssh start || /usr/sbin/sshd
+    
+    # Mantener el contenedor vivo inspeccionando logs (o con sshd -D)
     exec /usr/sbin/sshd -D
 }
 
