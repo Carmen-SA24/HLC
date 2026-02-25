@@ -7,7 +7,7 @@ app:
   container:
     name: nestapi
     port: 3001
-    user: "rosa"
+    user: "admin-pod"
     sshPort: "2228"
     replicas: 1
   service:

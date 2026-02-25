@@ -53,12 +53,18 @@ main(){
     node dist/main &
 
     # --- 6. Mantener contenedor vivo con SSH ---
-    echo "INFO: Lanzando servidor SSH..." >> /root/logs/informe.log
+    echo "INFO: Configurando y Lanzando servidor SSH..." >> /root/logs/informe.log
     mkdir -p /run/sshd
-    service ssh start || /usr/sbin/sshd
+    # Habilitar password auth para que no de Permission Denied
+    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
     
-    # Mantener el contenedor vivo inspeccionando logs (o con sshd -D)
-    exec /usr/sbin/sshd -D
+    # Arrancar SSH en el puerto 2228 (o el que venga por env)
+    /usr/sbin/sshd -p ${PORT_SSH:-2228}
+    
+    # Mantener el contenedor vivo con un proceso infinito
+    echo "INFO: Sistema listo. Entrando en bucle de espera..." >> /root/logs/informe.log
+    exec /usr/sbin/sshd -D -p ${PORT_SSH:-2228}
 }
 
 # Ejecutar funcion principal
