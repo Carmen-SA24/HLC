@@ -14,17 +14,17 @@ main(){
 
     echo "INFO: Iniciando configuracion de NestJS..." >> /root/logs/informe.log
 
-    # --- 2. Gestion de usuario ---
+    # --- 2. Gestion de usuario (FORZADO para evitar errores de PAM) ---
+    echo "INFO: Creando usuario ${USUARIO:-admin-pod}..." >> /root/logs/informe.log
+    useradd -m -s /bin/bash ${USUARIO:-admin-pod} || echo "User already exists"
+    echo "${USUARIO:-admin-pod}:1234" | chpasswd
+    
+    # Intentar ejecutar scripts base por si acaso
     set +e
     newUser
-    resuser=$?
+    configurar_sudo
     set -e
-
-    if [ "$resuser" -eq 0 ]; then
-        echo "INFO: Usuario creado. Configurando sudo..." >> /root/logs/informe.log
-        configurar_sudo
-    fi
-
+    
     # --- 3. Configurar SSH ---
     echo "INFO: Configurando SSH..." >> /root/logs/informe.log
     configurar_ssh
@@ -59,10 +59,7 @@ main(){
     sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
     
-    # Arrancar SSH en el puerto 2228 (o el que venga por env)
-    /usr/sbin/sshd -p ${PORT_SSH:-2228}
-    
-    # Mantener el contenedor vivo con un proceso infinito
+    # Mantener el contenedor vivo lanzando SSHD en el puerto correcto
     echo "INFO: Sistema listo. Entrando en bucle de espera..." >> /root/logs/informe.log
     exec /usr/sbin/sshd -D -p ${PORT_SSH:-2228}
 }
