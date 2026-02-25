@@ -23,13 +23,14 @@ Para que el sistema funcione, los archivos están organizados así:
 
 Hemos configurado puertos específicos para **evitar conflictos** con otros contenedores en la VPS:
 
-| Variable        | Valor    | Descripción                           |
-| :-------------- | :------- | :------------------------------------ |
-| `PORT_NODE`     | **3015** | Puerto público para acceder a la API. |
-| `PORT_POSTGRES` | **5433** | Puerto público para la base de datos. |
-| `PORT_SSH`      | **2228** | Puerto para acceso SSH al contenedor. |
-| `DB_PORT`       | 5432     | Puerto interno (no cambiar).          |
-| `FIRMA`         | carmen24 | Tu usuario de Docker Hub.             |
+| Variable        | Valor     | Descripción                                |
+| :-------------- | :-------- | :----------------------------------------- |
+| `PORT_NODE`     | **3015**  | Puerto público para acceder a la API.      |
+| `PORT_POSTGRES` | **5433**  | Puerto público para la base de datos.      |
+| `PORT_SSH`      | **2228**  | Puerto interno del contenedor para SSH.    |
+| `NODEPORT_SSH`  | **31535** | Puerto externo de la VPS para SSH directo. |
+| `NODEPORT_API`  | **30095** | Puerto externo de la VPS para API directa. |
+| `FIRMA`         | carmen24  | Tu usuario de Docker Hub.                  |
 
 ---
 
@@ -80,7 +81,8 @@ helm upgrade --install nest ./nest-helm -n nest --create-namespace
 - **Ver logs de NestJS**: `docker compose logs -f nestapi`
 - **Ver estado en Kubernetes**: `kubectl get all -n nest`
 - **Acceso a la API (Docker Compose)**: `http://161.97.152.19:3015`
-- **Acceso a la API (Kubernetes)**: `http://161.97.152.19:30095`
+- **Acceso a la API (Kubernetes NodePort)**: `http://161.97.152.19:30095`
+- **Acceso Directo por SSH (Sin kubectl)**: `ssh -p 31535 admin-pod@161.97.152.19`
   - `/` -> Debería mostrar `Hello World!` (mensaje de bienvenida).
   - `/pokemon` -> Lista de Pokémon en formato JSON.
   - `/peliculas` -> Lista de Películas en formato JSON.
@@ -318,65 +320,75 @@ FROM ${INICIALES}ubsecurity:latest   # hereda de crsaubsecurity
 
 ---
 
-### 2. Acceder al Pod con `kubectl exec`
+### 2. Acceder al Pod con `kubectl exec` (Método Rápido)
+
+Este método es útil para diagnósticos rápidos sin salir de la sesión de la VPS.
 
 ```bash
-# Paso 1: ver el pod corriendo
-kubectl get pods -n nest
-
-# Paso 2: entrar al pod (sustituir <POD_NAME> por el nombre real)
-kubectl exec -it <POD_NAME> -n nest -- /bin/bash
-
-# Atajo directo (obtiene el nombre automáticamente):
-POD_NAME=$(kubectl get pods -n nest -l app=nestapi -o jsonpath="{.items[0].metadata.name}")
-kubectl exec -it $POD_NAME -n nest -- /bin/bash
+# Obtener el nombre del pod automáticamente y entrar de forma segura
+kubectl exec -it -n nest $(kubectl get pod -l app=nestapi -n nest -o name) -- /bin/bash
 ```
 
 ---
 
-### 3. Dentro del Pod: Verificar el Usuario Creado
+### 3. Dentro del Pod: Verificar el Usuario `admin-pod`
+
+Hemos configurado un usuario específico dentro del Pod diferente al de la VPS para demostrar el aislamiento de seguridad.
 
 Una vez dentro del pod (`kubectl exec`), ejecutar:
 
 ```bash
-# Verificar que el usuario 'rosa' existe
-id rosa
+# Verificar que el usuario 'admin-pod' existe
+id admin-pod
 
-# Ver su entrada en /etc/passwd
-grep rosa /etc/passwd
+# Salida esperada:
+# uid=1001(admin-pod) gid=1001(admin-pod) groups=1001(admin-pod)
 
-# Comprobar que tiene permisos sudo
-sudo -l -U rosa
-```
-
-**Salida esperada de `id rosa`:**
-
-```
-uid=1001(rosa) gid=1001(rosa) groups=1001(rosa),27(sudo)
+# Comprobar que tiene asignado el password '1234' (aunque no lo veamos)
+# El prompt debe mostrar: admin-pod@deploy-nestapi-...
 ```
 
 ---
 
-### 4. Dentro del Pod: Verificar que SSH está Activo
+### 4. SSH Sin Trucos: Acceso Directo por NodePort
+
+Esta es la demostración definitiva de ciberseguridad: acceder al interior del contenedor desde el mundo exterior a través de un puerto mapeado por Kubernetes.
+
+**Comando desde la terminal de la VPS (Host) o desde tu PC local:**
+
+Este comando debe ejecutarse fuera del Pod, en la terminal principal de tu servidor para demostrar que la "puerta" (NodePort) está abierta al mundo.
 
 ```bash
-# Ver que el proceso sshd está corriendo
+# Conexión directa al puerto 31535 mapeado al SSH del Pod
+ssh -p 31535 admin-pod@161.97.152.19
+```
+
+- **Usuario**: `admin-pod` (Diferente a `rosa` para evitar confusiones).
+- **Password**: `1234`
+- **Puerto Externo**: `31535` (Configurado en `service-nestapi.yaml`).
+- **Puerto Interno**: `2228` (Donde escucha el servidor SSH en el contenedor).
+
+**¿Por qué entra a veces sin contraseña?**
+Si entras desde la VPS, los scripts de seguridad de clase pueden haber sincronizado tus llaves SSH. Para **forzar** que te pida la contraseña y demostrar que funciona, usa:
+
+```bash
+ssh -o PubkeyAuthentication=no -p 31535 admin-pod@161.97.152.19
+```
+
+---
+
+### 5. Verificación de Servicios
+
+Dentro del pod o mediante SSH, podemos verificar que todo el motor está encendido:
+
+```bash
+# Ver que el proceso sshd está corriendo en el puerto 2228
 ps aux | grep sshd
 
-# Ver que escucha en el puerto 22
-ss -tlnp | grep 22
-```
-
----
-
-### 5. Dentro del Pod: Verificar que NestJS Responde
-
-```bash
-# Petición de prueba desde dentro del propio pod
-curl http://localhost:3001
+# Ver que la API de NestJS responde localmente
 curl http://localhost:3001/pokemon
 ```
 
 ---
 
-🏁 **Despliegue finalizado con éxito por Carmen y Antigravity.**
+🏁 **Despliegue y configuración de ciberseguridad finalizados con éxito por Carmen y Antigravity.**
