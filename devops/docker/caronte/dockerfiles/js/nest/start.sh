@@ -48,9 +48,9 @@ main(){
     fi
 
     echo "INFO: Iniciando NestJS en puerto ${PORT:-3001}..." >> /root/logs/informe.log
-    # Arrancamos en primer plano para que los logs se vean en Kubernetes
-    echo "INFO: Ejecutando: node dist/main" >> /root/logs/informe.log
-    node dist/main
+    # Arrancamos en segundo plano para que el script siga y active el SSH
+    echo "INFO: Ejecutando: node dist/main &" >> /root/logs/informe.log
+    node dist/main &
 
     # --- 6. Mantener contenedor vivo con SSH ---
     mkdir -p /run/sshd
