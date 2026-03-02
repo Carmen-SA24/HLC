@@ -19,8 +19,11 @@ ENV USUARIO=rosa
 ENV PASSWORD=1234
 ENV PORT_SSH=22
 
-# Instalar Node.js y npm
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
+# Instalar Node.js 20 (desde NodeSource, compatible con Next.js)
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copiar aplicación construida
 COPY --from=builder /app /app
