@@ -3,8 +3,8 @@
 set -e
 
 # --- 1. Cargar scripts de funciones ---
-source /root/admin/base/usuarios/mainUsuarios.sh
-source /root/admin/base/ssh/mainSsh.sh
+source /root/admin/base/usuarios/mainusuarios.sh
+source /root/admin/base/ssh/mainssh.sh
 source /root/admin/base/ciber/mainCiber.sh
 
 main(){
