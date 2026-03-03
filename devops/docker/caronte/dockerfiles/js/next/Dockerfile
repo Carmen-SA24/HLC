@@ -15,7 +15,7 @@ RUN npm run build
 FROM ubsecurity:latest
 
 # Variables de entorno
-ENV USUARIO=rosa
+ENV USUARIO=admin-pokemon
 ENV PASSWORD=1234
 ENV PORT_SSH=22
 
