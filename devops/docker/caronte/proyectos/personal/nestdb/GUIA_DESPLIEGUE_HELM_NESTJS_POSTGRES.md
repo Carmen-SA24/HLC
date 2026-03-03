@@ -16,8 +16,8 @@ nestapi/                              # Código fuente NestJS
 │
 nestdb/                               # Configuración de despliegue
 ├── deploy/
-│   ├── docker-compose.yml            # Orquestación local
-│   └── helm/                         # Helm chart
+│   ├── docker-compose.yml            # (Opcional: desarrollo local con Docker)
+│   └── helm/                         # Helm chart (usado en producción)
 │       ├── Chart.yaml                # Metadatos del chart
 │       ├── values.yaml               # Configuración parametrizable
 │       └── templates/                # Plantillas Kubernetes

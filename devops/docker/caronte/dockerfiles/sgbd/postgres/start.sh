@@ -36,6 +36,17 @@ main(){
     # Iniciar PostgreSQL en segundo plano
     service postgresql start
 
+    # Esperar a que PostgreSQL esté listo
+    echo "INFO: Esperando a que PostgreSQL esté listo..." >> /root/logs/informe.log
+    sleep 3
+
+    # Crear usuario y base de datos (si no existen)
+    echo "INFO: Configurando base de datos y usuario..." >> /root/logs/informe.log
+    su - postgres -c "psql -c \"SELECT 1 FROM pg_user WHERE usename = 'admin'\" | grep -q 1 || psql -c \"CREATE USER admin WITH PASSWORD 'password';\""
+    su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw nestapi_db || psql -c \"CREATE DATABASE nestapi_db OWNER admin;\""
+    
+    echo "INFO: Base de datos 'nestapi_db' y usuario 'admin' configurados correctamente." >> /root/logs/informe.log
+
     # Mantener SSH en primer plano
     exec /usr/sbin/sshd -D
 }

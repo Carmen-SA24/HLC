@@ -1,17 +1,16 @@
-# PostgreSQL + GUI web pgAdmin 4
-# Hereda de ciber (ubsecurity) como indica el profesor
+# PostgreSQL con herencia de ciberseguridad
 ARG INICIALES=crsa
 FROM ${INICIALES}ubsecurity:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar PostgreSQL (antes venía de dbbase)
+# Instalar PostgreSQL
 RUN apt-get update && apt-get install -y \
     postgresql \ 
     postgresql-contrib \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar pgAdmin 4 para GUI web de gestión PostgreSQL
+# Instalar pgAdmin 4
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
@@ -23,14 +22,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y pgadmin4-web \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar pgAdmin en modo web
 RUN /usr/pgadmin4/bin/setup-web.sh --yes || true
 
-# Copiar script de inicio
 COPY dockerfiles/sgbd/postgres/start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Puertos: PostgreSQL(5432), pgAdmin web(80), SSH(22)
 EXPOSE 5432 80 22
 
 ENTRYPOINT ["/start.sh"]
