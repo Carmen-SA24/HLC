@@ -11,7 +11,8 @@ nestapi/                              # Código fuente NestJS
 ├── src/                              # Código de la aplicación
 │   ├── app.module.ts                 # TypeORM configurado
 │   ├── main.ts                       # Puerto 3001
-│   └── usuario/                      # Módulo CRUD usuarios
+│   ├── pelicula/                     # Módulo CRUD películas
+│   └── pokemon/                      # Módulo CRUD pokemon
 │
 nestdb/                               # Configuración de despliegue
 ├── deploy/
@@ -229,13 +230,13 @@ docker push carmen24/nestapi:latest
 
 # 5. Desplegar con Helm
 helm install nestapi ./proyectos/personal/nestdb/deploy/helm \
-  -n proyecto-fullstack --create-namespace
+  -n nest --create-namespace
 
 # 6. Verificar
-kubectl get pods -n proyecto-fullstack
-kubectl get svc -n proyecto-fullstack
-kubectl get pvc -n proyecto-fullstack
-kubectl get ingress -n proyecto-fullstack
+kubectl get pods -n nest
+kubectl get svc -n nest
+kubectl get pvc -n nest
+kubectl get ingress -n nest
 ```
 
 ---
@@ -244,7 +245,7 @@ kubectl get ingress -n proyecto-fullstack
 
 ### **Acceder al pod:**
 ```bash
-kubectl exec -it <nombre-pod> -n proyecto-fullstack -- bash
+kubectl exec -it <nombre-pod> -n nest -- bash
 ```
 
 ### **Comandos de verificación:**
@@ -277,50 +278,58 @@ cat /root/logs/informe.log
 
 ## 8. Verificación de PostgreSQL
 
-### **Acceder al pod PostgreSQL:**
-
+### **Acceder directamente a PostgreSQL:**
 ```bash
-kubectl exec -it <nombre-pod-postgres> -n proyecto-fullstack -- bash
+kubectl exec -it statefull-nestapi-postgres-0 -n nest -- psql -U admin -d nestapi_db
 ```
 
 ### **Comandos SQL:**
-```bash
-# Conectar a PostgreSQL
-psql -U admin -d nestapi_db
-
-# Listar tablas
+```sql
+-- Listar tablas
 \dt
 
-# Ver datos de la tabla usuario
-SELECT * FROM usuario;
+-- Ver datos de las tablas
+SELECT * FROM pelicula LIMIT 5;
+SELECT * FROM pokemon LIMIT 5;
 
-# Salir
+-- Salir
 \q
+```
+
+**Salida esperada:**
+```
+         List of relations
+ Schema |   Name   | Type  | Owner 
+--------+----------+-------+-------
+ public | pelicula | table | admin
+ public | pokemon  | table | admin
 ```
 
 ---
 
 ## 9. Pruebas de API REST
 
-### **Listar usuarios:**
+### **Acceso general:**
 ```bash
-curl http://api.carmenasir.com/usuario
+curl http://api.carmenasir.com
 ```
 
-### **Crear usuario:**
+### **Endpoints de Películas:**
 ```bash
-curl -X POST http://api.carmenasir.com/usuario \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Carmen",
-    "email": "carmen@example.com",
-    "password": "secret123"
-  }'
+# Listar películas
+curl http://api.carmenasir.com/pelicula
+
+# Obtener película por ID
+curl http://api.carmenasir.com/pelicula/1
 ```
 
-### **Obtener usuario por ID:**
+### **Endpoints de Pokemon:**
 ```bash
-curl http://api.carmenasir.com/usuario/1
+# Listar pokemon
+curl http://api.carmenasir.com/pokemon
+
+# Obtener pokemon por ID
+curl http://api.carmenasir.com/pokemon/1
 ```
 
 ---
@@ -329,31 +338,31 @@ curl http://api.carmenasir.com/usuario/1
 
 ```bash
 # Ver releases
-helm list -n proyecto-fullstack
+helm list -n nest
 
 # Ver historial
-helm history nestapi -n proyecto-fullstack
+helm history nestapi -n nest
 
 # Actualizar despliegue
-helm upgrade nestapi ./proyectos/personal/nestdb/deploy/helm -n proyecto-fullstack
+helm upgrade nestapi ./proyectos/personal/nestdb/deploy/helm -n nest
 
 # Reiniciar pods NestJS
-kubectl rollout restart deployment deploy-nestapi -n proyecto-fullstack
+kubectl rollout restart deployment deploy-nestapi -n nest
 
 # Reiniciar PostgreSQL
-kubectl rollout restart statefulset statefull-nestapi-postgres -n proyecto-fullstack
+kubectl rollout restart statefulset statefull-nestapi-postgres -n nest
 
 # Ver logs NestJS
-kubectl logs -f <pod-nestapi> -n proyecto-fullstack
+kubectl logs -f <pod-nestapi> -n nest
 
 # Ver logs PostgreSQL
-kubectl logs -f <pod-postgres> -n proyecto-fullstack
+kubectl logs -f <pod-postgres> -n nest
 
 # Rollback
-helm rollback nestapi -n proyecto-fullstack
+helm rollback nestapi -n nest
 
 # Desinstalar
-helm uninstall nestapi -n proyecto-fullstack
+helm uninstall nestapi -n nest
 ```
 
 ---
@@ -372,7 +381,7 @@ helm uninstall nestapi -n proyecto-fullstack
 
 | Componente | Valor |
 |------------|-------|
-| Namespace | proyecto-fullstack |
+| Namespace | nest |
 | Imagen NestJS | carmen24/nestapi:latest |
 | Imagen PostgreSQL | postgres:15-alpine |
 | Réplicas NestJS | 2 |
@@ -391,33 +400,33 @@ helm uninstall nestapi -n proyecto-fullstack
 
 ### **Pods no inician:**
 ```bash
-kubectl describe pod <nombre-pod> -n proyecto-fullstack
-kubectl logs <nombre-pod> -n proyecto-fullstack
+kubectl describe pod <nombre-pod> -n nest
+kubectl logs <nombre-pod> -n nest
 ```
 
 ### **PostgreSQL no conecta:**
 ```bash
 # Verificar variables de entorno en el pod NestJS
-kubectl exec -it <pod-nestapi> -n proyecto-fullstack -- env | grep DB
+kubectl exec -it <pod-nestapi> -n nest -- env | grep DB
 
 # Verificar que PostgreSQL está corriendo
-kubectl exec -it <pod-postgres> -n proyecto-fullstack -- pg_isready -U admin
+kubectl exec -it <pod-postgres> -n nest -- pg_isready -U admin
 ```
 
 ### **Recrear PostgreSQL (perderás datos):**
 ```bash
 # Eliminar StatefulSet y PVC
-kubectl delete statefulset statefull-nestapi-postgres -n proyecto-fullstack
-kubectl delete pvc data-statefull-nestapi-postgres-0 -n proyecto-fullstack
+kubectl delete statefulset statefull-nestapi-postgres -n nest
+kubectl delete pvc data-statefull-nestapi-postgres-0 -n nest
 
 # Redesplegar
-helm upgrade nestapi ./proyectos/personal/nestdb/deploy/helm -n proyecto-fullstack
+helm upgrade nestapi ./proyectos/personal/nestdb/deploy/helm -n nest
 ```
 
 ### **Ver estado del PVC:**
 ```bash
-kubectl get pvc -n proyecto-fullstack
-kubectl describe pvc data-statefull-nestapi-postgres-0 -n proyecto-fullstack
+kubectl get pvc -n nest
+kubectl describe pvc data-statefull-nestapi-postgres-0 -n nest
 ```
 
 ---
