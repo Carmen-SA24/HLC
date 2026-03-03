@@ -31,6 +31,8 @@ spec:
               value: {{ .Values.postgres.auth.username | quote }}
             - name: POSTGRES_PASSWORD
               value: {{ .Values.postgres.auth.password | quote }}
+            - name: USUARIO
+              value: {{ .Values.app.container.user | quote }}
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

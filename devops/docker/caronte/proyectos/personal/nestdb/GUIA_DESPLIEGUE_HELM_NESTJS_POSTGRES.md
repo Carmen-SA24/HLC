@@ -177,8 +177,9 @@ ingress:
 postgres:
   name: nestapi-postgres
   image:
-    repository: postgres
-    tag: "15-alpine"
+    repository: carmen24/postgres-ciber
+    tag: "latest"
+    pullPolicy: Always
   service:
     port: 5432
   auth:
@@ -190,6 +191,11 @@ postgres:
     size: 2Gi
     storageClassName: "microk8s-hostpath"
 ```
+
+> **📦 Imagen PostgreSQL Personalizada:**  
+> `carmen24/postgres-ciber:latest` hereda de `ubsecurity` (igual que nestapi y ppokemon).  
+> Incluye: PostgreSQL 15 + pgAdmin4 + usuario admin-pod + fail2ban + nmap + SSH.  
+> Se construye desde `dockerfiles/sgbd/postgres/Dockerfile` con inicio automático de DB y usuario.
 
 ### **Templates**
 
@@ -228,6 +234,12 @@ docker build -t carmen24/nestapi:latest \
 docker login
 docker push carmen24/nestapi:latest
 
+# 4b. Construir imagen PostgreSQL personalizada (si no existe)
+docker build -t carmen24/postgres-ciber:latest \
+  --build-arg INICIALES=crsa \
+  -f ./dockerfiles/sgbd/postgres/Dockerfile .
+docker push carmen24/postgres-ciber:latest
+
 # 5. Desplegar con Helm
 helm install nestapi ./proyectos/personal/nestdb/deploy/helm \
   -n nest --create-namespace
@@ -243,12 +255,17 @@ kubectl get ingress -n nest
 
 ## 7. Verificación de Ciberseguridad
 
-### **Acceder al pod:**
+### **Acceder al pod de NestAPI:**
 ```bash
-kubectl exec -it <nombre-pod> -n nest -- bash
+kubectl exec -it <nombre-pod-nestapi> -n nest -- bash
 ```
 
-### **Comandos de verificación:**
+### **Acceder al pod de PostgreSQL:**
+```bash
+kubectl exec -it statefull-nestapi-postgres-0 -n nest -- bash
+```
+
+### **Comandos de verificación (en ambos pods):**
 ```bash
 # 1. Usuario creado
 id admin-pod
