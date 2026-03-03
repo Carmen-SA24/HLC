@@ -33,6 +33,14 @@ main(){
     echo "INFO: Iniciando PostgreSQL..." >> /root/logs/informe.log
     mkdir -p /run/sshd
     
+    # Configurar PostgreSQL para escuchar en todas las interfaces
+    echo "INFO: Configurando PostgreSQL para aceptar conexiones externas..." >> /root/logs/informe.log
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf
+    sed -i "s/listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf
+    
+    # Permitir conexiones desde cualquier IP
+    echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/*/main/pg_hba.conf
+    
     # Iniciar PostgreSQL en segundo plano
     service postgresql start
 
