@@ -4,11 +4,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copiar dependencias
-COPY src/package*.json ./
+COPY proyectos/ppokemon/src/package*.json ./
 RUN npm install
 
 # Copiar el código fuente
-COPY src/ .
+COPY proyectos/ppokemon/src/ .
 RUN npm run build
 
 # --- ETAPA 2: Runtime (Ubsecurity + Node.js) ---
@@ -30,7 +30,7 @@ COPY --from=builder /app /app
 WORKDIR /app
 
 # Copiar script de arranque
-COPY ./deploy/start-pokemon.sh /start-pokemon.sh
+COPY dockerfiles/js/next/start.sh /start-pokemon.sh
 RUN chmod +x /start-pokemon.sh
 
 # Exponer puertos (3000 para Next.js, 22 para SSH)
