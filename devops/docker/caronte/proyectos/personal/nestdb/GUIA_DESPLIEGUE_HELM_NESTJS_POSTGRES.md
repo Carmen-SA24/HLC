@@ -117,10 +117,24 @@ exec /usr/sbin/sshd -D
 PostgreSQL se despliega como **StatefulSet** con persistencia garantizada:
 
 ```yaml
-# statefulset-postgres.yaml
+# statefulset-postgres.yaml (extracto)
 spec:
   replicas: 1
   serviceName: nestapi-postgres
+  template:
+    spec:
+      containers:
+        - name: nestapi-postgres
+          image: carmen24/postgres-ciber:latest
+          env:
+            - name: POSTGRES_DB
+              value: "nestapi_db"
+            - name: POSTGRES_USER
+              value: "admin"
+            - name: POSTGRES_PASSWORD
+              value: "password"
+            - name: USUARIO
+              value: "admin-pod"
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -134,9 +148,11 @@ spec:
 
 **Características:**
 - Persistencia de datos con PVC (2Gi)
-- Imagen: postgres:15-alpine
+- Imagen: carmen24/postgres-ciber:latest (hereda de ubsecurity)
 - Service interno (ClusterIP) en puerto 5432
-- Variables: DB_NAME, DB_USERNAME, DB_PASSWORD
+- Variables: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, USUARIO
+- Usuario admin-pod con permisos sudo
+- Herramientas de seguridad: fail2ban, nmap, SSH
 
 ---
 
@@ -400,7 +416,7 @@ helm uninstall nestapi -n nest
 |------------|-------|
 | Namespace | nest |
 | Imagen NestJS | carmen24/nestapi:latest |
-| Imagen PostgreSQL | postgres:15-alpine |
+| Imagen PostgreSQL | carmen24/postgres-ciber:latest |
 | Réplicas NestJS | 2 |
 | Puerto NestJS | 3001 |
 | NodePort NestJS | 30095 |
@@ -409,7 +425,7 @@ helm uninstall nestapi -n nest
 | Usuario Pod | admin-pod |
 | Persistencia DB | 2Gi (PVC) |
 | StorageClass | microk8s-hostpath |
-| Herencia | ubbase → ubsecurity → nestapi |
+| Herencia | ubbase → ubsecurity → nestapi/postgres |
 
 ---
 
