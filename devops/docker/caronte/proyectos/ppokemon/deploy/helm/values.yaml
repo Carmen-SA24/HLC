@@ -1,0 +1,27 @@
+app:
+  name: ppokemon
+  image:
+    repository: carmen24/ppokemon
+    tag: latest
+    pullPolicy: Always
+  container:
+    name: webpokemon
+    port: 3000
+    replicas: 2
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30083
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - pokemon.carmenasir.com
+  path: /
+  tls:
+    enabled: false
+    secretName: ""
+  certManager:
+    enabled: false
+    clusterIssuer: letsencrypt-prod

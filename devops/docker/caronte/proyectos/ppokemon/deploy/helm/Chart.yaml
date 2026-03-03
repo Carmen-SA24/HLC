@@ -1,0 +1,4 @@
+apiVersion: v2
+name: ppokemon-helm
+description: A Helm chart for Pokemon Next.js application
+version: 0.1.0
