@@ -16,3 +16,9 @@ devops/docker/caronte/common/tokens.txt
 
 # Claves privadas SSH
 devops/docker/caronte/common/id_ed25519
+
+# Archivos temporales del sistema
+.sudo_as_admin_successful
+.wget-hsts
+.lesshst
+.bash_history
