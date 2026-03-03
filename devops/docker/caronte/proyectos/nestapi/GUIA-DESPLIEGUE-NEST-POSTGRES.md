@@ -9,7 +9,7 @@ Este proyecto consiste en la migración de una API de NestJS de MySQL a **Postgr
 Para que el sistema funcione, los archivos están organizados así:
 
 1.  **`proyectos/nestapi/`**: Contiene el código fuente de la aplicación (clonado de GitHub).
-2.  **`proyectos/personal/nest-deploy/`**: Carpeta principal de despliegue.
+2.  **`proyectos/personal/nestdb/`**: Carpeta principal de despliegue.
     - `.env`: variables de configuración.
     - `docker-compose.yml`: orquestación local/provisional.
     - `kubernetes/nest-helm/`: carpetas del Chart de Helm para el despliegue final.
@@ -54,7 +54,7 @@ git pull origin main
 ### 3. Despliegue con Docker Compose (Prueba)
 
 ```bash
-cd proyectos/personal/nest-deploy
+cd proyectos/personal/nestdb
 docker compose up -d --build
 ```
 

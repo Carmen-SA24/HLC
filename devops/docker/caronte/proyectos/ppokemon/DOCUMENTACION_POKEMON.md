@@ -1,402 +1,246 @@
-# Arquitectura de Despliegue y Flujo de Comunicación - Proyecto Pokémon
+# Despliegue de ppokemon con Helm - Next.js con Ciberseguridad
 
-Este proyecto implementa una arquitectura basada en microservicios contenerizados y orquestados mediante Kubernetes, siguiendo un modelo de capas de seguridad heredadas.
+Proyecto Next.js desplegado en Kubernetes usando Helm, con herencia de capas de seguridad desde ubsecurity.
 
 ---
 
-## 1. Construcción de la Imagen (Dockerfile Multietapa)
+## 1. Estructura de Archivos
 
-La imagen Docker del proyecto "ppokemon" utiliza una estrategia **Multi-stage Build** para optimización y seguridad:
+```
+ppokemon/
+├── src/                              # Código fuente Next.js
+├── deploy/
+│   └── helm/                         # Helm chart
+│       ├── Chart.yaml                # Metadatos del chart
+│       ├── values.yaml               # Configuración parametrizable
+│       └── templates/                # Plantillas Kubernetes
+│           ├── deploy-ppokemon.yaml  # Deployment
+│           ├── service-ppokemon.yaml # Service NodePort
+│           └── ingress-ppokemon.yaml # Ingress
+└── dockerfiles/js/next/
+    ├── Dockerfile                    # Construcción de imagen
+    └── start.sh                      # Script de arranque
+```
+
+---
+
+## 2. Dockerfile - Herencia de Capas
+
+**Ubicación:** `dockerfiles/js/next/Dockerfile`
 
 ### **Etapa 1: Builder (Compilación)**
-
 ```dockerfile
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY src/package*.json ./
+COPY proyectos/ppokemon/src/package*.json ./
 RUN npm install
-COPY src/ .
+COPY proyectos/ppokemon/src/ .
 RUN npm run build
 ```
+- Compila la aplicación Next.js
+- Genera build optimizado
 
-### **Etapa 2: Runtime (Ejecución con Ubsecurity)**
-
+### **Etapa 2: Runtime (Herencia de ubsecurity)**
 ```dockerfile
-FROM ubsecurity:latest
+FROM ubsecurity:latest          # ← HERENCIA DE CIBERSEGURIDAD
 
-ENV USUARIO=rosa
+ENV USUARIO=admin-pokemon
 ENV PASSWORD=1234
 ENV PORT_SSH=22
 
-# Instalar Node.js y npm
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
 
-# Copiar aplicación construida
 COPY --from=builder /app /app
 WORKDIR /app
-
-# Copiar script de arranque
-COPY ./deploy/start-pokemon.sh /start-pokemon.sh
+COPY dockerfiles/js/next/start.sh /start-pokemon.sh
 RUN chmod +x /start-pokemon.sh
 
 EXPOSE 3000 22
 ENTRYPOINT ["/start-pokemon.sh"]
 ```
 
-### **Script de Arranque (`start-pokemon.sh`)**
+**Herencia completa:**
+```
+ubbase (Ubuntu base) 
+  └─> ubsecurity (fail2ban, nmap, SSH, usuarios)
+       └─> ppokemon (Next.js + Node.js)
+```
+
+---
+
+## 3. Script de Arranque
+
+**Ubicación:** `dockerfiles/js/next/start.sh`
 
 ```bash
 #!/bin/bash
 # Iniciar Next.js en background
 cd /app && npm start &
 
-# Iniciar script base de seguridad
+# Iniciar script base de seguridad (de ubsecurity)
 exec /root/admin/base/start.sh
 ```
 
-**Características clave:**
-
-- Hereda de `ubsecurity:latest` (incluye fail2ban, nmap, usuario rosa)
-- Ejecuta Next.js con SSR en puerto 3000
-- Mantiene activa la capa de seguridad
-
----
-
-## 2. Cambios Realizados en el Proyecto
-
-### **deploy/dockerfile**
-
-**Cambio:** De `ubsecurity + Nginx` a `ubsecurity + Node.js`
-
-**Antes:**
-
-```dockerfile
-FROM ubsecurity:latest
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/out /var/www/html/
-```
-
-**Después:**
-
-```dockerfile
-FROM ubsecurity:latest
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app /app
-```
-
-**Razón:** Next.js con SSR necesita Node.js, no archivos estáticos con Nginx.
+**Funciones:**
+- Arranca Next.js en puerto 3000
+- Ejecuta scripts de ciberseguridad heredados
+- Crea usuario admin-pokemon
+- Inicia SSH
 
 ---
 
-### **deploy/start-pokemon.sh**
+## 4. Helm Chart
 
-**Cambio:** De iniciar Nginx a iniciar Node.js
-
-**Antes:**
-
-```bash
-#!/bin/bash
-nginx -g 'daemon off;' &
-exec /root/admin/base/start.sh
-```
-
-**Después:**
-
-```bash
-#!/bin/bash
-cd /app && npm start &
-exec /root/admin/base/start.sh
-```
-
-**Razón:** Ejecutar el servidor Next.js en lugar de servir archivos estáticos.
-
----
-
-### **deploy/kubernetes/service-pokemon.yml**
-
-**Cambio:** Puerto de destino actualizado
-
-**Antes:**
-
+### **Chart.yaml**
 ```yaml
-ports:
-  - port: 80
-    targetPort: 80
+apiVersion: v2
+name: ppokemon-helm
+description: A Helm chart for Pokemon Next.js application
+version: 0.1.0
+```
+
+### **values.yaml** (Configuración)
+```yaml
+app:
+  name: ppokemon
+  image:
+    repository: carmen24/ppokemon
+    tag: latest
+    pullPolicy: Always
+  container:
+    name: webpokemon
+    port: 3000
+    replicas: 2
+  service:
+    type: NodePort
+    port: 80
     nodePort: 30083
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - pokemon.carmenasir.com
+  path: /
 ```
 
-**Después:**
+### **Templates**
 
-```yaml
-ports:
-  - port: 80
-    targetPort: 3000
-    nodePort: 30083
-```
+**deploy-ppokemon.yaml** - Define el Deployment con 2 réplicas
 
-**Razón:** Next.js corre en el puerto 3000, no en el 80 como Nginx.
+**service-ppokemon.yaml** - Service tipo NodePort en puerto 30083
 
----
-
-## 3. Manifiestos de Kubernetes
-
-### **namespace-pokemon.yml**
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: proyectopokemon
-  labels:
-    name: proyectopokemon
-```
-
-### **deploy-pokemon.yml**
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pokemon-deployment
-  namespace: proyectopokemon
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: webpokemon
-  template:
-    metadata:
-      labels:
-        app: webpokemon
-    spec:
-      containers:
-        - name: webpokemon
-          image: carmen24/ppokemon:latest
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "256Mi"
-```
-
-### **service-pokemon.yml**
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: pokemon-service
-  namespace: proyectopokemon
-spec:
-  type: NodePort
-  selector:
-    app: webpokemon
-  ports:
-    - port: 80
-      targetPort: 3000
-      nodePort: 30083
-```
-
-### **ingress-pokemon.yml**
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: pokemon-ingress
-  namespace: proyectopokemon
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  rules:
-    - host: pokemon.carmenasir.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: pokemon-service
-                port:
-                  number: 80
-    - host: www.carmenasir.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: pokemon-service
-                port:
-                  number: 80
-```
-
----
-
-## 4. Configuración DNS (Arsys)
-
-**Registros A creados:**
-
-- `pokemon.carmenasir.com` → `161.97.152.19`
-
-**TTL:** 3600 segundos (1 hora)
+**ingress-ppokemon.yaml** - Ingress con dominio pokemon.carmenasir.com
 
 ---
 
 ## 5. Comandos de Despliegue
 
-### **En LOCAL (Windows):**
+### **En la VPS:**
 
 ```bash
-# Commit de cambios
-git add -A
-git commit -m "fix: cambiar ppokemon de Nginx a Node.js para soportar SSR"
-git push origin main
-```
+# 1. Navegar al directorio
+cd ~/devops/docker/caronte
 
-### **En VPS:**
+# 2. Actualizar código (si usas Git)
+git pull origin main
 
-```bash
-# 1. Navegar al proyecto
-cd ~/caronte/proyectos/ppokemon
+# 3. Construir imagen
+docker build -t carmen24/ppokemon:latest -f ./dockerfiles/js/next/Dockerfile .
 
-# 2. Construir imagen Docker
-docker build -t carmen24/ppokemon:latest -f deploy/dockerfile .
-
-# 3. Subir a Docker Hub
+# 4. Subir a Docker Hub
 docker login
 docker push carmen24/ppokemon:latest
 
-# 4. Aplicar manifiestos Kubernetes
-kubectl apply -f deploy/kubernetes/
+# 5. Desplegar con Helm
+helm install ppokemon ./proyectos/ppokemon/deploy/helm -n proyectopokemon --create-namespace
 
-# 5. Verificar despliegue
+# 6. Verificar
 kubectl get pods -n proyectopokemon
 kubectl get svc -n proyectopokemon
 kubectl get ingress -n proyectopokemon
-
-# 6. Ver logs (opcional)
-kubectl logs -n proyectopokemon -l app=webpokemon --tail=50
 ```
 
 ---
 
-## 6. Flujo de una Petición Web
+## 6. Verificación de Ciberseguridad
 
-```
-Usuario (www.carmenasir.com)
-    ↓
-DNS Arsys (161.97.152.19)
-    ↓
-Nginx Ingress Controller (VPS)
-    ↓
-Service pokemon-service (NodePort 30083)
-    ↓
-Pod 1 o Pod 2 (Next.js :3000)
-    ↓
-Respuesta HTML renderizada
+### **Acceder al pod:**
+```bash
+kubectl exec -it <nombre-pod> -n proyectopokemon -- bash
 ```
 
-**Paso a paso:**
+### **Comandos de verificación:**
+```bash
+# 1. Usuario creado
+id admin-pokemon
 
-1. Usuario escribe `www.carmenasir.com`
-2. DNS resuelve a `161.97.152.19`
-3. Ingress lee `Host: pokemon.carmenasir.com` → enruta a `pokemon-service`
-4. Service balancea entre 2 pods
-5. Next.js procesa la petición con SSR
-6. Usuario recibe HTML renderizado
+# 2. Scripts de seguridad heredados
+ls -la /root/admin/base/
+
+# 3. Herramientas de ciberseguridad
+which fail2ban-client
+which nmap
+
+# 4. SSH activo
+service ssh status
+ps aux | grep ssh
+
+# 5. Logs del sistema
+cat /root/logs/informe.log
+```
+
+**Salida esperada:**
+- Usuario `admin-pokemon` existe
+- Carpetas: `ciber/`, `ssh/`, `usuarios/`, `sudo/`
+- fail2ban y nmap instalados
+- SSH corriendo
 
 ---
 
-## 7. Verificación del Despliegue
-
-### **Desde el VPS:**
+## 7. Comandos Útiles de Helm
 
 ```bash
-# Por NodePort
-curl http://localhost:30083
+# Ver releases
+helm list -n proyectopokemon
 
-# Por dominio
-curl -H "Host: carmenasir.com" http://161.97.152.19
-```
+# Ver historial
+helm history ppokemon -n proyectopokemon
 
-### **Desde el navegador:**
+# Actualizar
+helm upgrade ppokemon ./proyectos/ppokemon/deploy/helm -n proyectopokemon
 
-- http://pokemon.carmenasir.com
+# Reiniciar pods
+kubectl rollout restart deployment deploy-ppokemon -n proyectopokemon
 
----
+# Rollback
+helm rollback ppokemon -n proyectopokemon
 
-## 8. Arquitectura Visual
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    INTERNET (Usuario)                        │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-              www.carmenasir.com
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  DNS (Arsys)                                 │
-│              Registro A → 161.97.152.19                      │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  VPS (161.97.152.19)                         │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │         Nginx Ingress Controller                      │  │
-│  │  (Lee Host: carmenasir.com → pokemon-service)         │  │
-│  └──────────────────────┬────────────────────────────────┘  │
-│                         │                                    │
-│                         ▼                                    │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │   Kubernetes Service (pokemon-service)                │  │
-│  │   NodePort: 30083 | TargetPort: 3000                  │  │
-│  └──────────────────────┬────────────────────────────────┘  │
-│                         │                                    │
-│         ┌───────────────┴───────────────┐                   │
-│         ▼                               ▼                   │
-│  ┌─────────────┐                 ┌─────────────┐           │
-│  │   Pod 1     │                 │   Pod 2     │           │
-│  │ ┌─────────┐ │                 │ ┌─────────┐ │           │
-│  │ │ Next.js │ │                 │ │ Next.js │ │           │
-│  │ │ :3000   │ │                 │ │ :3000   │ │           │
-│  │ └─────────┘ │                 │ └─────────┘ │           │
-│  │ ┌─────────┐ │                 │ ┌─────────┐ │           │
-│  │ │ubsecurity│ │                 │ │ubsecurity│ │           │
-│  │ └─────────┘ │                 │ └─────────┘ │           │
-│  └─────────────┘                 └─────────────┘           │
-└─────────────────────────────────────────────────────────────┘
+# Desinstalar
+helm uninstall ppokemon -n proyectopokemon
 ```
 
 ---
 
-## 9. Especificaciones Técnicas
+## 8. Acceso
 
-| Componente               | Valor                    |
-| ------------------------ | ------------------------ |
-| **Namespace**            | proyectopokemon          |
-| **Imagen Docker**        | carmen24/ppokemon:latest |
-| **Réplicas**             | 2                        |
-| **Puerto Interno**       | 3000 (Next.js)           |
-| **NodePort**             | 30083                    |
-| **Dominio**              | pokemon.carmenasir.com   |
-| **IP VPS**               | 161.97.152.19            |
-| **CPU Request/Limit**    | 100m / 500m              |
-| **Memory Request/Limit** | 128Mi / 256Mi            |
+**URL:** http://pokemon.carmenasir.com
+
+**NodePort:** http://<IP-VPS>:30083
 
 ---
 
-## 10. Estado Final
+## 9. Especificaciones
 
-✅ **Desplegado y accesible en:** http://pokemon.carmenasir.com  
-✅ **Alta disponibilidad:** 2 réplicas activas  
-✅ **Seguridad:** Capa ubsecurity heredada  
-✅ **SSR:** Next.js con renderizado del lado del servidor
+| Componente | Valor |
+|------------|-------|
+| Namespace | proyectopokemon |
+| Imagen | carmen24/ppokemon:latest |
+| Réplicas | 2 |
+| Puerto Next.js | 3000 |
+| NodePort | 30083 |
+| Dominio | pokemon.carmenasir.com |
+| Usuario Pod | admin-pokemon |
+| Herencia | ubbase → ubsecurity → ppokemon |
