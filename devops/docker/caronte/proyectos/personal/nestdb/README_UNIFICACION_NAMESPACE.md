@@ -191,6 +191,19 @@ ps aux | grep ssh
 # 5. Logs del sistema
 cat /root/logs/informe.log
 
+# 6. Comprobar alta disponibilidad (eliminar un pod)
+# Ver los pods actuales
+kubectl get pods -n nest
+
+# Eliminar uno de los dos pods de NestJS
+kubectl delete pod deploy-nestapi-65864bf5c5-4r6t8 -n nest
+
+# Ver cómo se recrea automáticamente
+kubectl get pods -n nest
+
+# La API sigue funcionando (el otro pod atendía las peticiones)
+curl http://api.carmenasir.com/peliculas
+
 ```
 Cada pod tiene:
 - Su propio contenedor aislado
