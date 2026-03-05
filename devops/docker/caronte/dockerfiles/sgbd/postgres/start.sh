@@ -56,14 +56,18 @@ main(){
     PGDATA_REAL="/var/lib/postgresql/${PG_VERSION}/main"
 
     if [ ! -f "$PGDATA_REAL/PG_VERSION" ]; then
-        echo "INFO: PGDATA vacío. Inicializando cluster PostgreSQL $PG_VERSION..." >> $LOG
+        echo "INFO: PGDATA vacío. Inicializando con initdb..." >> $LOG
         mkdir -p "$PGDATA_REAL"
         chown -R postgres:postgres /var/lib/postgresql
         chmod 700 "$PGDATA_REAL"
-        # pg_createcluster inicializa PGDATA y actualiza /etc/postgresql/*/main/
-        pg_createcluster $PG_VERSION main 2>/dev/null || \
-            su - postgres -c "/usr/lib/postgresql/$PG_VERSION/bin/initdb -D $PGDATA_REAL"
-        echo "INFO: Cluster inicializado correctamente." >> $LOG
+        # initdb inicializa el directorio de datos directamente
+        # (pg_createcluster falla si la entrada en /etc/postgresql ya existe)
+        su - postgres -c "/usr/lib/postgresql/${PG_VERSION}/bin/initdb \
+            -D ${PGDATA_REAL} \
+            --locale=C.UTF-8 \
+            --auth-local=trust \
+            --auth-host=md5"
+        echo "INFO: initdb completado correctamente." >> $LOG
     else
         echo "INFO: PGDATA ya existe. Saltando inicialización." >> $LOG
     fi
@@ -112,14 +116,17 @@ setup_primary(){
         sed -i 's/^hot_standby.*/hot_standby = on/' $PGCONF_DIR/postgresql.conf || \
         echo "hot_standby = on" >> $PGCONF_DIR/postgresql.conf
 
-    # Permitir replicacion desde cualquier IP
-    grep -q "replication" $PGCONF_DIR/pg_hba.conf || \
+    # Permitir replicacion desde cualquier IP (siempre añadir - el grep anterior
+    # matcheaba entradas de localhost que trae Ubuntu por defecto y nunca añadía 0.0.0.0/0)
+    grep -q "0.0.0.0/0.*replication\|replication.*0.0.0.0/0" $PGCONF_DIR/pg_hba.conf || \
         echo "host    replication     all             0.0.0.0/0               md5" >> $PGCONF_DIR/pg_hba.conf
 
     # Iniciar PostgreSQL
     echo "INFO: [PRIMARY] Arrancando PostgreSQL..." >> $LOG
     service postgresql start
-    sleep 3
+    sleep 5
+    # Reload para aplicar los cambios de pg_hba.conf (por si ya estaba arrancado)
+    service postgresql reload 2>/dev/null || true
 
     # Crear usuario y base de datos
     echo "INFO: [PRIMARY] Creando usuario admin y base de datos..." >> $LOG
