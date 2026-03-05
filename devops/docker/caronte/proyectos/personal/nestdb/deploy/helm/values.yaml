@@ -30,9 +30,9 @@ postgres:
   name: nestapi-postgres
   replicas: 2
   image:
-    repository: postgres
-    tag: "15"
-    pullPolicy: IfNotPresent
+    repository: carmen24/postgres-ciber
+    tag: "latest"
+    pullPolicy: Always
   service:
     port: 5432
   auth:
@@ -43,13 +43,3 @@ postgres:
     enabled: true
     size: 2Gi
     storageClassName: "microk8s-hostpath"
-
-seed:
-  enabled: false
-  sql: |-
-    -- Ejemplo: crear tabla y fila de prueba
-    CREATE TABLE IF NOT EXISTS public.example_seed (
-      id serial PRIMARY KEY,
-      name text NOT NULL
-    );
-    INSERT INTO public.example_seed (name) VALUES ('seeded');
