@@ -46,7 +46,6 @@ postgres:
 
 seed:
   enabled: false
-  # SQL statements to run as seed. Can be large; keep here for convenience or mount via ConfigMap/file.
   sql: |-
     -- Ejemplo: crear tabla y fila de prueba
     CREATE TABLE IF NOT EXISTS public.example_seed (
