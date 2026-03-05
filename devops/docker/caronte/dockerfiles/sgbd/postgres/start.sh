@@ -50,7 +50,26 @@ main(){
     echo "INFO: SSH iniciado en background." >> $LOG
 
     # -------------------------------------------------------
-    # 2. Configurar postgresql.conf base (escuchar en todas las IPs)
+    # 2. Inicializar cluster PostgreSQL si no existe (PVC vacío)
+    # -------------------------------------------------------
+    PG_VERSION=$(ls /etc/postgresql/ | head -n1)
+    PGDATA_REAL="/var/lib/postgresql/${PG_VERSION}/main"
+
+    if [ ! -f "$PGDATA_REAL/PG_VERSION" ]; then
+        echo "INFO: PGDATA vacío. Inicializando cluster PostgreSQL $PG_VERSION..." >> $LOG
+        mkdir -p "$PGDATA_REAL"
+        chown -R postgres:postgres /var/lib/postgresql
+        chmod 700 "$PGDATA_REAL"
+        # pg_createcluster inicializa PGDATA y actualiza /etc/postgresql/*/main/
+        pg_createcluster $PG_VERSION main 2>/dev/null || \
+            su - postgres -c "/usr/lib/postgresql/$PG_VERSION/bin/initdb -D $PGDATA_REAL"
+        echo "INFO: Cluster inicializado correctamente." >> $LOG
+    else
+        echo "INFO: PGDATA ya existe. Saltando inicialización." >> $LOG
+    fi
+
+    # -------------------------------------------------------
+    # 3. Configurar postgresql.conf base (escuchar en todas las IPs)
     # -------------------------------------------------------
     echo "INFO: Configurando postgresql.conf..." >> $LOG
     sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" $PGCONF_DIR/postgresql.conf
