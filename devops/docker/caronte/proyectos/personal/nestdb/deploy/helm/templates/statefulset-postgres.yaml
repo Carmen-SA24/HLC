@@ -28,7 +28,7 @@ spec:
               if [ -f /scripts/setup-replication.sh ]; then
                 bash /scripts/setup-replication.sh
               fi
-              docker-entrypoint.sh postgres
+              exec /usr/local/bin/docker-entrypoint.sh postgres
           ports:
             - containerPort: {{ .Values.postgres.service.port }}
           env:
