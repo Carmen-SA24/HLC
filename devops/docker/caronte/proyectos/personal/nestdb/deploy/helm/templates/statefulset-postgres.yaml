@@ -22,13 +22,6 @@ spec:
         - name: {{ .Values.postgres.name }}
           image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
           imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              if [ -f /scripts/setup-replication.sh ]; then
-                bash /scripts/setup-replication.sh
-              fi
-              exec /usr/local/bin/docker-entrypoint.sh postgres
           ports:
             - containerPort: {{ .Values.postgres.service.port }}
           env:
@@ -43,13 +36,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-            - name: replication-scripts
-              mountPath: /scripts
-      volumes:
-        - name: replication-scripts
-          configMap:
-            name: postgres-replication-script
-            defaultMode: 0755
   volumeClaimTemplates:
     - metadata:
         name: data
