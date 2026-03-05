@@ -301,3 +301,29 @@ kubectl logs -f statefull-nestapi-postgres-0 -n nest
 ---
 
 **Documentación generada:** 3 de marzo de 2026
+
+
+------------
+⚠️ Advertencia: Al probar la replicación de PostgreSQL con StatefulSet, al eliminar uno de los pods, el nuevo pod se regeneraba vacío (sin los datos del primario). El objetivo era que ambos pods tuvieran los mismos datos, pero la replicación no funcionó como se esperaba. Por este motivo se realizaron todos los cambios y refuerzos documentados a continuación.
+
+Cambios Técnicos y Refuerzos (Marzo 2026)
+
+Refuerzo de start.sh en PostgreSQL: Se añadió un bloque al final del script para evitar que el pod termine si falla PostgreSQL: 
+```bash
+exec su - postgres -c "postgres -D /var/lib/postgresql/data" || { echo "ERROR: Falló el arranque de PostgreSQL. El pod se mantiene vivo para evitar entrypoint heredado." >> /root/logs/informe.log tail -f /dev/null }
+```
+
+Motivo: Evitar CrashLoopBackOff y que se ejecute el entrypoint heredado (docker-entrypoint.sh) al heredar de la imagen de seguridad.
+
+Dockerfile custom PostgreSQL: Confirmado ENTRYPOINT ["/start.sh"] para sobrescribir el entrypoint de la base. Motivo: Mantener la herencia de seguridad y evitar comandos heredados no deseados.
+
+Revisión de manifiestos Helm/Kubernetes: Verificado que no hay referencias a docker-entrypoint.sh en los YAML ni en los scripts de replicación. Motivo: Documentar que la causa del error no está en los manifiestos, sino en la cadena de herencia de la imagen.
+
+Documentación de troubleshooting: Se documenta el proceso de refuerzo y verificación para futuras incidencias.
+
+Fecha: 5 de marzo de 2026
+
+Copia este bloque y pégalo al final de tu README.
+
+
+
