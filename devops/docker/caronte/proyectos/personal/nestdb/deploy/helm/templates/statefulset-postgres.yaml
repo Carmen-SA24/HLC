@@ -28,7 +28,7 @@ spec:
               if [ -f /scripts/setup-replication.sh ]; then
                 bash /scripts/setup-replication.sh
               fi
-              exec docker-entrypoint.sh postgres
+              # El entrypoint ya está gestionado por start.sh en la imagen custom
           ports:
             - containerPort: {{ .Values.postgres.service.port }}
           env:
