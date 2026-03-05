@@ -55,9 +55,6 @@ main(){
     
     echo "INFO: Base de datos 'nestapi_db' y usuario 'admin' configurados correctamente." >> /root/logs/informe.log
 
-    # Iniciar SSH en segundo plano (si se requiere)
-    /usr/sbin/sshd -D &
-
     # Ejecutar PostgreSQL en primer plano para que el pod se mantenga vivo
     exec su - postgres -c "postgres -D /var/lib/postgresql/data"
 }
