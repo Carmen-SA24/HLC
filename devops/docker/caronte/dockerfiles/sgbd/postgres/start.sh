@@ -85,7 +85,10 @@ main(){
     # --- FIN BLOQUE REPLICACIÓN STREAMING ---
 
     # Ejecutar PostgreSQL en primer plano para que el pod se mantenga vivo
-    exec su - postgres -c "postgres -D /var/lib/postgresql/data"
+    exec su - postgres -c "postgres -D /var/lib/postgresql/data" || {
+        echo "ERROR: Falló el arranque de PostgreSQL. El pod se mantiene vivo para evitar entrypoint heredado." >> /root/logs/informe.log
+        tail -f /dev/null
+    }
 }
 
 # Ejecutar funcion principal
