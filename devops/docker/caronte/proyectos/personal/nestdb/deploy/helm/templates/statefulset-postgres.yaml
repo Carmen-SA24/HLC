@@ -4,8 +4,6 @@ metadata:
   name: statefull-{{ .Values.postgres.name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  # serviceName debe apuntar al Service headless (ClusterIP: None)
-  # Esto permite DNS: statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local
   serviceName: {{ .Values.postgres.name }}
   replicas: {{ .Values.postgres.replicas | default 2 }}
   selector:
@@ -20,25 +18,6 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app: {{ .Values.postgres.name }}
     spec:
-      # El pod-1 no arranca hasta que pod-0 este corriendo
-      # (garantizado por StatefulSet orderedReady)
-      initContainers:
-        - name: setup-replication
-          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
-          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
-          command: ["/bin/bash", "/scripts/setup-replication.sh"]
-          env:
-            - name: POSTGRES_DB
-              value: {{ .Values.postgres.auth.database | quote }}
-            - name: POSTGRES_USER
-              value: {{ .Values.postgres.auth.username | quote }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgres.auth.password | quote }}
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/postgresql
-            - name: replication-scripts
-              mountPath: /scripts
       containers:
         - name: {{ .Values.postgres.name }}
           image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
@@ -55,36 +34,21 @@ spec:
               value: {{ .Values.postgres.auth.password | quote }}
             - name: USUARIO
               value: "admin-pod"
-          # Readiness: solo acepta trafico cuando PostgreSQL responde
           readinessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - {{ .Values.postgres.auth.username | quote }}
-            initialDelaySeconds: 15
+              command: ["pg_isready", "-U", {{ .Values.postgres.auth.username | quote }}]
+            initialDelaySeconds: 20
             periodSeconds: 10
             failureThreshold: 6
-          # Liveness: reinicia el pod si PostgreSQL deja de responder
           livenessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - {{ .Values.postgres.auth.username | quote }}
-            initialDelaySeconds: 30
+              command: ["pg_isready", "-U", {{ .Values.postgres.auth.username | quote }}]
+            initialDelaySeconds: 40
             periodSeconds: 15
             failureThreshold: 4
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql
-            - name: replication-scripts
-              mountPath: /scripts
-      volumes:
-        - name: replication-scripts
-          configMap:
-            name: postgres-replication-script
-            defaultMode: 0755
   volumeClaimTemplates:
     - metadata:
         name: data
