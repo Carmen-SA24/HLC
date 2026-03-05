@@ -30,9 +30,9 @@ postgres:
   name: nestapi-postgres
   replicas: 2
   image:
-    repository: carmen24/postgres-ciber
-    tag: "latest"
-    pullPolicy: Always
+    repository: postgres
+    tag: "15"
+    pullPolicy: IfNotPresent
   service:
     port: 5432
   auth:

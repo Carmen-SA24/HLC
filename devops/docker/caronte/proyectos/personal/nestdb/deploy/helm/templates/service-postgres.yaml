@@ -9,7 +9,6 @@ spec:
     app: {{ .Values.postgres.name }}
     app.kubernetes.io/component: postgres
     app.kubernetes.io/instance: {{ .Release.Name }}
-    statefulset.kubernetes.io/pod-name: statefull-{{ .Values.postgres.name }}-0
   ports:
     - name: pg
       port: {{ .Values.postgres.service.port }}
