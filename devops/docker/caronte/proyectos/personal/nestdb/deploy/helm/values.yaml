@@ -28,6 +28,7 @@ ingress:
 
 postgres:
   name: nestapi-postgres
+  replicas: 2
   image:
     repository: carmen24/postgres-ciber
     tag: "latest"

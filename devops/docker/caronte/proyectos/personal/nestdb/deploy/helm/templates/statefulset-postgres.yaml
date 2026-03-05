@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   serviceName: {{ .Values.postgres.name }}
-  replicas: 1
+  replicas: {{ .Values.postgres.replicas | default 1 }}
   selector:
     matchLabels:
       app: {{ .Values.postgres.name }}
