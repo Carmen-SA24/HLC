@@ -188,6 +188,12 @@ setup_replica(){
     # Asegurar que standby.signal existe (marca este postgres como replica)
     touch $PGDATA_DIR/standby.signal
 
+    # CRITICO: pg_basebackup corre como root → archivos son de root
+    # PostgreSQL se ejecuta como usuario 'postgres' → Permission denied sin esto
+    chown -R postgres:postgres $PGDATA_DIR
+    chmod 700 $PGDATA_DIR
+    echo "INFO: [REPLICA] Permisos de PGDATA corregidos para usuario postgres." >> $LOG
+
     # Iniciar PostgreSQL como replica (standby)
     echo "INFO: [REPLICA] Arrancando PostgreSQL en modo standby..." >> $LOG
     service postgresql start
