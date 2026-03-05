@@ -1,8 +1,42 @@
+---
+# Service HEADLESS (ClusterIP: None)
+# Permite resolver los pods del StatefulSet por DNS:
+#   statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local  <- PRIMARY
+#   statefull-nestapi-postgres-1.nestapi-postgres.nest.svc.cluster.local  <- REPLICA
+# Este service lo usa el StatefulSet (serviceName) y la logica de replicacion.
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.postgres.name }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.postgres.name }}
+    app.kubernetes.io/component: postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  clusterIP: None   # <-- HEADLESS: necesario para DNS entre pods del StatefulSet
+  selector:
+    app: {{ .Values.postgres.name }}
+    app.kubernetes.io/component: postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: pg
+      port: {{ .Values.postgres.service.port }}
+      targetPort: 5432
+---
+# Service normal (con IP) para que NestAPI conecte a PostgreSQL.
+# Enruta solo al PRIMARY (pod-0) ya que la app escribe en la BD.
+# Si el primary cae, Kubernetes redirigira al pod disponible.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.name }}-rw
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.postgres.name }}
+    app.kubernetes.io/component: postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   type: ClusterIP
   selector:

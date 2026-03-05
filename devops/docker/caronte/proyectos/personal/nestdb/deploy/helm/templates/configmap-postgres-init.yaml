@@ -2,46 +2,84 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-replication-script
-  namespace: {{ .Release.Namespace }}
+  namespace: { { .Release.Namespace } }
 data:
+  # ---------------------------------------------------------------
+  # setup-replication.sh
+  # Ejecutado por el StatefulSet como command/args.
+  # Detecta si el pod es PRIMARY (ordinal 0) o REPLICA (ordinal 1+)
+  # y configura la replicacion streaming de PostgreSQL.
+  # ---------------------------------------------------------------
   setup-replication.sh: |
     #!/bin/bash
     set -e
+
     HOSTNAME=$(hostname)
     ORDINAL=${HOSTNAME##*-}
-    PGDATA="/var/lib/postgresql/data"
-    
-    echo "=== Setup PostgreSQL Replication ==="
-    echo "Pod: $HOSTNAME, Ordinal: $ORDINAL"
-    
+    # Ruta real de configuracion dentro del contenedor
+    PGCONF_DIR=$(ls -d /etc/postgresql/*/main 2>/dev/null | head -n1)
+    # PGDATA real (donde estan los ficheros de datos)
+    PG_VERSION=$(ls /etc/postgresql/ | head -n1)
+    PGDATA="/var/lib/postgresql/${PG_VERSION}/main"
+    PRIMARY_SVC="statefull-{{ .Values.postgres.name }}-0.{{ .Values.postgres.name }}.{{ .Release.Namespace }}.svc.cluster.local"
+    LOG=/root/logs/informe.log
+
+    mkdir -p /root/logs && touch $LOG
+    echo "=== setup-replication.sh | Pod: $HOSTNAME | Ordinal: $ORDINAL ===" >> $LOG
+
     if [ "$ORDINAL" = "0" ]; then
-      echo "*** PRIMARY ***"
-      if [ -s "$PGDATA/PG_VERSION" ]; then
-        cat >> $PGDATA/postgresql.conf <<'EOFPG'
-    wal_level = replica
-    max_wal_senders = 5
-    wal_keep_size = 128
-    hot_standby = on
-    EOFPG
-        cat >> $PGDATA/pg_hba.conf <<'EOFHBA'
-    host replication all all md5
-    EOFHBA
-        echo "Primary configured"
-      fi
+      # =================================
+      # PRIMARY: habilitar WAL replication
+      # =================================
+      echo "[PRIMARY] Configurando postgresql.conf para replicacion..." >> $LOG
+
+      for PARAM in "wal_level = replica" "max_wal_senders = 5" "wal_keep_size = 128" "hot_standby = on"; do
+        KEY=$(echo $PARAM | cut -d= -f1 | tr -d ' ')
+        grep -q "^${KEY}" $PGCONF_DIR/postgresql.conf && \
+          sed -i "s/^${KEY}.*/${PARAM}/" $PGCONF_DIR/postgresql.conf || \
+          echo "$PARAM" >> $PGCONF_DIR/postgresql.conf
+      done
+
+      # Permitir replicacion desde cualquier IP
+      grep -q "^host.*replication" $PGCONF_DIR/pg_hba.conf || \
+        echo "host    replication     all             0.0.0.0/0               md5" >> $PGCONF_DIR/pg_hba.conf
+
+      echo "[PRIMARY] Configuracion WAL lista." >> $LOG
+
     else
-      echo "*** REPLICA ***"
-      PRIMARY="statefull-{{ .Values.postgres.name }}-0.{{ .Values.postgres.name }}.{{ .Release.Namespace }}.svc.cluster.local"
-      
-      if [ ! -s "$PGDATA/PG_VERSION" ]; then
-        echo "Waiting for Primary..."
-        for i in {1..30}; do
-          pg_isready -h $PRIMARY -p 5432 -U ${POSTGRES_USER} && break
-          sleep 5
-        done
-        
-        rm -rf $PGDATA/*
-        echo "Copying from Primary..."
-        PGPASSWORD=${POSTGRES_PASSWORD} pg_basebackup -h $PRIMARY -D $PGDATA -U ${POSTGRES_USER} -v -P -X stream -R
-        echo "Replica configured"
+      # =================================
+      # REPLICA: esperar al primary y hacer pg_basebackup
+      # =================================
+      echo "[REPLICA] Esperando al PRIMARY ($PRIMARY_SVC)..." >> $LOG
+
+      for i in $(seq 1 60); do
+        pg_isready -h $PRIMARY_SVC -p 5432 -U ${POSTGRES_USER} 2>/dev/null && break
+        echo "[REPLICA] Intento $i/60 - Primary no disponible. Esperando 5s..." >> $LOG
+        sleep 5
+      done
+
+      if ! pg_isready -h $PRIMARY_SVC -p 5432 -U ${POSTGRES_USER} 2>/dev/null; then
+        echo "[REPLICA] ERROR: Primary no disponible. Abortando." >> $LOG
+        exit 1
       fi
+
+      echo "[REPLICA] Primary disponible. Ejecutando pg_basebackup..." >> $LOG
+
+      # Parar postgresql si estuviera corriendo
+      service postgresql stop 2>/dev/null || true
+
+      # Limpiar PGDATA para recibir la copia limpia del primary
+      rm -rf ${PGDATA}/*
+
+      # Clonar datos del primary (-R genera standby.signal + primary_conninfo)
+      PGPASSWORD=${POSTGRES_PASSWORD} pg_basebackup \
+        -h $PRIMARY_SVC \
+        -D $PGDATA \
+        -U ${POSTGRES_USER} \
+        -v -P -X stream -R
+
+      # Asegurar marcador de standby
+      touch ${PGDATA}/standby.signal
+
+      echo "[REPLICA] pg_basebackup completado. Pod arrancara como standby." >> $LOG
     fi

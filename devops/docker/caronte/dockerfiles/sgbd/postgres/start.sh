@@ -1,94 +1,175 @@
 #!/bin/bash
-# Script de inicio para PostgreSQL con configuracion SSH heredada
+# Script de inicio para PostgreSQL con replicacion streaming y seguridad heredada
+# Pod-0 = PRIMARY (lectura/escritura)
+# Pod-1+ = REPLICA (sincronizada desde primary via WAL)
+
 set -e
 
 # Cargar funciones de configuracion base
 source /root/admin/base/usuarios/mainUsuarios.sh
 source /root/admin/base/ssh/mainSsh.sh
 
-main(){
-    # Crear directorio de logs
-    mkdir -p /root/logs
-    touch /root/logs/informe.log
+# -------------------------------------------------------
+# Variables globales
+# -------------------------------------------------------
+PGCONF_DIR=$(ls -d /etc/postgresql/*/main 2>/dev/null | head -n1)
+PGDATA_SVC="$PGCONF_DIR"          # Donde postgresql.conf / pg_hba.conf
+PGDATA_DIR="/var/lib/postgresql/$(ls /etc/postgresql/ 2>/dev/null | head -n1)/main"
+LOG=/root/logs/informe.log
 
-    echo "INFO: Iniciando configuracion de usuario..." >> /root/logs/informe.log
-    
-    # Gestion de usuario
+# Detectar ordinal del pod (0 = primary, 1+ = replica)
+ORDINAL=$(hostname | awk -F'-' '{print $NF}')
+PRIMARY_SVC="statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local"
+
+main(){
+    # -------------------------------------------------------
+    # 1. Logs y usuario del sistema
+    # -------------------------------------------------------
+    mkdir -p /root/logs
+    touch $LOG
+    mkdir -p /run/sshd
+
+    echo "INFO: === Iniciando pod PostgreSQL (ordinal=$ORDINAL) ===" >> $LOG
+
+    # Gestion de usuario del sistema
     set +e
     newUser
     resuser=$?
     set -e
-
-    # Configurar sudo si el usuario fue creado
     if [ "$resuser" -eq 0 ]; then
-        echo "INFO: Usuario creado. Configurando sudo..." >> /root/logs/informe.log
+        echo "INFO: Usuario creado. Configurando sudo..." >> $LOG
         configurar_sudo
     fi
-    
-    # Configurar SSH
-    echo "INFO: Configurando SSH..." >> /root/logs/informe.log
+
+    # Configurar SSH (herencia ubsecurity)
+    echo "INFO: Configurando SSH..." >> $LOG
     configurar_ssh
 
-    # Iniciar PostgreSQL
-    echo "INFO: Iniciando PostgreSQL..." >> /root/logs/informe.log
-    mkdir -p /run/sshd
-    
-    # Configurar PostgreSQL para escuchar en todas las interfaces
-    echo "INFO: Configurando PostgreSQL para aceptar conexiones externas..." >> /root/logs/informe.log
-    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf
-    sed -i "s/listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf
-    
-    # Permitir conexiones desde cualquier IP
-    echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/*/main/pg_hba.conf
-    
-    # Iniciar PostgreSQL en segundo plano
-    service postgresql start
+    # Iniciar SSH en background (mantiene acceso al pod)
+    /usr/sbin/sshd &
+    echo "INFO: SSH iniciado en background." >> $LOG
 
-    # Esperar a que PostgreSQL esté listo
-    echo "INFO: Esperando a que PostgreSQL esté listo..." >> /root/logs/informe.log
+    # -------------------------------------------------------
+    # 2. Configurar postgresql.conf base (escuchar en todas las IPs)
+    # -------------------------------------------------------
+    echo "INFO: Configurando postgresql.conf..." >> $LOG
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" $PGCONF_DIR/postgresql.conf
+    sed -i "s/listen_addresses = 'localhost'/listen_addresses = '*'/g" $PGCONF_DIR/postgresql.conf
+
+    # Asegurar acceso desde cualquier IP
+    grep -q "0.0.0.0/0" $PGCONF_DIR/pg_hba.conf || \
+        echo "host    all             all             0.0.0.0/0               md5" >> $PGCONF_DIR/pg_hba.conf
+
+    # -------------------------------------------------------
+    # 3. Configuracion segun rol (PRIMARY o REPLICA)
+    # -------------------------------------------------------
+    if [ "$ORDINAL" = "0" ]; then
+        echo "INFO: === Configurando como PRIMARY ===" >> $LOG
+        setup_primary
+    else
+        echo "INFO: === Configurando como REPLICA ===" >> $LOG
+        setup_replica
+    fi
+}
+
+# -------------------------------------------------------
+# Funcion PRIMARY
+# -------------------------------------------------------
+setup_primary(){
+    # Activar parametros de replicacion en postgresql.conf
+    grep -q "^wal_level" $PGCONF_DIR/postgresql.conf && \
+        sed -i 's/^wal_level.*/wal_level = replica/' $PGCONF_DIR/postgresql.conf || \
+        echo "wal_level = replica" >> $PGCONF_DIR/postgresql.conf
+
+    grep -q "^max_wal_senders" $PGCONF_DIR/postgresql.conf && \
+        sed -i 's/^max_wal_senders.*/max_wal_senders = 5/' $PGCONF_DIR/postgresql.conf || \
+        echo "max_wal_senders = 5" >> $PGCONF_DIR/postgresql.conf
+
+    grep -q "^wal_keep_size" $PGCONF_DIR/postgresql.conf && \
+        sed -i 's/^wal_keep_size.*/wal_keep_size = 128/' $PGCONF_DIR/postgresql.conf || \
+        echo "wal_keep_size = 128" >> $PGCONF_DIR/postgresql.conf
+
+    grep -q "^hot_standby" $PGCONF_DIR/postgresql.conf && \
+        sed -i 's/^hot_standby.*/hot_standby = on/' $PGCONF_DIR/postgresql.conf || \
+        echo "hot_standby = on" >> $PGCONF_DIR/postgresql.conf
+
+    # Permitir replicacion desde cualquier IP
+    grep -q "replication" $PGCONF_DIR/pg_hba.conf || \
+        echo "host    replication     all             0.0.0.0/0               md5" >> $PGCONF_DIR/pg_hba.conf
+
+    # Iniciar PostgreSQL
+    echo "INFO: [PRIMARY] Arrancando PostgreSQL..." >> $LOG
+    service postgresql start
     sleep 3
 
-    # Crear usuario y base de datos (si no existen)
-    echo "INFO: Configurando base de datos y usuario..." >> /root/logs/informe.log
-    su - postgres -c "psql -c \"SELECT 1 FROM pg_user WHERE usename = 'admin'\" | grep -q 1 || psql -c \"CREATE USER admin WITH PASSWORD 'password';\""
-    su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw nestapi_db || psql -c \"CREATE DATABASE nestapi_db OWNER admin;\""
-    
-    echo "INFO: Base de datos 'nestapi_db' y usuario 'admin' configurados correctamente." >> /root/logs/informe.log
+    # Crear usuario y base de datos
+    echo "INFO: [PRIMARY] Creando usuario admin y base de datos..." >> $LOG
+    su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='admin'\" | grep -q 1 || \
+        psql -c \"CREATE USER admin WITH PASSWORD 'password' REPLICATION;\""
+    su - postgres -c "psql -lqt | cut -d\| -f1 | grep -qw nestapi_db || \
+        psql -c \"CREATE DATABASE nestapi_db OWNER admin;\""
 
+    # Asegurar que el usuario admin tiene permisos de REPLICATION
+    su - postgres -c "psql -c \"ALTER USER admin WITH REPLICATION;\""
 
-    # --- INICIO BLOQUE REPLICACIÓN STREAMING ---
-    # Detectar si es pod-0 (PRIMARY) o pod-1 (REPLICA)
-    ORDINAL=$(hostname | awk -F'-' '{print $NF}')
-    PGDATA="/var/lib/postgresql/data"
+    echo "INFO: [PRIMARY] PostgreSQL listo. Base de datos y usuario configurados." >> $LOG
+    echo "INFO: [PRIMARY] Replicacion WAL habilitada." >> $LOG
 
-    if [ "$ORDINAL" = "0" ]; then
-        echo "Configurando como PRIMARY..."
-        # Configuración de postgresql.conf para replicación
-        sed -i '/^#*wal_level/c\wal_level = replica' /etc/postgresql/*/main/postgresql.conf
-        sed -i '/^#*max_wal_senders/c\max_wal_senders = 5' /etc/postgresql/*/main/postgresql.conf
-        sed -i '/^#*wal_keep_size/c\wal_keep_size = 128' /etc/postgresql/*/main/postgresql.conf
-        sed -i '/^#*hot_standby/c\hot_standby = on' /etc/postgresql/*/main/postgresql.conf
-        echo "host replication all all md5" >> /etc/postgresql/*/main/pg_hba.conf
-    else
-        echo "Configurando como REPLICA..."
-        PRIMARY_HOST="statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local"
-        # Esperar a que el primary esté disponible
-        for i in {1..30}; do
-            pg_isready -h $PRIMARY_HOST -p 5432 -U admin && break
-            sleep 5
-        done
-        # Limpiar directorio de datos
-        rm -rf $PGDATA/*
-        # Copiar datos desde Primary usando pg_basebackup
-        PGPASSWORD=password pg_basebackup -h $PRIMARY_HOST -D $PGDATA -U admin -v -P -X stream -R
-    fi
-    # --- FIN BLOQUE REPLICACIÓN STREAMING ---
+    # Mantener el pod vivo (SSH ya corre en background, PostgreSQL como servicio)
+    echo "INFO: [PRIMARY] Esperando indefinidamente (SSH activo)..." >> $LOG
+    tail -f /var/log/postgresql/*.log 2>/dev/null || tail -f /dev/null
+}
 
-    # Ejecutar PostgreSQL en primer plano para que el pod se mantenga vivo
-    exec su - postgres -c "postgres -D /var/lib/postgresql/data" || {
-        echo "ERROR: Falló el arranque de PostgreSQL. El pod se mantiene vivo para evitar entrypoint heredado." >> /root/logs/informe.log
+# -------------------------------------------------------
+# Funcion REPLICA
+# -------------------------------------------------------
+setup_replica(){
+    echo "INFO: [REPLICA] Esperando a que el PRIMARY este disponible..." >> $LOG
+
+    # Esperar hasta 5 minutos a que el primary arranque
+    for i in $(seq 1 60); do
+        pg_isready -h $PRIMARY_SVC -p 5432 -U admin 2>/dev/null && break
+        echo "INFO: [REPLICA] Intento $i/60 - Primary no disponible aun. Esperando 5s..." >> $LOG
+        sleep 5
+    done
+
+    if ! pg_isready -h $PRIMARY_SVC -p 5432 -U admin 2>/dev/null; then
+        echo "ERROR: [REPLICA] Primary no disponible despues de 5 minutos. Abortando." >> $LOG
         tail -f /dev/null
-    }
+        exit 1
+    fi
+
+    echo "INFO: [REPLICA] Primary disponible. Iniciando pg_basebackup..." >> $LOG
+
+    # Detener PostgreSQL si estaba corriendo
+    service postgresql stop 2>/dev/null || true
+
+    # Limpiar directorio de datos para recibir la copia del primary
+    rm -rf $PGDATA_DIR/*
+
+    # Copiar datos del primary (incluye postgresql.conf, pg_hba.conf, WAL)
+    # -R genera automaticamente standby.signal y primary_conninfo
+    PGPASSWORD=password pg_basebackup \
+        -h $PRIMARY_SVC \
+        -D $PGDATA_DIR \
+        -U admin \
+        -v -P \
+        -X stream \
+        -R
+
+    echo "INFO: [REPLICA] pg_basebackup completado." >> $LOG
+
+    # Asegurar que standby.signal existe (marca este postgres como replica)
+    touch $PGDATA_DIR/standby.signal
+
+    # Iniciar PostgreSQL como replica (standby)
+    echo "INFO: [REPLICA] Arrancando PostgreSQL en modo standby..." >> $LOG
+    service postgresql start
+
+    echo "INFO: [REPLICA] PostgreSQL standby activo. Sincronizado con PRIMARY." >> $LOG
+
+    # Mantener el pod vivo
+    tail -f /var/log/postgresql/*.log 2>/dev/null || tail -f /dev/null
 }
 
 # Ejecutar funcion principal
