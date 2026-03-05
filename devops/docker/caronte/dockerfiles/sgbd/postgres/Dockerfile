@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN /usr/pgadmin4/bin/setup-web.sh --yes || true
 
-COPY start.sh /start.sh
+COPY dockerfiles/sgbd/postgres/start.sh /start.sh
 RUN chmod +x /start.sh
 
 EXPOSE 5432 80 22
