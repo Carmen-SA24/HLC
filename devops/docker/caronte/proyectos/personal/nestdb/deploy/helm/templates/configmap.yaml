@@ -4,9 +4,10 @@ metadata:
   name: config-{{ .Values.app.name }}
   namespace: {{ .Release.Namespace }}
 data:
-  # Apunta al service -rw (ClusterIP normal) no al headless
-  # Esto garantiza que NestAPI siempre conecte a un pod PostgreSQL disponible
-  DB_HOST: "{{ .Values.postgres.name }}-rw"
+  # Apunta DIRECTAMENTE al pod-0 (PRIMARY) via DNS headless del StatefulSet
+  # El service -rw balanceaba entre primary y replica (read-only) → 500 en escrituras
+  # Con el DNS headless, siempre llega al primary aunque el pod se reinicie
+  DB_HOST: "statefull-{{ .Values.postgres.name }}-0.{{ .Values.postgres.name }}.{{ .Release.Namespace }}.svc.cluster.local"
   DB_PORT: {{ .Values.postgres.service.port | quote }}
   DB_NAME: {{ .Values.postgres.auth.database | quote }}
   DB_USERNAME: {{ .Values.postgres.auth.username | quote }}
