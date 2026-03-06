@@ -2,17 +2,19 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-{{ .Values.app.name }}
-  namespace: {{ .Release.Namespace }}
+  namespace: { { .Release.Namespace } }
 data:
-  # Apunta DIRECTAMENTE al pod-0 (PRIMARY) via DNS headless del StatefulSet
-  # El service -rw balanceaba entre primary y replica (read-only) → 500 en escrituras
-  # Con el DNS headless, siempre llega al primary aunque el pod se reinicie
-  DB_HOST: "statefull-{{ .Values.postgres.name }}-0.{{ .Values.postgres.name }}.{{ .Release.Namespace }}.svc.cluster.local"
-  DB_PORT: {{ .Values.postgres.service.port | quote }}
-  DB_NAME: {{ .Values.postgres.auth.database | quote }}
-  DB_USERNAME: {{ .Values.postgres.auth.username | quote }}
-  DB_PASSWORD: {{ .Values.postgres.auth.password | quote }}
-  PORT: {{ .Values.app.container.port | quote }}
-  USUARIO: {{ .Values.app.container.user | quote }}
-  PORT_SSH: {{ .Values.app.container.sshPort | quote }}
+  # DB_HOST usa el service -rw que balancea entre pods READY.
+  # Cuando pod-0 cae (no está Ready), el service envía tráfico a pod-1 (hot standby).
+  # Pod-1 puede servir lecturas (GET) → la página sigue mostrando datos sin interrupción.
+  # ⚠️  Escrituras (POST/PUT/DELETE) fallarán durante la caída del primary (pod-1 es read-only).
+  DB_HOST: "{{ .Values.postgres.name }}-rw"
+
+  DB_PORT: { { .Values.postgres.service.port | quote } }
+  DB_NAME: { { .Values.postgres.auth.database | quote } }
+  DB_USERNAME: { { .Values.postgres.auth.username | quote } }
+  DB_PASSWORD: { { .Values.postgres.auth.password | quote } }
+  PORT: { { .Values.app.container.port | quote } }
+  USUARIO: { { .Values.app.container.user | quote } }
+  PORT_SSH: { { .Values.app.container.sshPort | quote } }
   DB_SYNC: "true"
