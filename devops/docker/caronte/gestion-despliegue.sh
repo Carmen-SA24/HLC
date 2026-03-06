@@ -58,9 +58,9 @@ menu() {
     echo "  8) Verificar replicación PostgreSQL activa"
     echo ""
     echo -e "  ${BOLD}── PARTE 4: Alta Disponibilidad ────────────────────${NC}"
-    echo "  9) HA TEST: Eliminar pod NestAPI (Deployment)"
-    echo " 10) HA TEST: Eliminar PRIMARY PostgreSQL (pod-0)"
-    echo " 11) HA TEST: Eliminar REPLICA PostgreSQL (pod-1)"
+    echo "  9) TEST: Eliminar pod NestAPI (Deployment)"
+    echo " 10) TEST: Eliminar PRIMARY PostgreSQL (pod-0)"
+    echo " 11) TEST: Eliminar REPLICA PostgreSQL (pod-1)"
     echo ""
     echo "  0) Salir"
     sep
@@ -205,7 +205,7 @@ case_demo() {
 
     # ── PARTE 4: Alta Disponibilidad ────────────────────────
     9)
-        title "HA TEST: Eliminar pod de NestAPI (Deployment)"
+        title "TEST: Eliminar pod de NestAPI (Deployment)"
         info "Los Deployments garantizan siempre el número de réplicas configurado."
         info "Al eliminar un pod, el Deployment crea uno nuevo automáticamente."
         echo ""
@@ -226,7 +226,7 @@ case_demo() {
         ;;
 
     10)
-        title "HA TEST: Eliminar PRIMARY PostgreSQL (pod-0)"
+        title "TEST: Eliminar PRIMARY PostgreSQL (pod-0)"
         info "El service -rw enruta a pod-1 (hot standby) cuando pod-0 no está Ready."
         info "La API debe seguir respondiendo SIN interrupciones."
         echo ""
@@ -236,7 +236,7 @@ case_demo() {
         info "API ANTES:"
         cmd curl -s -o /dev/null -w "  HTTP %{http_code}\n" "$API_NEST/pokemon"
         echo ""
-        echo -e "  ${YELLOW}⚠  Prepara el navegador con $API_NEST/pokemon en pantalla paralela.${NC}"
+        echo -e "  ${YELLOW}⚠  Prepara el navegador con $API_NEST en pantalla paralela.${NC}"
         echo -ne "  ${CYAN}[Presiona ENTER para eliminar pod-0 y comenzar la prueba...]${NC}"
         read
         echo -e "  ${RED}Eliminando statefull-nestapi-postgres-0...${NC}"
@@ -252,7 +252,7 @@ case_demo() {
         ;;
 
     11)
-        title "HA TEST: Eliminar REPLICA PostgreSQL (pod-1)"
+        title "TEST: Eliminar REPLICA PostgreSQL (pod-1)"
         info "Pod-0 (PRIMARY) sigue activo. La API no se ve afectada en ningún momento."
         info "Kubernetes recrea pod-1 que hace pg_basebackup y vuelve sincronizado."
         echo ""
@@ -262,7 +262,7 @@ case_demo() {
         info "API ANTES:"
         cmd curl -s -o /dev/null -w "  HTTP %{http_code}\n" "$API_NEST/pokemon"
         echo ""
-        echo -e "  ${YELLOW}⚠  Prepara el navegador con $API_NEST/pokemon en pantalla paralela.${NC}"
+        echo -e "  ${YELLOW}⚠  Prepara el navegador con $API_NEST en pantalla paralela.${NC}"
         echo -ne "  ${CYAN}[Presiona ENTER para eliminar pod-1 y comenzar la prueba...]${NC}"
         read
         echo -e "  ${RED}Eliminando statefull-nestapi-postgres-1...${NC}"
