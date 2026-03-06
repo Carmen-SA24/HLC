@@ -47,3 +47,27 @@ spec:
     - name: pg
       port: {{ .Values.postgres.service.port }}
       targetPort: 5432
+---
+# Service NodePort SSH para acceder al pod postgres-0 desde fuera del cluster.
+# Permite: ssh -p 31536 admin-pod@<IP-VPS>
+# (equivalente al NodePort 31535 que usa NestAPI para su SSH)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.name }}-ssh
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.postgres.name }}
+    app.kubernetes.io/component: postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Values.postgres.name }}
+    app.kubernetes.io/component: postgres
+    statefulset.kubernetes.io/pod-name: statefull-{{ .Values.postgres.name }}-0
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22
+      nodePort: 31536
