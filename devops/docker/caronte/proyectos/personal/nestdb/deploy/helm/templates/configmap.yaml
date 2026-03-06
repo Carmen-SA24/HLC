@@ -4,10 +4,7 @@ metadata:
   name: config-{{ .Values.app.name }}
   namespace: {{ .Release.Namespace }}
 data:
-  # DB_HOST usa el service -rw que balancea entre pods READY.
-  # Cuando pod-0 cae (no está Ready), el service envía tráfico a pod-1 (hot standby).
-  # Pod-1 puede servir lecturas (GET) → la página sigue mostrando datos sin interrupción.
-  # ⚠️  Escrituras (POST/PUT/DELETE) fallarán durante la caída del primary (pod-1 es read-only).
+  # Servicio principal para PostgreSQL (-rw balancea tráfico según disponibilidad)
   DB_HOST: "{{ .Values.postgres.name }}-rw"
 
   DB_PORT: {{ .Values.postgres.service.port | quote }}

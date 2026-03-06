@@ -24,7 +24,7 @@ COPY ./proyectos/${PROYECTO}/package*.json /app/
 COPY ./proyectos/${PROYECTO}/tsconfig*.json /app/
 COPY ./proyectos/${PROYECTO}/nest-cli.json /app/
 
-# Instalar dependencias y compilar (AQUÍ ES DONDE AHORRAMOS TIEMPO LUEGO)
+# Instalar dependencias y compilar proyecto
 RUN npm install
 COPY ./proyectos/${PROYECTO}/src /app/src
 RUN npm run build

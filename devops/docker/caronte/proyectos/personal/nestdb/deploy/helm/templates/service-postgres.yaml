@@ -1,9 +1,6 @@
 ---
-# Service HEADLESS (ClusterIP: None)
-# Permite resolver los pods del StatefulSet por DNS:
-#   statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local  <- PRIMARY
-#   statefull-nestapi-postgres-1.nestapi-postgres.nest.svc.cluster.local  <- REPLICA
-# Este service lo usa el StatefulSet (serviceName) y la logica de replicacion.
+# Headless Service: Permite resolución DNS directa entre pods del StatefulSet
+# Necesario para la sincronización entre PRIMARY y REPLICA
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,9 +22,7 @@ spec:
       port: {{ .Values.postgres.service.port }}
       targetPort: 5432
 ---
-# Service normal (con IP) para que NestAPI conecte a PostgreSQL.
-# Enruta solo al PRIMARY (pod-0) ya que la app escribe en la BD.
-# Si el primary cae, Kubernetes redirigira al pod disponible.
+# Service Lectura/Escritura: Balancea el tráfico entre pods disponibles de PostgreSQL
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,9 +43,7 @@ spec:
       port: {{ .Values.postgres.service.port }}
       targetPort: 5432
 ---
-# Service NodePort SSH para acceder al pod postgres-0 desde fuera del cluster.
-# Permite: ssh -p 31536 admin-pod@<IP-VPS>
-# (equivalente al NodePort 31535 que usa NestAPI para su SSH)
+# Service NodePort: Expone acceso SSH externo exclusivo al pod principal de PostgreSQL
 apiVersion: v1
 kind: Service
 metadata:

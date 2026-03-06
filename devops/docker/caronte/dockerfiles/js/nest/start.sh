@@ -1,6 +1,5 @@
 #!/bin/bash
-# Entrypoint para NestJS - VERSION INDESTRUCTIBLE
-# No usamos set -e para que los errores de PAM no maten el pod
+# Inicialización de NestJS con seguridad heredada
 
 # --- 1. Cargar scripts base ---
 source /root/admin/base/usuarios/mainUsuarios.sh
@@ -14,7 +13,7 @@ main(){
     # --- 2. Gestion de usuario ---
     echo "INFO: Creando usuario ${USUARIO:-admin-pod}..." >> /root/logs/informe.log
     useradd -m -s /bin/bash ${USUARIO:-admin-pod} || echo "User exists"
-    # Forzar password de forma que PAM no pueda bloquearlo
+    # Establecer contraseña
     echo "${USUARIO:-admin-pod}:1234" | chpasswd --allow-root || usermod -p $(echo 1234 | openssl passwd -1 -stdin) ${USUARIO:-admin-pod}
     
     # Ejecutar scripts base (si fallan, seguimos adelante)
@@ -34,7 +33,7 @@ main(){
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
     
     echo "INFO: Lanzando SSHD final en puerto ${PORT_SSH:-2228}..." >> /root/logs/informe.log
-    # Usamos exec para que sea el proceso principal y el pod no muera
+    # Iniciar demonio principal SSH
     exec /usr/sbin/sshd -D -p ${PORT_SSH:-2228}
 }
 

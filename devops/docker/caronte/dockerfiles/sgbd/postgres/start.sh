@@ -1,7 +1,7 @@
 #!/bin/bash
-# Script de inicio para PostgreSQL con replicacion streaming y seguridad heredada
-# Pod-0 = PRIMARY (lectura/escritura)
-# Pod-1+ = REPLICA (sincronizada desde primary via WAL)
+# Script de PostgreSQL con replicación streaming heredando ubsecurity
+# PRIMARY = Nodo 0 (Lectura y Escritura)
+# REPLICA = Nodo 1+ (Sincronización exacta desde el Primary)
 
 set -e
 
@@ -50,7 +50,7 @@ main(){
     echo "INFO: SSH iniciado en background." >> $LOG
 
     # -------------------------------------------------------
-    # 2. Inicializar cluster PostgreSQL si no existe (PVC vacío)
+    # 2. Inicializar cluster PostgreSQL
     # -------------------------------------------------------
     PG_VERSION=$(ls /etc/postgresql/ | head -n1)
     PGDATA_REAL="/var/lib/postgresql/${PG_VERSION}/main"
@@ -60,8 +60,8 @@ main(){
         mkdir -p "$PGDATA_REAL"
         chown -R postgres:postgres /var/lib/postgresql
         chmod 700 "$PGDATA_REAL"
-        # initdb inicializa el directorio de datos directamente
-        # (pg_createcluster falla si la entrada en /etc/postgresql ya existe)
+        # Generar base de datos inicial vacía
+
         su - postgres -c "/usr/lib/postgresql/${PG_VERSION}/bin/initdb \
             -D ${PGDATA_REAL} \
             --locale=C.UTF-8 \
@@ -141,8 +141,8 @@ setup_primary(){
     echo "INFO: [PRIMARY] PostgreSQL listo. Base de datos y usuario configurados." >> $LOG
     echo "INFO: [PRIMARY] Replicacion WAL habilitada." >> $LOG
 
-    # Mantener el pod vivo (SSH ya corre en background, PostgreSQL como servicio)
-    echo "INFO: [PRIMARY] Esperando indefinidamente (SSH activo)..." >> $LOG
+    # Mantener el contenedor vivo
+    echo "INFO: [PRIMARY] En espera (SSH activo)..." >> $LOG
     tail -f /var/log/postgresql/*.log 2>/dev/null || tail -f /dev/null
 }
 
@@ -173,8 +173,7 @@ setup_replica(){
     # Limpiar directorio de datos para recibir la copia del primary
     rm -rf $PGDATA_DIR/*
 
-    # Copiar datos del primary (incluye postgresql.conf, pg_hba.conf, WAL)
-    # -R genera automaticamente standby.signal y primary_conninfo
+    # Copiar datos exactos del Primary y arrancar replicación
     PGPASSWORD=password pg_basebackup \
         -h $PRIMARY_SVC \
         -D $PGDATA_DIR \
@@ -188,8 +187,8 @@ setup_replica(){
     # Asegurar que standby.signal existe (marca este postgres como replica)
     touch $PGDATA_DIR/standby.signal
 
-    # CRITICO: pg_basebackup corre como root → archivos son de root
-    # PostgreSQL se ejecuta como usuario 'postgres' → Permission denied sin esto
+    # Corregir permisos generados por el backup
+
     chown -R postgres:postgres $PGDATA_DIR
     chmod 700 $PGDATA_DIR
     echo "INFO: [REPLICA] Permisos de PGDATA corregidos para usuario postgres." >> $LOG
