@@ -34,6 +34,9 @@ spec:
               value: {{ .Values.postgres.auth.password | quote }}
             - name: USUARIO
               value: "admin-pod"
+            - name: PASSWORD
+              value: "1234"
+
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "postgres"]
