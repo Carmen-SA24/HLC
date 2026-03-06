@@ -348,122 +348,227 @@ kubectl logs -f statefull-nestapi-postgres-0 -n nest
 
 ## ⚠️ Problema Detectado: Réplica de PostgreSQL Arrancaba Vacía
 
-Al probar la alta disponibilidad de PostgreSQL con 2 réplicas en el StatefulSet, se detectó que al eliminar y recrear el pod-1 (réplica), éste arrancaba **vacío**, sin los datos del primario.
-
-**Causa raíz:** El `start.sh` tenía tres errores críticos:
-
-1. Usaba dos PGDATA distintos: primero `service postgresql start` (usa `/etc/postgresql/*/main/`) y luego intentaba `postgres -D /var/lib/postgresql/data` (directorio diferente → fallo)
-2. El usuario `admin` no tenía permisos `REPLICATION`, por lo que `pg_basebackup` era rechazado
-3. La réplica ejecutaba `pg_basebackup` **después** de haber arrancado PostgreSQL, siendo imposible limpiar el PGDATA
+Al probar la alta disponibilidad de PostgreSQL con 2 réplicas en el StatefulSet, al eliminar el pod-1 (réplica) y que Kubernetes lo recreara, el pod nuevo arrancaba **vacío**, sin los datos del primario.
 
 ---
 
-## Solución Implementada: Alta Disponibilidad PostgreSQL (Marzo 2026)
+## Solución Implementada: Alta Disponibilidad PostgreSQL (5-6 Marzo 2026)
 
 ### Arquitectura Final
 
 ```
 Pod-0: statefull-nestapi-postgres-0  →  PRIMARY  (lectura/escritura + WAL sender)
-Pod-1: statefull-nestapi-postgres-1  →  REPLICA  (hot standby, sincronizada via WAL)
+Pod-1: statefull-nestapi-postgres-1  →  REPLICA  (hot standby, sincronizada via WAL streaming)
 
-NestAPI  →  service nestapi-postgres-rw  →  cualquier pod disponible (port 5432)
-Pod-1    →  pg_basebackup               →  statefull-nestapi-postgres-0.<headless-svc>.nest.svc.cluster.local
+NestAPI  →  statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local (DNS headless)
+Pod-1    →  pg_basebackup  →  pod-0 (clona datos al arrancar)
 ```
 
-### Cambios Aplicados
+---
 
-#### 1. `dockerfiles/sgbd/postgres/start.sh` — Reescritura completa
+### Bugs Encontrados y Soluciones
 
-- Detecta el rol del pod por ordinal del hostname: `ORDINAL=$(hostname | awk -F'-' '{print $NF}')`
-- **Pod-0 (PRIMARY):**
-  - Configura `wal_level=replica`, `max_wal_senders=5`, `wal_keep_size=128`, `hot_standby=on`
-  - Crea el usuario `admin` con `REPLICATION` explícito: `ALTER USER admin WITH REPLICATION;`
-  - Inicia SSH en background y PostgreSQL como servicio
-- **Pod-1 (REPLICA):**
-  - Espera hasta 5 minutos a que el primary esté disponible (`pg_isready`)
-  - Para PostgreSQL si estuviera corriendo
-  - Limpia PGDATA y ejecuta `pg_basebackup -R` (genera `standby.signal` + `primary_conninfo`)
-  - Arranca PostgreSQL en modo standby automáticamente
+#### Bug 1 — Dockerfile: ruta de COPY incorrecta
 
-#### 2. `templates/configmap-postgres-init.yaml` — Script corregido
+**Síntoma:** `ERROR: failed to solve: "/start.sh": not found`
+**Causa:** `COPY start.sh /start.sh` busca en el contexto raíz del build (`.`), pero el fichero está en `dockerfiles/sgbd/postgres/start.sh`
+**Solución:**
 
-- Usa `PGCONF_DIR=$(ls -d /etc/postgresql/*/main | head -n1)` para detectar la ruta real de configuración
-- Usa variables de entorno del pod (`$POSTGRES_USER`, `$POSTGRES_PASSWORD`)
-- El primary: configura WAL y permite replicación en `pg_hba.conf`
-- La réplica: ejecuta `pg_basebackup` con `-R` para configuración automática de standby
-
-#### 3. `templates/statefulset-postgres.yaml` — initContainer
-
-- El script de replicación se ejecuta como **initContainer** (antes del contenedor principal)
-- Añadidos `readinessProbe` y `livenessProbe` con `pg_isready`
-- El pod-1 no arranca hasta que pod-0 esté `Ready` (garantía del StatefulSet con `OrderedReady`)
-
-#### 4. `templates/service-postgres.yaml` — Dos services
-
-| Service               | Tipo                         | Uso                                                                   |
-| --------------------- | ---------------------------- | --------------------------------------------------------------------- |
-| `nestapi-postgres`    | `ClusterIP: None` (headless) | DNS entre pods del StatefulSet (`pod-0.nestapi-postgres.nest.svc...`) |
-| `nestapi-postgres-rw` | `ClusterIP` normal           | NestAPI conecta aquí → siempre llega a un pod disponible              |
-
-#### 5. `templates/configmap.yaml` — DB_HOST actualizado
-
-```yaml
-DB_HOST: "nestapi-postgres-rw" # Antes: nestapi-postgres (headless → no funcionaba bien)
+```dockerfile
+# Antes:
+COPY start.sh /start.sh
+# Después:
+COPY dockerfiles/sgbd/postgres/start.sh /start.sh
 ```
 
-### Comandos para Redesplegar
+**Fichero:** `dockerfiles/sgbd/postgres/Dockerfile`
+
+---
+
+#### Bug 2 — PVC vacío: PGDATA no existe al arrancar
+
+**Síntoma:** `Error: /var/lib/postgresql/16/main is not accessible or does not exist`
+**Causa:** El PVC se monta en `/var/lib/postgresql` vacío, sobreescribiendo el PGDATA pre-inicializado de la imagen Docker. `service postgresql start` falla porque el directorio de datos no existe.
+**Solución:** Detectar si PGDATA está vacío y usar `initdb` para inicializarlo:
 
 ```bash
-# En la VPS - reconstruir imagen con el start.sh corregido
+PG_VERSION=$(ls /etc/postgresql/ | head -n1)
+PGDATA_REAL="/var/lib/postgresql/${PG_VERSION}/main"
+if [ ! -f "$PGDATA_REAL/PG_VERSION" ]; then
+    mkdir -p "$PGDATA_REAL"
+    chown -R postgres:postgres /var/lib/postgresql
+    chmod 700 "$PGDATA_REAL"
+    su - postgres -c "/usr/lib/postgresql/${PG_VERSION}/bin/initdb \
+        -D ${PGDATA_REAL} --locale=C.UTF-8 --auth-local=trust --auth-host=md5"
+fi
+```
+
+**Fichero:** `dockerfiles/sgbd/postgres/start.sh`
+
+---
+
+#### Bug 3 — pg_hba.conf: entrada de replicación para 0.0.0.0/0 nunca se añadía
+
+**Síntoma:** `FATAL: no pg_hba.conf entry for replication connection from host "10.1.x.x"`
+**Causa:** El `grep "replication"` matcheaba las líneas de localhost que trae Ubuntu por defecto (`host replication all 127.0.0.1/32`), así que la condición `||` nunca añadía la entrada para `0.0.0.0/0`.
+**Solución:** Cambiar el grep para buscar específicamente `0.0.0.0/0`:
+
+```bash
+# Antes (bug):
+grep -q "replication" $PGCONF_DIR/pg_hba.conf || \
+    echo "host replication all 0.0.0.0/0 md5" >> pg_hba.conf
+# Después (fix):
+grep -q "0.0.0.0/0.*replication\|replication.*0.0.0.0/0" $PGCONF_DIR/pg_hba.conf || \
+    echo "host    replication     all             0.0.0.0/0               md5" >> $PGCONF_DIR/pg_hba.conf
+```
+
+**Fichero:** `dockerfiles/sgbd/postgres/start.sh`
+
+---
+
+#### Bug 4 — pg_basebackup: archivos creados como root → Permission denied
+
+**Síntoma:** `FATAL: could not open file "/var/lib/postgresql/16/main/PG_VERSION": Permission denied`
+**Causa:** `pg_basebackup` corre como `root` (el usuario del contenedor), los archivos copiados son de root. `service postgresql start` arranca PostgreSQL como el usuario del SO `postgres`, que no puede leer archivos de root.
+**Solución:** Hacer `chown` después del basebackup:
+
+```bash
+PGPASSWORD=password pg_basebackup -h $PRIMARY_SVC -D $PGDATA_DIR -U admin -v -P -X stream -R
+
+# FIX: corregir propietario antes de arrancar PostgreSQL
+chown -R postgres:postgres $PGDATA_DIR
+chmod 700 $PGDATA_DIR
+```
+
+**Fichero:** `dockerfiles/sgbd/postgres/start.sh`
+
+---
+
+#### Bug 5 — Probes con -U admin fallaban por peer auth
+
+**Síntoma:** Logs llenos de `Peer authentication failed for user "admin"`
+**Causa:** `readinessProbe` y `livenessProbe` ejecutaban `pg_isready -U admin` como usuario `root` del contenedor. La autenticación `peer` comprueba que el usuario del SO coincida con el usuario de PostgreSQL (root ≠ admin → fallo).
+**Solución:** Cambiar las probes para usar el usuario `postgres` (que sí tiene peer auth):
+
+```yaml
+readinessProbe:
+  exec:
+    command: ["pg_isready", "-U", "postgres"]
+livenessProbe:
+  exec:
+    command: ["pg_isready", "-U", "postgres"]
+```
+
+**Fichero:** `deploy/helm/templates/statefulset-postgres.yaml`
+
+---
+
+#### Bug 6 — Service -rw balanceaba escrituras a la réplica (read-only)
+
+**Síntoma:** ~50% de las peticiones POST daban `500 Internal Server Error` de forma aleatoria
+**Causa:** El service `nestapi-postgres-rw` balanceaba entre pod-0 (PRIMARY, lectura/escritura) y pod-1 (REPLICA, **solo lectura**). Las escrituras que llegaban a pod-1 eran rechazadas por PostgreSQL.
+**Solución:** Apuntar NestAPI directamente al pod-0 via DNS headless del StatefulSet:
+
+```yaml
+# configmap.yaml - Antes:
+DB_HOST: "nestapi-postgres-rw"
+# Después:
+DB_HOST: "statefull-nestapi-postgres-0.nestapi-postgres.nest.svc.cluster.local"
+```
+
+**Fichero:** `deploy/helm/templates/configmap.yaml`
+
+---
+
+#### Bug 7 — Tras borrar PVCs, TypeORM no recrea las tablas si NestAPI ya llevaba horas corriendo
+
+**Síntoma:** API devuelve `500` con error `42P01` (tabla no existe) aunque la BD esté vacía y `DB_SYNC: "true"` esté configurado.
+**Causa:** TypeORM `synchronize: true` solo crea las tablas **una vez al arrancar**. Si los pods de NestAPI llevan horas corriendo y la BD se resetea (borrado de PVCs), TypeORM no vuelve a sincronizar.
+**Solución:** Reiniciar NestAPI después de borrar PVCs:
+
+```bash
+kubectl rollout restart deployment deploy-nestapi -n nest
+```
+
+---
+
+### Ficheros Modificados
+
+| Fichero                                              | Cambio                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dockerfiles/sgbd/postgres/Dockerfile`               | Ruta COPY corregida                                                                                     |
+| `dockerfiles/sgbd/postgres/start.sh`                 | Reescritura: initdb si PVC vacío, WAL config, pg_basebackup con chown, propio script de primary/replica |
+| `deploy/helm/templates/statefulset-postgres.yaml`    | Sin initContainer, probes con usuario postgres, replicas: 2                                             |
+| `deploy/helm/templates/service-postgres.yaml`        | Service headless (ClusterIP: None) para DNS entre pods                                                  |
+| `deploy/helm/templates/configmap.yaml`               | DB_HOST apunta a pod-0 directamente                                                                     |
+| `deploy/helm/templates/configmap-postgres-init.yaml` | **Eliminado** (duplicaba lógica ya en start.sh)                                                         |
+
+---
+
+### Comandos de Despliegue Completos
+
+```bash
 cd ~/devops/docker/caronte
 git pull origin main
 
+# Reconstruir imagen postgres (cuando se cambia start.sh)
 docker build -t carmen24/postgres-ciber:latest \
   --build-arg INICIALES=crsa \
   -f ./dockerfiles/sgbd/postgres/Dockerfile .
 docker push carmen24/postgres-ciber:latest
 
-# Borrar PVCs viejos (necesario para limpiar datos del intento anterior)
+# Solo si es necesario resetear la BD (borra todos los datos):
 kubectl delete statefulset statefull-nestapi-postgres -n nest
 kubectl delete pvc data-statefull-nestapi-postgres-0 -n nest
-kubectl delete pvc data-statefull-nestapi-postgres-1 -n nest   # si existe
+kubectl delete pvc data-statefull-nestapi-postgres-1 -n nest
 
-# Redesplegar con Helm
+# Redesplegar con Helm (cambios en templates/values)
 helm upgrade nestapi ./proyectos/personal/nestdb/deploy/helm -n nest
+
+# Reiniciar solo la réplica (nueva imagen sin tocar primary)
+kubectl delete pod statefull-nestapi-postgres-1 -n nest
+
+# Reiniciar NestAPI (necesario si se borraron PVCs para que TypeORM recree tablas)
+kubectl rollout restart deployment deploy-nestapi -n nest
 ```
-
-### Verificar que Funciona
-
-```bash
-# Ver los 2 pods de postgres levantados
-kubectl get pods -n nest
-# ESPERADO:
-# statefull-nestapi-postgres-0   1/1   Running   0   ...   <- PRIMARY
-# statefull-nestapi-postgres-1   1/1   Running   0   ...   <- REPLICA
-
-# Verificar replicación activa en el PRIMARY
-kubectl exec -it statefull-nestapi-postgres-0 -n nest -- \
-  su - postgres -c "psql -c 'SELECT * FROM pg_stat_replication;'"
-# ESPERADO: 1 fila con la replica conectada
-
-# PRUEBA DE ALTA DISPONIBILIDAD: eliminar pod-0
-kubectl delete pod statefull-nestapi-postgres-0 -n nest
-# Kubernetes lo recrea. Mientras tanto, la API sigue contestando gracias a pod-1.
-curl http://api.carmenasir.com/pokemon   # debe responder con datos
-
-# Ver que pod-0 se recrea solo
-kubectl get pods -n nest -w
-```
-
-### Resultado Esperado
-
-| Escenario            | Resultado                                                                            |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| Ambos pods corriendo | PRIMARY acepta escrituras, REPLICA sincronizada en tiempo real                       |
-| Pod-0 (primary) cae  | Kubernetes recrea pod-0; pod-1 sigue respondiendo lecturas; la app sigue funcionando |
-| Pod-1 (replica) cae  | Kubernetes recrea pod-1; hace `pg_basebackup` del primary y se sincroniza            |
-| NestAPI conecta      | Usa `nestapi-postgres-rw` → siempre llega a un pod disponible                        |
 
 ---
 
-**Documentación generada:** 5 de marzo de 2026
+### Prueba de Alta Disponibilidad
+
+```bash
+# 1. Verificar estado de los 2 pods
+kubectl get pods -n nest
+# statefull-nestapi-postgres-0   1/1   Running  ← PRIMARY
+# statefull-nestapi-postgres-1   1/1   Running  ← REPLICA
+
+# 2. Verificar replicación activa
+kubectl exec -it statefull-nestapi-postgres-0 -n nest -- \
+  su - postgres -c "psql -c 'SELECT client_addr, state FROM pg_stat_replication;'"
+# Debe mostrar 1 fila con la IP del pod-1
+
+# 3. Verificar que hay datos
+curl http://api.carmenasir.com/pokemon
+
+# 4. Eliminar el PRIMARY
+kubectl delete pod statefull-nestapi-postgres-0 -n nest
+
+# 5. Ver que Kubernetes lo recrea automáticamente (~30-60s de downtime)
+kubectl get pods -n nest -w
+
+# 6. Cuando pod-0 vuelva, los datos siguen intactos
+curl http://api.carmenasir.com/pokemon
+```
+
+### Comportamiento Esperado
+
+| Escenario            | Comportamiento                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| Ambos pods corriendo | PRIMARY acepta escrituras, REPLICA sincronizada en tiempo real vía WAL                         |
+| Pod-0 (primary) cae  | Kubernetes lo recrea en ~30-60s con datos del PVC intactos. Breve indisponibilidad de la API.  |
+| Pod-1 (replica) cae  | Kubernetes lo recrea, hace pg_basebackup desde pod-0 y se resincroniza. Sin impacto en la API. |
+| Se borran los PVCs   | Los datos SE PIERDEN. Hay que reenviar datos y hacer `rollout restart deploy-nestapi`.         |
+
+---
+
+**Documentación actualizada:** 6 de marzo de 2026
