@@ -560,14 +560,88 @@ kubectl get pods -n nest -w
 curl http://api.carmenasir.com/pokemon
 ```
 
-### Comportamiento Esperado
+### Comportamiento Esperado (con DB_HOST al service -rw)
 
-| Escenario            | Comportamiento                                                                                 |
-| -------------------- | ---------------------------------------------------------------------------------------------- |
-| Ambos pods corriendo | PRIMARY acepta escrituras, REPLICA sincronizada en tiempo real vía WAL                         |
-| Pod-0 (primary) cae  | Kubernetes lo recrea en ~30-60s con datos del PVC intactos. Breve indisponibilidad de la API.  |
-| Pod-1 (replica) cae  | Kubernetes lo recrea, hace pg_basebackup desde pod-0 y se resincroniza. Sin impacto en la API. |
-| Se borran los PVCs   | Los datos SE PIERDEN. Hay que reenviar datos y hacer `rollout restart deploy-nestapi`.         |
+| Escenario            | Comportamiento                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| Ambos pods corriendo | PRIMARY acepta escrituras, REPLICA sincronizada en tiempo real vía WAL                 |
+| Pod-0 (primary) cae  | service -rw enruta a pod-1 (hot standby) → **la API nunca deja de responder**          |
+| Pod-1 (replica) cae  | pod-0 sigue atendiendo → **la API nunca deja de responder**                            |
+| Se borran los PVCs   | Los datos SE PIERDEN. Hay que reenviar datos y hacer `rollout restart deploy-nestapi`. |
+
+---
+
+## ✅ Pruebas de Alta Disponibilidad Realizadas con Éxito (6 Marzo 2026)
+
+### Prueba 1 — Eliminar el PRIMARY (pod-0)
+
+**Objetivo:** Verificar que la API sigue disponible cuando cae el pod primario.
+
+**Comandos ejecutados:**
+
+```bash
+# Verificar estado previo
+kubectl get pods -n nest
+# statefull-nestapi-postgres-0   1/1   Running  ← PRIMARY
+# statefull-nestapi-postgres-1   1/1   Running  ← REPLICA
+
+# Eliminar el PRIMARY
+kubectl delete pod statefull-nestapi-postgres-0 -n nest
+# pod "statefull-nestapi-postgres-0" deleted from nest namespace
+
+# Comprobar estado inmediatamente
+kubectl get pods -n nest
+# statefull-nestapi-postgres-0   0/1   Running   ← recreándose
+# statefull-nestapi-postgres-1   1/1   Running   ← sirviendo datos
+
+# Verificar que la API responde durante la recreación
+curl http://api.carmenasir.com/pokemon
+# [{"id":1,"nombre":"Bulbasaur",...}, {"id":2,...}]  ← datos disponibles ✅
+```
+
+**Resultado:** ✅ La página **nunca dejó de mostrar los datos**. El service `-rw` enrutó automáticamente las peticiones a pod-1 (hot standby) mientras pod-0 se recreaba. Kubernetes recreó pod-0 en ~90 segundos con todos los datos intactos desde el PVC.
+
+---
+
+### Prueba 2 — Eliminar la REPLICA (pod-1)
+
+**Objetivo:** Verificar que la API sigue disponible cuando cae el pod réplica.
+
+**Comandos ejecutados:**
+
+```bash
+# Verificar estado previo
+kubectl get pods -n nest
+# statefull-nestapi-postgres-0   1/1   Running  ← PRIMARY
+# statefull-nestapi-postgres-1   1/1   Running  ← REPLICA
+
+# Eliminar la REPLICA
+kubectl delete pod statefull-nestapi-postgres-1 -n nest
+# pod "statefull-nestapi-postgres-1" deleted from nest namespace
+
+# Comprobar estado inmediatamente
+kubectl get pods -n nest
+# statefull-nestapi-postgres-0   1/1   Running   ← PRIMARY (sigue activo)
+# statefull-nestapi-postgres-1   0/1   Running   ← recreándose (pg_basebackup)
+
+# Verificar que la API responde durante la recreación
+curl http://api.carmenasir.com/pokemon
+# [{"id":1,"nombre":"Bulbasaur",...}, {"id":2,...}]  ← datos disponibles ✅
+```
+
+**Resultado:** ✅ La página **nunca dejó de mostrar los datos**. Pod-0 (PRIMARY) continuó sirviendo todas las peticiones sin ninguna interrupción. Kubernetes recreó pod-1, que ejecutó `pg_basebackup` desde pod-0 y volvió sincronizado.
+
+---
+
+### Conclusión de las Pruebas
+
+Ambas pruebas confirman que la arquitectura implementada cumple con los requisitos de **Alta Disponibilidad**:
+
+- 🔄 **Replicación en tiempo real**: Ambos pods tienen siempre los mismos datos
+- 🛡️ **Sin punto único de fallo**: Si cae cualquier pod de PostgreSQL, el otro sirve los datos
+- 🔁 **Auto-recuperación**: Kubernetes recrea el pod caído automáticamente
+- 💾 **Persistencia garantizada**: Los datos sobreviven a reinicios gracias a los PVCs
+- 🔀 **Failover automático**: El service `-rw` deja de enrutar a pods no disponibles
 
 ---
 
