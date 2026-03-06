@@ -234,17 +234,8 @@ kubectl get pods -n nest
 
 curl http://api.carmenasir.com/peliculas
 
-````
-Cada pod tiene:
-- Su propio contenedor aislado
-- Su propio usuario:
-  - **ppokemon**: `admin-pokemon`
-  - **nestapi**: `admin-pod`
-  - **postgres**: `admin-pod`
-- Sus propios procesos (Next.js, NestJS o PostgreSQL)
-- Herramientas de ciberseguridad heredadas de `ubsecurity`
-
 ---
+
 
 ## Por Qué Funcionó
 
@@ -253,7 +244,7 @@ Los templates de Helm usan variables dinámicas:
 ```yaml
 metadata:
   namespace: {{ .Release.Namespace }}
-````
+```
 
 Cuando ejecutas `helm install -n nest`, Helm sustituye automáticamente con "nest".
 
@@ -732,6 +723,66 @@ kubectl rollout restart deployment deploy-nestapi -n nest
 
 ✅ **Verificado:** La página muestra correctamente los 5 pokémon y las películas cargadas en la BD.
 
+
 ---
+### Filtro Global de Excepciones (AllExceptionsFilter) en NestJS
+
+Se añadió un filtro global de excepciones en el backend para mostrar mensajes claros cuando:
+- La base de datos no está disponible: "La base de datos no está disponible. Espera unos segundos e intenta de nuevo."
+- El backend está iniciando: "El backend está iniciando. Por favor, espera un momento."
+- Otros errores internos: "Error interno del servidor"
+
+**Archivos editados:**
+- `src/all-exceptions.filter.ts` (nuevo archivo)
+- `src/main.ts` (registro global del filtro)
+
+**Código añadido:**
+
+```typescript
+// src/all-exceptions.filter.ts
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Error interno del servidor';
+
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      message = exception.message;
+    } else if (
+      typeof exception === 'object' &&
+      exception &&
+      (exception as any).code === 'ECONNREFUSED'
+    ) {
+      message = 'La base de datos no está disponible. Espera unos segundos e intenta de nuevo.';
+    } else if (
+      typeof exception === 'object' &&
+      exception &&
+      (exception as any).message?.includes('Connection is not ready')
+    ) {
+      message = 'El backend está iniciando. Por favor, espera un momento.';
+    }
+
+    response.status(status).json({
+      statusCode: status,
+      message,
+    });
+  }
+}
+
+// src/main.ts
+import { AllExceptionsFilter } from './all-exceptions.filter';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new AllExceptionsFilter());
+  // ...existing code...
+}
+bootstrap();
+
 
 **Documentación actualizada:** 6 de marzo de 2026
