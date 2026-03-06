@@ -645,4 +645,93 @@ Ambas pruebas confirman que la arquitectura implementada cumple con los requisit
 
 ---
 
+## 🖥️ Frontend HTML — Dashboard de Datos (6 Marzo 2026)
+
+### Objetivo
+
+Mostrar los datos de la base de datos (Pokémon y Películas) con una interfaz visual en el propio NestJS, sin necesidad de desplegar un frontend separado (Next.js). El profesor indicó usar HTML + JavaScript con `fetch` para consumir la propia API.
+
+### Solución Implementada
+
+Se modificó `app.controller.ts` para que la ruta raíz `/` devuelva una página HTML completa con CSS y JavaScript embebidos. La página hace `fetch` a los endpoints `/pokemon` y `/peliculas` y renderiza los datos en tarjetas (cards).
+
+### Arquitectura
+
+```
+Navegador → GET http://api.carmenasir.com/
+          → NestJS devuelve la página HTML
+
+Navegador → fetch('/pokemon')     → NestJS devuelve JSON con pokémon
+Navegador → fetch('/peliculas')   → NestJS devuelve JSON con películas
+Navegador → renderiza cards con los datos recibidos
+```
+
+### Ficheros Modificados
+
+| Fichero                                   | Cambio                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------- |
+| `proyectos/nestapi/src/app.controller.ts` | Reemplazado el `getHello()` por `getPortada()` que devuelve HTML completo |
+| `proyectos/nestapi/src/app.module.ts`     | Eliminado `AppService` (ya no se usa)                                     |
+| `proyectos/nestapi/src/main.ts`           | Añadido `api.carmenasir.com` a la lista de orígenes CORS                  |
+
+### Código clave — Fetch en el HTML
+
+```javascript
+// Fetch de Pokémon
+async function cargarPokemon() {
+  const res = await fetch("/pokemon"); // llama al endpoint de la propia API
+  const data = await res.json(); // parsea el JSON
+  data.forEach((p) => {
+    // construye una card por cada pokémon
+    grid.innerHTML += `<div class="card">...</div>`;
+  });
+}
+
+// Fetch de Películas
+async function cargarPeliculas() {
+  const res = await fetch("/peliculas");
+  const data = await res.json();
+  data.forEach((p) => {
+    grid.innerHTML += `<div class="card">...</div>`;
+  });
+}
+
+// Se ejecutan automáticamente al cargar la página
+cargarPokemon();
+cargarPeliculas();
+```
+
+### Diseño de la Página
+
+- 🌑 **Fondo oscuro** (dark mode, `#0f0f1a`)
+- 💜 **Paleta morada** como color de acento
+- 📑 **Dos tabs** — ⚡ Pokémon / 🎬 Películas
+- 🃏 **Cards** con los datos de cada registro
+- ✨ **Efecto hover** en las cards (elevación suave)
+- 📱 **Grid responsivo** que se adapta al tamaño de pantalla
+
+### Despliegue
+
+```bash
+# Reconstruir imagen NestAPI con los cambios del controller
+cd ~/devops/docker/caronte
+docker build -t carmen24/nestapi:latest \
+  -f ./dockerfiles/js/nest/Dockerfile .
+docker push carmen24/nestapi:latest
+
+kubectl rollout restart deployment deploy-nestapi -n nest
+```
+
+### Resultado
+
+| URL                                   | Respuesta                                         |
+| ------------------------------------- | ------------------------------------------------- |
+| `http://api.carmenasir.com`           | 🖥️ Dashboard HTML con tabs de Pokémon y Películas |
+| `http://api.carmenasir.com/pokemon`   | `[{...}]` JSON con todos los pokémon (API)        |
+| `http://api.carmenasir.com/peliculas` | `[{...}]` JSON con todas las películas (API)      |
+
+✅ **Verificado:** La página muestra correctamente los 5 pokémon y las películas cargadas en la BD.
+
+---
+
 **Documentación actualizada:** 6 de marzo de 2026
