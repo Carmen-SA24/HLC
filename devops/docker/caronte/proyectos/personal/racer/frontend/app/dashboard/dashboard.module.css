@@ -1,0 +1,669 @@
+/* ============================================
+   Dashboard - Módulo de estilos
+   ============================================ */
+
+/* ── Layout principal ─────────────────────── */
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  max-width: calc(100vw - 260px);
+}
+
+/* ── Header ───────────────────────────────── */
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pageTitle {
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.roleBadge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.headerDate {
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  font-size: 14px;
+}
+
+.headerTime {
+  font-family: monospace;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.userAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.userName {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.userEmail {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}
+
+/* ── Aviso de errores ─────────────────────── */
+.warningBanner {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: 12px;
+  color: #ffd43b;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Navegación de secciones ──────────────── */
+.sectionNav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.sectionTab {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.sectionTabActive {
+  background: rgba(37, 99, 235, 0.18);
+  color: #dbe8ef;
+  font-weight: 600;
+}
+
+.sectionTabInactive {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.52);
+  font-weight: 400;
+}
+
+/* ── Stats Grid (Resumen) ─────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* ── Secciones comunes ────────────────────── */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  color: white;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sectionSubtitle {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+/* ── Botón primario ───────────────────────── */
+.btnPrimary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+}
+
+/* ── Input de búsqueda ────────────────────── */
+.searchInput {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: #2563eb;
+}
+
+/* ── Tabla contenedor ─────────────────────── */
+.tableWrapper {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeadRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tableHeadCell {
+  padding: 12px 24px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.tableHeadCellRight {
+  padding: 12px 24px;
+  text-align: right;
+  font-weight: 500;
+}
+
+.tableBodyRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease;
+}
+
+.tableBodyRow:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tableBodyRowInactive {
+  opacity: 0.5;
+}
+
+.tableCell {
+  padding: 14px 24px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+.tableCellBold {
+  padding: 14px 24px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tableCellRight {
+  padding: 14px 24px;
+  text-align: right;
+}
+
+.tableEmpty {
+  padding: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tableEmptyMuted {
+  padding: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Código UID ───────────────────────────── */
+.uidCode {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: rgba(37, 99, 235, 0.14);
+  color: #dbe8ef;
+  font-family: monospace;
+}
+
+/* ── Badge de estado ──────────────────────── */
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusBadgeActive {
+  background: rgba(37, 99, 235, 0.15);
+  color: #dbe8ef;
+}
+
+.statusBadgeInactive {
+  background: rgba(37, 99, 235, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Acciones en tabla ────────────────────── */
+.actionGroup {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btnAction {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btnActionDanger {
+  padding: 6px 12px;
+  border: 1px solid rgba(184, 100, 100, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: #d8a0a0;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btnActionDanger:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+/* ── Filtros de reportes ──────────────────── */
+.filtersContainer {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.filterGroup {
+  flex: 1;
+  min-width: 180px;
+}
+
+.filterLabel {
+  display: block;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.filterSelect {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #0d1321;
+  color: #e2e8f0;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.filterSelect:focus {
+  border-color: #2563eb;
+}
+
+.filterInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: #0d1321;
+  color: #e2e8f0;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.filterInput:focus {
+  border-color: #2563eb;
+}
+
+.optgroupDark {
+  background: #0d1321;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+/* ── Botón generar reporte ────────────────── */
+.btnGenerate {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btnGenerate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+}
+
+.btnGenerate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Reporte resultados ───────────────────── */
+.reportResultCard {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.reportSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.reportSummaryItem {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.reportSummaryValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+.reportSummaryLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+}
+
+.reportSectionTitle {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+/* ── Estudiante problemático ──────────────── */
+.problematicStudent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 107, 107, 0.06);
+  border: 1px solid rgba(255, 107, 107, 0.15);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.problematicStudentName {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.problematicStudentCount {
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Modal ────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: #0d1321;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modalTitle {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.modalSubtitle {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  margin: 0 0 24px;
+}
+
+.modalFormGroup {
+  margin-bottom: 16px;
+}
+
+.modalLabel {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.modalInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modalInput:focus {
+  border-color: #2563eb;
+}
+
+.modalSelect {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.modalSelect:focus {
+  border-color: #2563eb;
+}
+
+.modalError {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btnCancel {
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btnCancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btnSave {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btnSave:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+}
+
+/* ── Sección Usuarios ─────────────────────── */
+.roleFilterGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.roleFilterBtn {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.roleFilterBtnActive {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #dbe8ef;
+}
+
+/* ── Notificaciones ───────────────────────── */
+.notificationsContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+}

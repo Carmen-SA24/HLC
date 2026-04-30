@@ -1,0 +1,33 @@
+# ── Python ─────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Node.js ────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+
+# ── Entorno ────────────────────────────────────
+.env
+.env.local
+*.env.local
+
+# ── IDE / SO ───────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Arduino ────────────────────────────────────
+arduino/pendientes.json
+arduino/credenciales.json
+
+# ── Firebase ───────────────────────────────────
+*firebase-adminsdk-*.json

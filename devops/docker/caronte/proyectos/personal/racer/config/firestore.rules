@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ==================== HELPER FUNCTIONS ====================
+    
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Obtiene el rol del usuario autenticado desde Firestore
+    function getUserRole() {
+      return get(/databases/$(database)/documents/usuarios_app/$(request.auth.uid)).data.rol;
+    }
+
+    function isSuperadmin() {
+      return signedIn() && getUserRole() == 'superadmin';
+    }
+
+    function isAdmin() {
+      return signedIn() && (getUserRole() == 'superadmin' || getUserRole() == 'admin');
+    }
+
+    function isViewer() {
+      return signedIn() && getUserRole() == 'viewer';
+    }
+
+    function isStaff() {
+      return signedIn() && (
+        getUserRole() == 'superadmin' ||
+        getUserRole() == 'admin' ||
+        getUserRole() == 'viewer'
+      );
+    }
+
+    // ==================== USUARIOS_APP ====================
+    // Solo superadmin puede gestionar usuarios de la app
+    // Cada usuario puede leer su propio documento
+    match /usuarios_app/{userId} {
+      allow read: if signedIn() && (
+        request.auth.uid == userId ||  // Leer su propio perfil
+        isSuperadmin()                   // Superadmin puede leer todos
+      );
+      // Permitir crear: superadmin O el propio usuario (para cuando createUserWithEmailAndPassword
+      // cambia la sesión al nuevo usuario antes de escribir en Firestore)
+      allow create: if signedIn() && (
+        isSuperadmin() ||
+        request.auth.uid == userId
+      );
+      allow update: if signedIn() && (
+        isSuperadmin() ||                // Superadmin puede editar cualquiera
+        request.auth.uid == userId       // Usuario puede editar su propio perfil
+      );
+      allow delete: if isSuperadmin();
+    }
+
+    // ==================== TARJETAS ====================
+    // Superadmin y admin pueden gestionar tarjetas
+    // Viewer solo puede leer
+    match /tarjetas/{tarjetaId} {
+      allow read: if signedIn() && isStaff();
+      allow create, update: if signedIn() && isAdmin();
+      allow delete: if isSuperadmin();
+    }
+
+    // ==================== ACCESOS ====================
+    // Todos los roles pueden leer accesos
+    // El bridge Arduino crea accesos (usuario autenticado)
+    match /accesos/{accesoId} {
+      allow read: if signedIn() && isStaff();
+      allow create: if signedIn();  // El bridge Arduino crea registros
+      allow delete: if isSuperadmin();
+      allow update: if false;       // Los accesos son inmutables
+    }
+
+    // ==================== LOGS DEL SISTEMA ====================
+    match /logs_sistema/{logId} {
+      allow read: if signedIn() && isSuperadmin();
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+  }
+}

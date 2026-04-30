@@ -1,0 +1,51 @@
+{
+  "name": "proyecto-racer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Proyecto R.A.C.E.R. con frontend Next.js y backend Firebase/Python",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:deploy": "firebase deploy",
+    "firebase:deploy:functions": "firebase deploy --only functions",
+    "firebase:logs": "firebase functions:log",
+    "firebase:seed": "node ../backend/scripts/seed-firestore.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "rfid",
+    "control-acceso",
+    "firebase",
+    "nextjs",
+    "asir"
+  ],
+  "author": "Oliver Dangelo Magallanes Espinoza",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "express": "^4.18.2",
+    "firebase": "^12.12.0",
+    "firebase-admin": "^11.2.1",
+    "firebase-functions": "^4.1.1",
+    "lucide-react": "^1.14.0",
+    "next": "16.2.3",
+    "react": "19.2.4",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.3",
+    "firebase-tools": "^11.25.0",
+    "jest": "^29.4.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
