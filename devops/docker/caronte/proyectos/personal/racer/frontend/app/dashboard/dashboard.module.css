@@ -576,12 +576,20 @@
   padding: 12px 16px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: #0d1321;
+  color: #e2e8f0;
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
   cursor: pointer;
+  color-scheme: dark;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+.modalSelect option {
+  background: #0d1321;
+  color: #e2e8f0;
 }
 
 .modalSelect:focus {
