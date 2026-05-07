@@ -9,10 +9,11 @@ IMAGE_NAME=carmen24/racer:latest
 HELM_RELEASE=racer; HELM_NAMESPACE=racer
 COMMIT_HASH_FILE=/tmp/racer_last_deploy_commit
 
-# --- Auto-update: si el script cambia, se re-ejecuta ---
+# --- Auto-update: git pull + restaurar permisos ---
 cd "$REPO_DIR"
 OLD_CHECKSUM=$(md5sum "$0" 2>/dev/null | cut -d' ' -f1)
 git pull origin main 2>&1 | grep -v "Already up to date" || true
+chmod +x "$0"  # git pull quita permisos, los restauramos
 NEW_CHECKSUM=$(md5sum "$0" 2>/dev/null | cut -d' ' -f1)
 if [ "$OLD_CHECKSUM" != "$NEW_CHECKSUM" ]; then
     msg "$AMARILLO" "Script actualizado. Re-ejecutando..."
