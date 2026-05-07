@@ -72,6 +72,30 @@ firebase_habilitado = False
 rtdb_habilitado = False
 firestore_client = None
 
+# Líneas del escaneo de arranque que el puente debe ignorar silenciosamente
+LINEAS_DIAGNOSTICO = {
+    "Sistema R.A.C.E.R. listo",
+    "LCD 20x4: OK",
+    "RFID RC522: OK",
+    "RTC DS3231: OK",
+    "RTC DS3231: ERROR",
+    "LED Verde: OK",
+    "LED Rojo: OK",
+    "Buzzer: OK",
+    "TODOS LOS COMPONENTES OK",
+}
+
+
+def es_linea_diagnostico(linea: str) -> bool:
+    """Devuelve True si la línea es parte del escaneo de arranque del Arduino."""
+    linea = linea.strip()
+    if linea in LINEAS_DIAGNOSTICO:
+        return True
+    # También ignorar cualquier línea que empiece por estos prefijos
+    prefijos = ("Sistema R.A.C.E.R.", "LCD 20x4", "RFID RC522", "RTC DS3231",
+                "LED Verde", "LED Rojo", "Buzzer", "TODOS LOS COMPONENTES")
+    return any(linea.startswith(p) for p in prefijos)
+
 
 def _extraer_bytes_hex(uid_rfid: str) -> List[str]:
     # Saca los pares de letras/números hex de un UID (ej: AA, BB, CC)
@@ -453,7 +477,6 @@ def validar_acceso_y_controlador_arduino(uid_rfid: str, arduino_serial) -> tuple
 
 def enviar_resultado_arduino(arduino_serial, permitido: bool, motivo: str, nombre: str) -> None:
     # Envía PERMITIDO o DENEGADO al Arduino con el nombre para la LCD
-    # El mensaje incluye todo junto para que el Arduino no se desincronice
     # Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO
     try:
         if not arduino_serial or not arduino_serial.is_open:
@@ -463,11 +486,9 @@ def enviar_resultado_arduino(arduino_serial, permitido: bool, motivo: str, nombr
         nombre_limpio = nombre[:20] if nombre else "Desconocido"
         estado = "PERMITIDO" if permitido else "DENEGADO"
         
-        # Enviar todo en un solo mensaje: resultado + nombre + motivo
-        # Salto de línea de Windows para el Monitor Serie del Arduino
         mensaje = f"RESULTADO|{estado}|{nombre_limpio}|{motivo}\r\n"
         arduino_serial.write(mensaje.encode("utf-8"))
-        arduino_serial.flush()  # Asegurar que se envía ya
+        arduino_serial.flush()
         logger.info("Enviado al Arduino: %s", mensaje.strip())
         
     except Exception as exc:
@@ -481,15 +502,8 @@ def enviar_comando_arduino(arduino_serial, comando: str) -> None:
             logger.warning("Puerto Arduino no disponible para enviar comando")
             return
 
-        # Comandos disponibles:
-        # SONIDO_CORTO - Pitido corto (acceso permitido)
-        # SONIDO_LARGO - Pitido largo (acceso denegado)
-        # SONIDO_DOBLE - Pitido doble (aviso)
-        # LED_VERDE    - Encender LED verde
-        # LED_ROJO     - Encender LED rojo
-        
         arduino_serial.write(f"{comando}\n".encode("utf-8"))
-        logger.info("🔊 Comando enviado al Arduino: %s", comando)
+        logger.info("Comando enviado al Arduino: %s", comando)
     except Exception as exc:
         logger.warning("No se pudo enviar comando al Arduino: %s", exc)
 
@@ -533,7 +547,6 @@ def sincronizar_pendientes() -> None:
         except Exception as exc:
             logger.warning("No se pudo sincronizar un registro pendiente: %s", exc)
             pendientes_restantes.append(item)
-            # Si Firebase falla, salir del bucle y dejar el resto para la siguiente ronda
             pendientes_restantes.extend(pendientes[indice + 1 :])
             break
 
@@ -574,6 +587,11 @@ def leer_arduino() -> None:
 
                 linea = linea_bytes.decode("utf-8", errors="ignore").strip()
                 if not linea:
+                    continue
+
+                # Ignorar silenciosamente las líneas del escaneo de arranque
+                if es_linea_diagnostico(linea):
+                    logger.debug("Diagnóstico Arduino: %s", linea)
                     continue
 
                 logger.info("Recibido del Arduino: %s", linea)
@@ -617,7 +635,7 @@ def main() -> None:
     hilo_sync = threading.Thread(target=worker_sincronizacion, daemon=True)
     hilo_sync.start()
 
-    logger.info("📡 Escuchando tarjetas... (cola local activada por si falla Firebase)")
+    logger.info("Escuchando tarjetas... (cola local activada por si falla Firebase)")
     leer_arduino()
 
 

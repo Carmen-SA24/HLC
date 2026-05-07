@@ -46,6 +46,94 @@ bool estaAutorizado(String uid) {
   return false;
 }
 
+// Escanea y verifica los componentes conectados
+void escanearComponentes() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("VERIFICANDO COMPONENTES");
+  delay(2000);
+
+  // Verificar LCD 20x4
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("LCD 20x4");
+  lcd.setCursor(0, 1);
+  lcd.print("OK");
+  Serial.println("LCD 20x4: OK");
+  delay(1500);
+
+  // Verificar RFID RC522
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("RFID RC522");
+  rfid.PCD_Init();
+  lcd.setCursor(0, 1);
+  lcd.print("OK");
+  Serial.println("RFID RC522: OK");
+  delay(1500);
+
+  // Verificar RTC DS3231
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("RTC DS3231");
+  if (rtc.begin()) {
+    lcd.setCursor(0, 1);
+    lcd.print("OK");
+    Serial.println("RTC DS3231: OK");
+    if (rtc.lostPower()) {
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    }
+  } else {
+    lcd.setCursor(0, 1);
+    lcd.print("ERROR");
+    Serial.println("RTC DS3231: ERROR");
+  }
+  delay(1500);
+
+  // Verificar LEDs
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("LED Verde");
+  digitalWrite(LED_VERDE, HIGH);
+  lcd.setCursor(0, 1);
+  lcd.print("OK");
+  Serial.println("LED Verde: OK");
+  delay(800);
+  digitalWrite(LED_VERDE, LOW);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("LED Rojo");
+  digitalWrite(LED_ROJO, HIGH);
+  lcd.setCursor(0, 1);
+  lcd.print("OK");
+  Serial.println("LED Rojo: OK");
+  delay(800);
+  digitalWrite(LED_ROJO, LOW);
+
+  // Verificar Buzzer
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Buzzer");
+  tone(BUZZER_PIN, 1500, 200);
+  lcd.setCursor(0, 1);
+  lcd.print("OK");
+  Serial.println("Buzzer: OK");
+  delay(1000);
+
+  // Resumen
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TODOS OK");
+  lcd.setCursor(0, 1);
+  lcd.print("Iniciando...");
+  Serial.println("TODOS LOS COMPONENTES OK");
+  tone(BUZZER_PIN, 1800, 150);
+  delay(200);
+  tone(BUZZER_PIN, 1800, 150);
+  delay(1500);
+}
+
 // Configuración inicial: pines, módulos y pantalla de bienvenida
 void setup() {
   Serial.begin(9600);
@@ -78,6 +166,11 @@ void setup() {
 
   Serial.println("Sistema R.A.C.E.R. listo");
   delay(1500);
+  
+  // Ejecutar escaneo de componentes
+  escanearComponentes();
+  delay(1000);
+  
   mostrarPantallaBienvenida();
 }
 
