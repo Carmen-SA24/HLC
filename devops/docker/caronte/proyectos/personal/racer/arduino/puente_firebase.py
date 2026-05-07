@@ -23,7 +23,7 @@ import tempfile
 import threading
 import time
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -153,9 +153,10 @@ def obtener_tarjeta_por_uid(uid_rfid: str) -> Optional[Dict[str, Any]]:
         logger.info("Buscando UID '%s' con variantes: %s", uid_rfid, candidatos)
 
     try:
+        from google.cloud.firestore_v1.base_query import FieldFilter
         coincidencias = (
             firestore_client.collection("tarjetas")
-            .where("uid_rfid", "in", candidatos)
+            .where(filter=FieldFilter("uid_rfid", "in", candidatos))
             .limit(1)
             .stream()
         )
@@ -264,7 +265,7 @@ class RegistroAcceso:
                         uid=normalizar_uid_rfid(uid),
                         resultado=resultado,
                         raw_line=raw_line,
-                        received_at=datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                        received_at=datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
                         timestamp=int(fecha_hora_local.timestamp() * 1000),
                     )
             except Exception as e:
@@ -315,7 +316,7 @@ class RegistroAcceso:
             uid=normalizar_uid_rfid(uid),
             resultado=resultado,
             raw_line=raw_line,
-            received_at=datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            received_at=datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
             timestamp=timestamp,
         )
 
