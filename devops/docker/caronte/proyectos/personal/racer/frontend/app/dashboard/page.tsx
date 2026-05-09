@@ -1563,16 +1563,7 @@ export default function DashboardPage() {
                   </div>
                   <div className={styles.configCardBody}>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Firebase Auth</span>
-                      <span className={styles.configInfoValue}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
-                          Conectado
-                        </span>
-                      </span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Firestore DB</span>
+                      <span className={styles.configInfoLabel}>Firebase</span>
                       <span className={styles.configInfoValue}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
@@ -1588,14 +1579,6 @@ export default function DashboardPage() {
                           Pendiente
                         </span>
                       </span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Actualización</span>
-                      <span className={styles.configInfoValue}>Tiempo real</span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Exportación</span>
-                      <span className={styles.configInfoValue}>CSV / PDF</span>
                     </div>
                   </div>
                 </div>
