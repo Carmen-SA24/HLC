@@ -147,6 +147,7 @@ export default function DashboardPage() {
   });
   const [tarjetaFormError, setTarjetaFormError] = useState('');
   const [tarjetaFormLoading, setTarjetaFormLoading] = useState(false);
+  const [tarjetaEditando, setTarjetaEditando] = useState<Tarjeta | null>(null);
 
   // Estado para reportes
   const [reporteTipo, setReporteTipo] = useState<'diario' | 'semanal' | 'mensual'>('diario');
@@ -545,17 +546,28 @@ export default function DashboardPage() {
         throw new Error('El nombre del estudiante solo puede contener letras');
       }
 
-      const tarjetaRef = doc(collection(db, 'tarjetas'));
-      await setDoc(tarjetaRef, {
-        uid_rfid: uid,
-        nombre_estudiante: nombre,
-        curso: tarjetaForm.curso.trim(),
-        activo: true,
-        fecha_registro: Date.now(),
-        registrada_por: user?.uid || '',
-      });
+      if (tarjetaModal === 'editar' && tarjetaEditando) {
+        // === MODO EDICIÓN ===
+        await updateDoc(doc(db, 'tarjetas', tarjetaEditando.id), {
+          uid_rfid: uid,
+          nombre_estudiante: nombre,
+          curso: tarjetaForm.curso.trim(),
+        });
+      } else {
+        // === MODO CREACIÓN ===
+        const tarjetaRef = doc(collection(db, 'tarjetas'));
+        await setDoc(tarjetaRef, {
+          uid_rfid: uid,
+          nombre_estudiante: nombre,
+          curso: tarjetaForm.curso.trim(),
+          activo: true,
+          fecha_registro: Date.now(),
+          registrada_por: user?.uid || '',
+        });
+      }
 
       setTarjetaModal(null);
+      setTarjetaEditando(null);
       setTarjetaForm({ uid_rfid: '', nombre_estudiante: '', curso: '1º ESO' });
       // No es necesario recargar: onSnapshot actualiza en tiempo real
     } catch (err: any) {
@@ -563,6 +575,17 @@ export default function DashboardPage() {
     } finally {
       setTarjetaFormLoading(false);
     }
+  };
+
+  const handleEditTarjeta = (tarjeta: Tarjeta) => {
+    setTarjetaForm({
+      uid_rfid: tarjeta.uid_rfid,
+      nombre_estudiante: tarjeta.nombre_estudiante,
+      curso: tarjeta.curso || '1º ESO',
+    });
+    setTarjetaEditando(tarjeta);
+    setTarjetaFormError('');
+    setTarjetaModal('editar');
   };
 
   const handleToggleTarjeta = async (tarjeta: Tarjeta) => {
@@ -968,13 +991,80 @@ export default function DashboardPage() {
                                 <button
                                   onClick={() => handleToggleTarjeta(t)}
                                   className={styles.btnAction}
-                                  style={{ color: t.activo ? '#ff6b6b' : '#51cf66' }}
+                                  style={{
+                                    color: t.activo ? '#ff6b6b' : '#51cf66',
+                                    background: t.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)',
+                                    borderColor: t.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)',
+                                    fontWeight: 600,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!t.activo) {
+                                      e.currentTarget.style.background = 'rgba(81,207,102,0.35)';
+                                      e.currentTarget.style.borderColor = 'rgba(81,207,102,0.8)';
+                                      e.currentTarget.style.color = '#8affb0';
+                                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(81,207,102,0.5)';
+                                    } else {
+                                      e.currentTarget.style.background = 'rgba(255,107,107,0.25)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,107,107,0.6)';
+                                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
+                                    }
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = t.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)';
+                                    e.currentTarget.style.borderColor = t.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)';
+                                    e.currentTarget.style.color = t.activo ? '#ff6b6b' : '#51cf66';
+                                    e.currentTarget.style.transform = 'translateY(0px)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
                                 >
                                   {t.activo ? 'Desactivar' : 'Activar'}
                                 </button>
                                 <button
+                                  onClick={() => handleEditTarjeta(t)}
+                                  className={styles.btnAction}
+                                  style={{
+                                    color: '#93c5fd',
+                                    background: 'rgba(147,197,253,0.1)',
+                                    borderColor: 'rgba(147,197,253,0.25)',
+                                    fontWeight: 600,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(147,197,253,0.22)';
+                                    e.currentTarget.style.borderColor = 'rgba(147,197,253,0.55)';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(147,197,253,0.25)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(147,197,253,0.1)';
+                                    e.currentTarget.style.borderColor = 'rgba(147,197,253,0.25)';
+                                    e.currentTarget.style.transform = 'translateY(0px)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
+                                >
+                                  Editar
+                                </button>
+                                <button
                                   onClick={() => handleDeleteTarjeta(t)}
                                   className={styles.btnActionDanger}
+                                  style={{
+                                    color: '#f0a0a0',
+                                    background: 'rgba(220,80,80,0.12)',
+                                    borderColor: 'rgba(220,80,80,0.35)',
+                                    fontWeight: 600,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(220,80,80,0.28)';
+                                    e.currentTarget.style.borderColor = 'rgba(220,80,80,0.6)';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,80,80,0.3)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(220,80,80,0.12)';
+                                    e.currentTarget.style.borderColor = 'rgba(220,80,80,0.35)';
+                                    e.currentTarget.style.transform = 'translateY(0px)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
                                 >
                                   Eliminar
                                 </button>
@@ -1264,15 +1354,87 @@ export default function DashboardPage() {
                             <td className={styles.tableCell} style={{ color: 'rgba(255,255,255,0.4)' }}>{u.fechaRegistro || '—'}</td>
                             <td className={styles.tableCellRight}>
                               <div className={styles.actionGroup}>
-                                <button onClick={() => openEditModal(u)} className={styles.btnAction}
-                                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white'; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-                                >Editar</button>
-                                <button onClick={() => handleToggleActivo(u)} className={styles.btnAction} style={{ color: u.activo ? '#d8a0a0' : '#9fd3ba' }}>
+                                <button
+                                  onClick={() => openEditModal(u)}
+                                  className={styles.btnAction}
+                                  style={{
+                                    color: '#93c5fd',
+                                    background: 'rgba(147,197,253,0.1)',
+                                    borderColor: 'rgba(147,197,253,0.25)',
+                                    fontWeight: 600,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(147,197,253,0.22)';
+                                    e.currentTarget.style.borderColor = 'rgba(147,197,253,0.55)';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(147,197,253,0.25)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(147,197,253,0.1)';
+                                    e.currentTarget.style.borderColor = 'rgba(147,197,253,0.25)';
+                                    e.currentTarget.style.transform = 'translateY(0px)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() => handleToggleActivo(u)}
+                                  className={styles.btnAction}
+                                  style={{
+                                    color: u.activo ? '#ff6b6b' : '#51cf66',
+                                    background: u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)',
+                                    borderColor: u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)',
+                                    fontWeight: 600,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!u.activo) {
+                                      e.currentTarget.style.background = 'rgba(81,207,102,0.35)';
+                                      e.currentTarget.style.borderColor = 'rgba(81,207,102,0.8)';
+                                      e.currentTarget.style.color = '#8affb0';
+                                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(81,207,102,0.5)';
+                                    } else {
+                                      e.currentTarget.style.background = 'rgba(255,107,107,0.25)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,107,107,0.6)';
+                                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
+                                    }
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)';
+                                    e.currentTarget.style.borderColor = u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)';
+                                    e.currentTarget.style.color = u.activo ? '#ff6b6b' : '#51cf66';
+                                    e.currentTarget.style.transform = 'translateY(0px)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
+                                >
                                   {u.activo ? 'Desactivar' : 'Activar'}
                                 </button>
                                 {u.rol !== 'superadmin' && (
-                                  <button onClick={() => handleDeleteUser(u)} className={styles.btnActionDanger}>Eliminar</button>
+                                  <button
+                                    onClick={() => handleDeleteUser(u)}
+                                    className={styles.btnActionDanger}
+                                    style={{
+                                      color: '#f0a0a0',
+                                      background: 'rgba(220,80,80,0.12)',
+                                      borderColor: 'rgba(220,80,80,0.35)',
+                                      fontWeight: 600,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = 'rgba(220,80,80,0.28)';
+                                      e.currentTarget.style.borderColor = 'rgba(220,80,80,0.6)';
+                                      e.currentTarget.style.transform = 'translateY(-2px)';
+                                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(220,80,80,0.3)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'rgba(220,80,80,0.12)';
+                                      e.currentTarget.style.borderColor = 'rgba(220,80,80,0.35)';
+                                      e.currentTarget.style.transform = 'translateY(0px)';
+                                      e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                  >
+                                    Eliminar
+                                  </button>
                                 )}
                               </div>
                             </td>
@@ -1292,94 +1454,81 @@ export default function DashboardPage() {
               <div className={styles.sectionHeader}>
                 <div>
                   <h2 className={styles.sectionTitle}>Configuración del sistema</h2>
-                  <p className={styles.sectionSubtitle}>Ajustes generales de R.A.C.E.R</p>
+                  <p className={styles.sectionSubtitle}>Resumen general y estado de R.A.C.E.R</p>
                 </div>
               </div>
 
               <div className={styles.configGrid}>
-                {/* Tarjeta: Información del sistema */}
+                {/* Tarjeta: Estado del sistema */}
                 <div className={styles.configCard}>
                   <div className={styles.configCardHeader}>
-                    <span className={styles.configCardIcon}>ℹ️</span>
-                    <h3 className={styles.configCardTitle}>Información del sistema</h3>
+                    <h3 className={styles.configCardTitle}>Estado del sistema</h3>
                   </div>
                   <div className={styles.configCardBody}>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Versión</span>
-                      <span className={styles.configInfoValue}>1.0.0</span>
+                      <span className={styles.configInfoLabel}>Accesos hoy</span>
+                      <span className={styles.configInfoValue} style={{ color: '#93c5fd', fontWeight: 700 }}>{stats.totalHoy}</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Entorno</span>
-                      <span className={styles.configInfoValue}>Producción</span>
+                      <span className={styles.configInfoLabel}>Concedidos</span>
+                      <span className={styles.configInfoValue} style={{ color: '#51cf66', fontWeight: 700 }}>{stats.concedidosHoy}</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Firebase Proyecto</span>
-                      <span className={styles.configInfoValue} style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                        {firebaseConfig.projectId || '—'}
-                      </span>
+                      <span className={styles.configInfoLabel}>Denegados</span>
+                      <span className={styles.configInfoValue} style={{ color: '#ff6b6b', fontWeight: 700 }}>{stats.denegadosHoy}</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Último acceso</span>
-                      <span className={styles.configInfoValue}>
-                        {user?.fechaRegistro ? new Date(user.fechaRegistro).toLocaleString('es-ES') : '—'}
-                      </span>
+                      <span className={styles.configInfoLabel}>Tarjetas activas</span>
+                      <span className={styles.configInfoValue} style={{ color: '#51cf66', fontWeight: 700 }}>{stats.tarjetasActivas}</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Usuarios del sistema</span>
+                      <span className={styles.configInfoValue} style={{ fontWeight: 700 }}>{usuarios.length}</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Tarjetas registradas</span>
+                      <span className={styles.configInfoValue} style={{ fontWeight: 700 }}>{tarjetas.length}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Tarjeta: Preferencias de sesión */}
+                {/* Tarjeta: Sesión actual */}
                 <div className={styles.configCard}>
                   <div className={styles.configCardHeader}>
-                    <span className={styles.configCardIcon}>🔒</span>
-                    <h3 className={styles.configCardTitle}>Seguridad de sesión</h3>
+                    <h3 className={styles.configCardTitle}>Mi sesión</h3>
                   </div>
                   <div className={styles.configCardBody}>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Tiempo de inactividad</span>
-                      <span className={styles.configInfoValue}>30 minutos</span>
+                      <span className={styles.configInfoLabel}>Usuario</span>
+                      <span className={styles.configInfoValue}>{user?.nombre || user?.email?.split('@')[0] || '—'}</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Advertencia previa</span>
-                      <span className={styles.configInfoValue}>2 minutos</span>
+                      <span className={styles.configInfoLabel}>Email</span>
+                      <span className={styles.configInfoValue} style={{ fontSize: '12px' }}>{user?.email || '—'}</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Refresco de token</span>
-                      <span className={styles.configInfoValue}>55 minutos</span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Estado sesión</span>
+                      <span className={styles.configInfoLabel}>Rol</span>
                       <span className={styles.configInfoValue}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
-                          Activa
+                        <span style={{
+                          display: 'inline-block', padding: '2px 10px', borderRadius: '6px', fontSize: '12px',
+                          background: 'rgba(209, 179, 106, 0.15)', color: '#d1b36a', fontWeight: 600
+                        }}>
+                          Superadmin
                         </span>
                       </span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Tarjeta: Estadísticas de Firebase */}
-                <div className={styles.configCard}>
-                  <div className={styles.configCardHeader}>
-                    <span className={styles.configCardIcon}>📊</span>
-                    <h3 className={styles.configCardTitle}>Límites de Firestore</h3>
-                  </div>
-                  <div className={styles.configCardBody}>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Registros visibles</span>
-                      <span className={styles.configInfoValue}>Últimos 100</span>
+                      <span className={styles.configInfoLabel}>Tiempo sesión</span>
+                      <span className={styles.configInfoValue}>30 min inactividad</span>
                     </div>
                     <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Paginación</span>
-                      <span className={styles.configInfoValue}>15 por página</span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Exportación</span>
-                      <span className={styles.configInfoValue}>CSV / PDF</span>
-                    </div>
-                    <div className={styles.configInfoRow}>
-                      <span className={styles.configInfoLabel}>Actualización</span>
-                      <span className={styles.configInfoValue}>Tiempo real</span>
+                      <span className={styles.configInfoLabel}>Estado</span>
+                      <span className={styles.configInfoValue}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                          Conectado
+                        </span>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1387,11 +1536,10 @@ export default function DashboardPage() {
                 {/* Tarjeta: Roles del sistema */}
                 <div className={styles.configCard}>
                   <div className={styles.configCardHeader}>
-                    <span className={styles.configCardIcon}>👥</span>
                     <h3 className={styles.configCardTitle}>Roles del sistema</h3>
                   </div>
                   <div className={styles.configCardBody}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(209, 179, 106, 0.08)', borderRadius: '10px', border: '1px solid rgba(209, 179, 106, 0.15)' }}>
                         <span style={{ color: '#d1b36a', fontWeight: 700, fontSize: '13px', minWidth: '90px' }}>Superadmin</span>
                         <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Acceso total al sistema</span>
@@ -1404,6 +1552,50 @@ export default function DashboardPage() {
                         <span style={{ color: '#5a86a8', fontWeight: 700, fontSize: '13px', minWidth: '90px' }}>Viewer</span>
                         <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Solo consulta de datos</span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta: Conexiones del sistema */}
+                <div className={styles.configCard}>
+                  <div className={styles.configCardHeader}>
+                    <h3 className={styles.configCardTitle}>Conexiones del sistema</h3>
+                  </div>
+                  <div className={styles.configCardBody}>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Firebase Auth</span>
+                      <span className={styles.configInfoValue}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                          Conectado
+                        </span>
+                      </span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Firestore DB</span>
+                      <span className={styles.configInfoValue}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                          {firebaseConfig.projectId || 'Conectado'}
+                        </span>
+                      </span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Puente Arduino</span>
+                      <span className={styles.configInfoValue}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                          Pendiente
+                        </span>
+                      </span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Actualización</span>
+                      <span className={styles.configInfoValue}>Tiempo real</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Exportación</span>
+                      <span className={styles.configInfoValue}>CSV / PDF</span>
                     </div>
                   </div>
                 </div>
@@ -1509,7 +1701,7 @@ export default function DashboardPage() {
         >
           <div className={styles.modalContent}>
             <h3 className={styles.modalTitle}>
-              Nueva tarjeta RFID
+              {tarjetaModal === 'editar' ? 'Editar tarjeta RFID' : 'Nueva tarjeta RFID'}
             </h3>
 
             {tarjetaFormError && (
@@ -1587,7 +1779,7 @@ export default function DashboardPage() {
                   {tarjetaFormLoading ? (
                     <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
                   ) : (
-                    'Registrar Tarjeta'
+                    tarjetaModal === 'editar' ? 'Guardar cambios' : 'Registrar Tarjeta'
                   )}
                 </button>
               </div>
