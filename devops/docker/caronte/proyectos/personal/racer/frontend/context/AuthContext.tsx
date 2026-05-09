@@ -65,7 +65,7 @@ const TOKEN_REFRESH_INTERVAL = 55 * 60 * 1000;
 // Timeout total: 15 minutos sin actividad → cierre automático
 // Advertencia: A los 13 minutos → mostrar modal con opción de extender
 // Esto deja 2 minutos para que el usuario reaccione
-const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;  // 15 minutos en milisegundos
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;  // 30 minutos en milisegundos
 const INACTIVITY_WARNING_MS = 2 * 60 * 1000;   // 2 minutos de advertencia antes de cierre
 
 // ==================== PROVEEDOR: AuthProvider ====================

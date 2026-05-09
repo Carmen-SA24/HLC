@@ -1336,7 +1336,7 @@ export default function DashboardPage() {
                   <div className={styles.configCardBody}>
                     <div className={styles.configInfoRow}>
                       <span className={styles.configInfoLabel}>Tiempo de inactividad</span>
-                      <span className={styles.configInfoValue}>15 minutos</span>
+                      <span className={styles.configInfoValue}>30 minutos</span>
                     </div>
                     <div className={styles.configInfoRow}>
                       <span className={styles.configInfoLabel}>Advertencia previa</span>
@@ -1528,7 +1528,7 @@ export default function DashboardPage() {
                     const val = e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
                     setTarjetaForm({ ...tarjetaForm, uid_rfid: val });
                   }}
-                  placeholder="Ej: 4A 3B 2C 1D"
+                  placeholder="Ej: 4A3B2C1D (junto) o 4A 3B 2C 1D (con espacios)"
                   required
                   className={styles.modalInput}
                   style={{ fontFamily: 'monospace' }}
