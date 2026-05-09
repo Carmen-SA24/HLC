@@ -1378,38 +1378,40 @@ export default function DashboardPage() {
                                 >
                                   Editar
                                 </button>
-                                <button
-                                  onClick={() => handleToggleActivo(u)}
-                                  className={styles.btnAction}
-                                  style={{
-                                    color: u.activo ? '#ff6b6b' : '#51cf66',
-                                    background: u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)',
-                                    borderColor: u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)',
-                                    fontWeight: 600,
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!u.activo) {
-                                      e.currentTarget.style.background = 'rgba(81,207,102,0.35)';
-                                      e.currentTarget.style.borderColor = 'rgba(81,207,102,0.8)';
-                                      e.currentTarget.style.color = '#8affb0';
-                                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(81,207,102,0.5)';
-                                    } else {
-                                      e.currentTarget.style.background = 'rgba(255,107,107,0.25)';
-                                      e.currentTarget.style.borderColor = 'rgba(255,107,107,0.6)';
-                                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
-                                    }
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)';
-                                    e.currentTarget.style.borderColor = u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)';
-                                    e.currentTarget.style.color = u.activo ? '#ff6b6b' : '#51cf66';
-                                    e.currentTarget.style.transform = 'translateY(0px)';
-                                    e.currentTarget.style.boxShadow = 'none';
-                                  }}
-                                >
-                                  {u.activo ? 'Desactivar' : 'Activar'}
-                                </button>
+                                {!(u.rol === 'superadmin' && user?.uid === u.uid) && (
+                                  <button
+                                    onClick={() => handleToggleActivo(u)}
+                                    className={styles.btnAction}
+                                    style={{
+                                      color: u.activo ? '#ff6b6b' : '#51cf66',
+                                      background: u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)',
+                                      borderColor: u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)',
+                                      fontWeight: 600,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!u.activo) {
+                                        e.currentTarget.style.background = 'rgba(81,207,102,0.35)';
+                                        e.currentTarget.style.borderColor = 'rgba(81,207,102,0.8)';
+                                        e.currentTarget.style.color = '#8affb0';
+                                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(81,207,102,0.5)';
+                                      } else {
+                                        e.currentTarget.style.background = 'rgba(255,107,107,0.25)';
+                                        e.currentTarget.style.borderColor = 'rgba(255,107,107,0.6)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
+                                      }
+                                      e.currentTarget.style.transform = 'translateY(-2px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = u.activo ? 'rgba(255,107,107,0.12)' : 'rgba(81,207,102,0.12)';
+                                      e.currentTarget.style.borderColor = u.activo ? 'rgba(255,107,107,0.3)' : 'rgba(81,207,102,0.3)';
+                                      e.currentTarget.style.color = u.activo ? '#ff6b6b' : '#51cf66';
+                                      e.currentTarget.style.transform = 'translateY(0px)';
+                                      e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                  >
+                                    {u.activo ? 'Desactivar' : 'Activar'}
+                                  </button>
+                                )}
                                 {u.rol !== 'superadmin' && (
                                   <button
                                     onClick={() => handleDeleteUser(u)}
