@@ -675,3 +675,252 @@
   gap: 8px;
   max-width: 380px;
 }
+
+/* ── Configuración ────────────────────────── */
+.configGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.configCard {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.configCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.configCardIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.configCardTitle {
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.configCardBody {
+  padding: 16px 20px;
+}
+
+.configInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.configInfoRow:last-child {
+  border-bottom: none;
+}
+
+.configInfoLabel {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
+
+.configInfoValue {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ── Responsive: Móvil ────────────────────── */
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 16px;
+    max-width: 100vw;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .headerTop {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .headerTitleRow {
+    flex-wrap: wrap;
+  }
+
+  .userCard {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sectionNav {
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+
+  .sectionTab {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .filtersContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterGroup {
+    min-width: unset;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .searchInput {
+    max-width: 100%;
+  }
+
+  .tableHeadCell,
+  .tableHeadCellRight,
+  .tableCell,
+  .tableCellBold,
+  .tableCellRight {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .tableCellBold {
+    font-size: 13px;
+  }
+
+  .actionGroup {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btnAction,
+  .btnActionDanger {
+    padding: 5px 10px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .reportSummary {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .reportSummaryValue {
+    font-size: 22px;
+  }
+
+  .configGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalContent {
+    padding: 24px 20px;
+    max-width: 100%;
+    margin: 0 10px;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
+  .btnCancel,
+  .btnSave {
+    width: 100%;
+    text-align: center;
+  }
+
+  .notificationsContainer {
+    max-width: calc(100vw - 32px);
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .roleFilterGroup {
+    width: 100%;
+  }
+
+  .roleFilterBtn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainContent {
+    padding: 12px;
+  }
+
+  .pageTitle {
+    font-size: 18px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .reportSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionTab {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .tableHeadCell,
+  .tableHeadCellRight,
+  .tableCell,
+  .tableCellBold,
+  .tableCellRight {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .tableCellBold {
+    font-size: 12px;
+  }
+
+  .userCard {
+    padding: 10px 14px;
+  }
+
+  .userAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .userName {
+    font-size: 13px;
+  }
+
+  .userEmail {
+    font-size: 11px;
+  }
+}

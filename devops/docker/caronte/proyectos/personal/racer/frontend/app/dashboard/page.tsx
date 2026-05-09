@@ -111,7 +111,7 @@ export default function DashboardPage() {
     loading: true,
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeSection, setActiveSection] = useState<'resumen' | 'accesos' | 'arduino' | 'tarjetas' | 'usuarios' | 'reportes'>('resumen');
+  const [activeSection, setActiveSection] = useState<'resumen' | 'accesos' | 'arduino' | 'tarjetas' | 'usuarios' | 'reportes' | 'configuracion'>('resumen');
   const [statsError, setStatsError] = useState<string | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const accesosDenegadosRef = useRef<Set<string>>(new Set()); // Para evitar duplicados
@@ -744,14 +744,22 @@ export default function DashboardPage() {
   };
 
   // Eliminar usuario
-  const handleDeleteUser = async (usuario: UsuarioApp) => {
-    if (!usuario.uid || !confirm(`¿Eliminar a ${usuario.nombre} ${usuario.apellidos}?`)) return;
-    try {
-      await deleteDoc(doc(db, 'usuarios_app', usuario.uid));
-      loadUsuarios();
-    } catch (err) {
-      console.error('Error al eliminar usuario:', err);
-    }
+  const handleDeleteUser = (usuario: UsuarioApp) => {
+    if (!usuario.uid) return;
+    setConfirmModal({
+      title: 'Eliminar usuario',
+      message: `¿Seguro que quieres eliminar a ${usuario.nombre} ${usuario.apellidos} (${usuario.email})? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar usuario',
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await deleteDoc(doc(db, 'usuarios_app', usuario.uid));
+          loadUsuarios();
+        } catch (err) {
+          console.error('Error al eliminar usuario:', err);
+        }
+      },
+    });
   };
 
   const formatDate = (date: Date) => {
@@ -810,7 +818,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className={styles.userName}>
-                  {user?.nombre ? `${user.nombre} ${user.apellidos}` : 'Usuario'}
+                  {user?.nombre ? `${user.nombre} ${user.apellidos}` : user?.email?.split('@')[0] || 'Usuario'}
                 </div>
                 <div className={styles.userEmail}>
                   {user?.email}
@@ -1277,6 +1285,131 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+
+          {/* Sección: Configuración (solo superadmin) */}
+          {activeSection === 'configuracion' && isSuperadmin && (
+            <div>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Configuración del sistema</h2>
+                  <p className={styles.sectionSubtitle}>Ajustes generales de R.A.C.E.R</p>
+                </div>
+              </div>
+
+              <div className={styles.configGrid}>
+                {/* Tarjeta: Información del sistema */}
+                <div className={styles.configCard}>
+                  <div className={styles.configCardHeader}>
+                    <span className={styles.configCardIcon}>ℹ️</span>
+                    <h3 className={styles.configCardTitle}>Información del sistema</h3>
+                  </div>
+                  <div className={styles.configCardBody}>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Versión</span>
+                      <span className={styles.configInfoValue}>1.0.0</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Entorno</span>
+                      <span className={styles.configInfoValue}>Producción</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Firebase Proyecto</span>
+                      <span className={styles.configInfoValue} style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                        {firebaseConfig.projectId || '—'}
+                      </span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Último acceso</span>
+                      <span className={styles.configInfoValue}>
+                        {user?.fechaRegistro ? new Date(user.fechaRegistro).toLocaleString('es-ES') : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta: Preferencias de sesión */}
+                <div className={styles.configCard}>
+                  <div className={styles.configCardHeader}>
+                    <span className={styles.configCardIcon}>🔒</span>
+                    <h3 className={styles.configCardTitle}>Seguridad de sesión</h3>
+                  </div>
+                  <div className={styles.configCardBody}>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Tiempo de inactividad</span>
+                      <span className={styles.configInfoValue}>15 minutos</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Advertencia previa</span>
+                      <span className={styles.configInfoValue}>2 minutos</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Refresco de token</span>
+                      <span className={styles.configInfoValue}>55 minutos</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Estado sesión</span>
+                      <span className={styles.configInfoValue}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                          Activa
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta: Estadísticas de Firebase */}
+                <div className={styles.configCard}>
+                  <div className={styles.configCardHeader}>
+                    <span className={styles.configCardIcon}>📊</span>
+                    <h3 className={styles.configCardTitle}>Límites de Firestore</h3>
+                  </div>
+                  <div className={styles.configCardBody}>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Registros visibles</span>
+                      <span className={styles.configInfoValue}>Últimos 100</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Paginación</span>
+                      <span className={styles.configInfoValue}>15 por página</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Exportación</span>
+                      <span className={styles.configInfoValue}>CSV / PDF</span>
+                    </div>
+                    <div className={styles.configInfoRow}>
+                      <span className={styles.configInfoLabel}>Actualización</span>
+                      <span className={styles.configInfoValue}>Tiempo real</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta: Roles del sistema */}
+                <div className={styles.configCard}>
+                  <div className={styles.configCardHeader}>
+                    <span className={styles.configCardIcon}>👥</span>
+                    <h3 className={styles.configCardTitle}>Roles del sistema</h3>
+                  </div>
+                  <div className={styles.configCardBody}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(209, 179, 106, 0.08)', borderRadius: '10px', border: '1px solid rgba(209, 179, 106, 0.15)' }}>
+                        <span style={{ color: '#d1b36a', fontWeight: 700, fontSize: '13px', minWidth: '90px' }}>Superadmin</span>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Acceso total al sistema</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(79, 143, 115, 0.08)', borderRadius: '10px', border: '1px solid rgba(79, 143, 115, 0.15)' }}>
+                        <span style={{ color: '#4f8f73', fontWeight: 700, fontSize: '13px', minWidth: '90px' }}>Admin</span>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Gestión de tarjetas y accesos</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(90, 134, 168, 0.08)', borderRadius: '10px', border: '1px solid rgba(90, 134, 168, 0.15)' }}>
+                        <span style={{ color: '#5a86a8', fontWeight: 700, fontSize: '13px', minWidth: '90px' }}>Viewer</span>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Solo consulta de datos</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1461,6 +1594,17 @@ export default function DashboardPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal de confirmación para eliminar tarjeta RFID */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel={confirmModal.confirmLabel}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
       )}
 
       <NotificationsContainer />

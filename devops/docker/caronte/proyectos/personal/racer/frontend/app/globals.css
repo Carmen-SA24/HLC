@@ -68,3 +68,26 @@ a, button, input, select, textarea {
 
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Sidebar responsive ────────────────────── */
+@media (max-width: 768px) {
+  .sidebar-hamburger {
+    display: flex !important;
+  }
+
+  .sidebar-overlay {
+    display: block !important;
+  }
+
+  .dashboard-sidebar {
+    transform: translateX(-100%) !important;
+  }
+
+  .dashboard-sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-spacer {
+    display: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -14,6 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  Menu,
+  X,
 } from 'lucide-react';
 
 interface NavItem {
@@ -45,6 +47,12 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Das
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Cerrar sidebar móvil al cambiar de sección
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [activeSection]);
 
   const handleLogout = async () => {
     await logout();
@@ -110,6 +118,48 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Das
 
   return (
     <>
+      {/* Botón hamburguesa para móvil */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        style={{
+          position: 'fixed',
+          top: '12px',
+          left: '12px',
+          zIndex: 200,
+          width: '40px',
+          height: '40px',
+          borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'rgba(8, 12, 18, 0.9)',
+          backdropFilter: 'blur(12px)',
+          color: 'rgba(226,232,240,0.7)',
+          display: 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+        className="sidebar-hamburger"
+        aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay para móvil */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 98,
+            display: 'none',
+          }}
+          className="sidebar-overlay"
+        />
+      )}
+
       <aside
         style={{
           width: collapsed ? '68px' : '256px',
@@ -119,12 +169,13 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Das
           borderRight: `1px solid ${THEME.border}`,
           display: 'flex',
           flexDirection: 'column',
-          transition: 'width 0.25s ease',
+          transition: 'width 0.25s ease, transform 0.25s ease',
           position: 'fixed',
           left: 0,
           top: 0,
           zIndex: 100,
         }}
+        className={`dashboard-sidebar ${mobileOpen ? 'mobile-open' : ''}`}
       >
         {/* Logo */}
         <div
@@ -203,7 +254,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Das
                   textOverflow: 'ellipsis',
                 }}
               >
-                {user?.nombre ? `${user.nombre} ${user.apellidos}` : 'Usuario'}
+                {user?.nombre ? `${user.nombre} ${user.apellidos}` : user?.email?.split('@')[0] || 'Usuario'}
               </div>
               <div style={{ color: 'rgba(148,163,184,0.50)', fontSize: '11px', marginTop: '1px' }}>
                 {getRoleLabel()}
@@ -338,7 +389,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Das
       </aside>
 
       {/* Spacer */}
-      <div style={{ width: collapsed ? '68px' : '256px', flexShrink: 0, transition: 'width 0.25s ease' }} />
+      <div style={{ width: collapsed ? '68px' : '256px', flexShrink: 0, transition: 'width 0.25s ease' }} className="sidebar-spacer" />
     </>
   );
 }

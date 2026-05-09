@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -10,6 +10,7 @@ import {
   onSnapshot,
   getDocs,
 } from 'firebase/firestore';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface Acceso {
   id: string;
@@ -22,6 +23,8 @@ interface Acceso {
   resultado: 'CONCEDIDO' | 'DENEGADO';
 }
 
+const PAGE_SIZE = 15;
+
 export default function RegistrosTable() {
   const [accesos, setAccesos] = useState<Acceso[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +34,7 @@ export default function RegistrosTable() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -99,34 +103,52 @@ export default function RegistrosTable() {
   }, []);
 
   // Filtrar accesos
-  const filteredAccesos = accesos.filter((a) => {
-    // Filtro por resultado
-    if (filter !== 'todos' && a.resultado !== filter) return false;
+  const filteredAccesos = useMemo(() => {
+    return accesos.filter((a) => {
+      // Filtro por resultado
+      if (filter !== 'todos' && a.resultado !== filter) return false;
 
-    // Búsqueda por texto (estudiante, curso, UID)
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const matchEstudiante = a.nombre_estudiante?.toLowerCase().includes(term);
-      const matchCurso = a.curso?.toLowerCase().includes(term);
-      const matchUid = a.uid_tarjeta?.toLowerCase().includes(term);
-      if (!matchEstudiante && !matchCurso && !matchUid) return false;
-    }
-
-    // Filtro por rango de fechas
-    if (dateFrom || dateTo) {
-      const accesoDate = new Date(a.timestamp);
-      if (dateFrom) {
-        const from = new Date(dateFrom + 'T00:00:00');
-        if (accesoDate < from) return false;
+      // Búsqueda por texto (estudiante, curso, UID)
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const matchEstudiante = a.nombre_estudiante?.toLowerCase().includes(term);
+        const matchCurso = a.curso?.toLowerCase().includes(term);
+        const matchUid = a.uid_tarjeta?.toLowerCase().includes(term);
+        if (!matchEstudiante && !matchCurso && !matchUid) return false;
       }
-      if (dateTo) {
-        const to = new Date(dateTo + 'T23:59:59');
-        if (accesoDate > to) return false;
-      }
-    }
 
-    return true;
-  });
+      // Filtro por rango de fechas
+      if (dateFrom || dateTo) {
+        const accesoDate = new Date(a.timestamp);
+        if (dateFrom) {
+          const from = new Date(dateFrom + 'T00:00:00');
+          if (accesoDate < from) return false;
+        }
+        if (dateTo) {
+          const to = new Date(dateTo + 'T23:59:59');
+          if (accesoDate > to) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [accesos, filter, searchTerm, dateFrom, dateTo]);
+
+  // Paginación
+  const totalPages = Math.max(1, Math.ceil(filteredAccesos.length / PAGE_SIZE));
+  const paginatedAccesos = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredAccesos.slice(start, start + PAGE_SIZE);
+  }, [filteredAccesos, currentPage]);
+
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm, dateFrom, dateTo]);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   const getResultadoColor = (resultado: string) => {
     return resultado === 'CONCEDIDO'
@@ -507,7 +529,7 @@ export default function RegistrosTable() {
                 </td>
               </tr>
             ) : (
-              filteredAccesos.map((acceso) => {
+              paginatedAccesos.map((acceso) => {
                 const resultadoStyle = getResultadoColor(acceso.resultado);
                 return (
                   <tr
@@ -560,6 +582,142 @@ export default function RegistrosTable() {
           </tbody>
         </table>
       </div>
+
+      {/* Paginación */}
+      {!loading && filteredAccesos.length > 0 && totalPages > 1 && (
+        <div
+          style={{
+            padding: '14px 24px',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+            Mostrando {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredAccesos.length)} de {filteredAccesos.length} registros
+          </span>
+
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            {/* Primera página */}
+            <button
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '6px 8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                background: 'transparent',
+                color: currentPage === 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <ChevronsLeft size={16} />
+            </button>
+
+            {/* Anterior */}
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '6px 8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                background: 'transparent',
+                color: currentPage === 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            {/* Números de página */}
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 7) {
+                pageNum = i + 1;
+              } else if (currentPage <= 4) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i;
+              } else {
+                pageNum = currentPage - 3 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => goToPage(pageNum)}
+                  style={{
+                    minWidth: '32px',
+                    padding: '6px 8px',
+                    border: '1px solid',
+                    borderColor: currentPage === pageNum ? 'rgba(37, 99, 235, 0.55)' : 'rgba(255,255,255,0.1)',
+                    borderRadius: '6px',
+                    background: currentPage === pageNum ? 'rgba(37, 99, 235, 0.18)' : 'transparent',
+                    color: currentPage === pageNum ? '#dbe8ef' : 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: currentPage === pageNum ? 600 : 400,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            {/* Siguiente */}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '6px 8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                background: 'transparent',
+                color: currentPage === totalPages ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <ChevronRight size={16} />
+            </button>
+
+            {/* Última página */}
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '6px 8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                background: 'transparent',
+                color: currentPage === totalPages ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
