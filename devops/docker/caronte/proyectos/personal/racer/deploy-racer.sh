@@ -5,7 +5,7 @@ VERDE='\033[0;32m'; AMARILLO='\033[1;33m'; ROJO='\033[0;31m'; CYAN='\033[0;36m';
 msg() { printf "${1}${2}${NC}\n"; }
 
 REPO_DIR=~/devops/docker/caronte/proyectos/personal/racer
-IMAGE_NAME=carmen24/racer:latest
+IMAGE_NAME=carmen24/racer
 HELM_RELEASE=racer; HELM_NAMESPACE=racer
 COMMIT_HASH_FILE=/tmp/racer_last_deploy_commit
 
@@ -47,6 +47,10 @@ for pattern in "${WATCH_PATTERNS[@]}"; do
     fi
 done
 
+# Obtener el commit hash como tag único
+COMMIT_HASH=$(git rev-parse --short HEAD)
+IMAGE_TAG="$COMMIT_HASH"
+
 if [ "$NEEDS_BUILD" = false ]; then
     msg "$VERDE" "Sin cambios en frontend/backend/config/Dockerfile. Saltando build y push."
     echo ""
@@ -54,19 +58,21 @@ if [ "$NEEDS_BUILD" = false ]; then
     msg "$AMARILLO" "[3/5] Helm upgrade..."
 else
     echo ""
-    msg "$AMARILLO" "[2/5] docker build..."
-    docker build -t "$IMAGE_NAME" -f deploy/Dockerfile .
+    msg "$AMARILLO" "[2/5] docker build (tag: $IMAGE_TAG)..."
+    docker build -t "$IMAGE_NAME:$IMAGE_TAG" -f deploy/Dockerfile .
     msg "$VERDE" "OK"
 
     echo ""
     msg "$AMARILLO" "[3/5] docker push..."
-    docker push "$IMAGE_NAME"
+    docker push "$IMAGE_NAME:$IMAGE_TAG"
     msg "$VERDE" "OK"
 fi
 
 echo ""
-msg "$AMARILLO" "[4/5] helm upgrade..."
-helm upgrade "$HELM_RELEASE" ./deploy/helm -n "$HELM_NAMESPACE"
+msg "$AMARILLO" "[4/5] helm upgrade (imagen: $IMAGE_NAME:$IMAGE_TAG)..."
+helm upgrade "$HELM_RELEASE" ./deploy/helm -n "$HELM_NAMESPACE" \
+    --set image.tag="$IMAGE_TAG" \
+    --set image.pullPolicy="Always"
 msg "$VERDE" "OK"
 
 echo ""
