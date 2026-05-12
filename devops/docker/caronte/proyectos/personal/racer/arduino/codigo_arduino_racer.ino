@@ -34,6 +34,10 @@ MFRC522 rfid(SS_PIN, RST_PIN);
 LiquidCrystal_I2C lcd(0x27, 20, 4);  // Pantalla LCD de 20 columnas x 4 filas
 RTC_DS3231 rtc;
 
+// Control de actualización del LCD para no saturar el bus I2C
+unsigned long ultimaActualizacionLCD = 0;
+int ultimoSegundoLCD = -1;
+
 // UIDs guardados en el Arduino por si el puente no responde
 String uidsAutorizados[] = {"A76E3B25", "353882E0"};
 int totalAutorizados = 2;
@@ -176,7 +180,12 @@ void setup() {
 
 // Bucle principal: muestra hora, lee tarjetas RFID y procesa accesos
 void loop() {
-  mostrarHoraYFecha();
+  // Solo actualizar el LCD cuando cambie el segundo para no saturar el bus I2C
+  DateTime ahora = rtc.now();
+  if (ahora.second() != ultimoSegundoLCD) {
+    ultimoSegundoLCD = ahora.second();
+    mostrarHoraYFecha(ahora);
+  }
 
   // NO llamar a PCD_Init() aquí. Llamarlo en cada iteración resetea el módulo
   // RFID constantemente e impide que detecte tarjetas. Solo se llama PCD_Init()
@@ -334,9 +343,7 @@ void loop() {
 }
 
 // Muestra la fecha y hora actual del RTC en las líneas 0 y 1 del LCD
-void mostrarHoraYFecha() {
-  DateTime ahora = rtc.now();
-
+void mostrarHoraYFecha(DateTime ahora) {
   lcd.setCursor(0, 0);
   String diasSemana[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado  "};
   lcd.print(diasSemana[ahora.dayOfTheWeek()]);
