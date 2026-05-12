@@ -177,7 +177,6 @@ void setup() {
 // Bucle principal: muestra hora, lee tarjetas RFID y procesa accesos
 void loop() {
   mostrarHoraYFecha();
-  digitalWrite(SS_PIN, LOW);
 
   // Si se detecta una tarjeta RFID, leer su UID
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
