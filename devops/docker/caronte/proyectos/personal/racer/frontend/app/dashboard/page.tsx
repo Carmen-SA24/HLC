@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import StatsCard from '@/components/StatsCard';
-import { Activity, CheckCircle2, XCircle, CreditCard } from 'lucide-react';
+import { Activity, CheckCircle2, XCircle, CreditCard, Waves } from 'lucide-react';
 import RegistrosTable from '@/components/RegistrosTable';
 import ArduinoStatus from '@/components/ArduinoStatus';
 import AccessDeniedNotification from '@/components/AccessDeniedNotification';
@@ -148,6 +148,10 @@ export default function DashboardPage() {
   const [tarjetaFormError, setTarjetaFormError] = useState('');
   const [tarjetaFormLoading, setTarjetaFormLoading] = useState(false);
   const [tarjetaEditando, setTarjetaEditando] = useState<Tarjeta | null>(null);
+  const [escaneandoUID, setEscaneandoUID] = useState(false);
+  const [ultimoUIDDetectado, setUltimoUIDDetectado] = useState<string | null>(null);
+  const unsubscribeAccesosRef = useRef<(() => void) | null>(null);
+  const uidDetectadoRef = useRef<string | null>(null);
 
   // Estado para reportes
   const [reporteTipo, setReporteTipo] = useState<'diario' | 'semanal' | 'mensual'>('diario');
@@ -427,6 +431,95 @@ export default function DashboardPage() {
       }
     };
   }, [activeSection, isAdmin]);
+
+  // ==================== ESCANEO AUTOMÁTICO DE UID RFID ====================
+  // Cuando el modal de tarjeta está abierto y el escaneo activado,
+  // escucha en tiempo real la colección 'accesos' para detectar nuevos UIDs
+  // que lleguen desde el Arduino/puente.
+
+  useEffect(() => {
+    // Limpiar listener anterior si existe
+    if (unsubscribeAccesosRef.current) {
+      unsubscribeAccesosRef.current();
+      unsubscribeAccesosRef.current = null;
+    }
+
+    // Solo escuchar cuando el modal está abierto y el escaneo está activado
+    if (!tarjetaModal || !escaneandoUID) return;
+
+    // Guardar el último UID ya conocido para no repetirlo
+    uidDetectadoRef.current = null;
+
+    // Flag para ignorar la carga inicial de documentos existentes
+    // Firestore onSnapshot dispara 'added' tanto para docs existentes como nuevos
+    let cargaInicial = true;
+
+    // Escuchar los últimos 5 accesos para capturar el más reciente
+    const q = query(
+      collection(db, 'accesos'),
+      orderBy('timestamp', 'desc'),
+      limit(5)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        // Si es el primer snapshot (carga inicial), ignoramos todos los 'added'
+        // porque corresponden a documentos ya existentes, no a nuevas lecturas
+        if (cargaInicial) {
+          cargaInicial = false;
+          return;
+        }
+
+        snapshot.docChanges().forEach((change) => {
+          // Solo nos interesan los documentos nuevos en tiempo real (added)
+          if (change.type !== 'added') return;
+
+          const data = change.doc.data();
+          const uidTarjeta = data.uid_tarjeta || data.uid || '';
+
+          if (!uidTarjeta) return;
+
+          // Evitar repetir el mismo UID si ya lo capturamos
+          if (uidDetectadoRef.current === uidTarjeta) return;
+          uidDetectadoRef.current = uidTarjeta;
+
+          // Extraer solo los bytes hexadecimales (eliminar separadores)
+          const uidLimpio = uidTarjeta
+            .replace(/[:\s]/g, '')
+            .toUpperCase();
+
+          if (!uidLimpio) return;
+
+          setUltimoUIDDetectado(uidLimpio);
+          setTarjetaForm((prev) => ({ ...prev, uid_rfid: uidLimpio }));
+          setEscaneandoUID(false);
+
+          // Notificación visual de que se detectó la tarjeta
+          setTarjetaFormError('');
+
+          // Pequeña animación: mostrar mensaje de éxito temporal
+          const notifMsg = `✅ Tarjeta detectada: ${uidLimpio}`;
+          setTarjetaFormError(notifMsg);
+          setTimeout(() => {
+            setTarjetaFormError((prev) => (prev === notifMsg ? '' : prev));
+          }, 3000);
+        });
+      },
+      (err) => {
+        console.warn('Error escuchando accesos para UID automático:', err.message);
+      }
+    );
+
+    unsubscribeAccesosRef.current = unsubscribe;
+
+    return () => {
+      if (unsubscribeAccesosRef.current) {
+        unsubscribeAccesosRef.current();
+        unsubscribeAccesosRef.current = null;
+      }
+    };
+  }, [tarjetaModal, escaneandoUID]);
 
   // ==================== USE EFFECTS ====================
 
@@ -1682,7 +1775,7 @@ export default function DashboardPage() {
       {tarjetaModal && (
         <div
           className={styles.modalOverlay}
-          onClick={(e) => { if (e.target === e.currentTarget) setTarjetaModal(null); }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setEscaneandoUID(false); setUltimoUIDDetectado(null); uidDetectadoRef.current = null; setTarjetaModal(null); } }}
         >
           <div className={styles.modalContent}>
             <h3 className={styles.modalTitle}>
@@ -1690,26 +1783,113 @@ export default function DashboardPage() {
             </h3>
 
             {tarjetaFormError && (
-              <div style={{ padding: '12px 16px', marginBottom: '16px', background: 'rgba(184, 100, 100, 0.12)', border: '1px solid rgba(184, 100, 100, 0.25)', borderRadius: '10px', color: '#d8a0a0', fontSize: '13px' }}>
-                {tarjetaFormError}
+              <div style={{
+                padding: '12px 16px',
+                marginBottom: '16px',
+                background: tarjetaFormError.includes('✅') || tarjetaFormError.includes('🔄')
+                  ? tarjetaFormError.includes('✅') ? 'rgba(52, 211, 153, 0.12)' : 'rgba(37, 99, 235, 0.12)'
+                  : 'rgba(184, 100, 100, 0.12)',
+                border: `1px solid ${
+                  tarjetaFormError.includes('✅') ? 'rgba(52, 211, 153, 0.25)'
+                  : tarjetaFormError.includes('🔄') ? 'rgba(37, 99, 235, 0.25)'
+                  : 'rgba(184, 100, 100, 0.25)'
+                }`,
+                borderRadius: '10px',
+                color: tarjetaFormError.includes('✅') ? '#34d399'
+                  : tarjetaFormError.includes('🔄') ? '#93c5fd'
+                  : '#d8a0a0',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                {tarjetaFormError.includes('🔄') && (
+                  <span style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: '#93c5fd',
+                    display: 'inline-block',
+                    animation: 'pulse 1s ease-in-out infinite',
+                    flexShrink: 0,
+                  }} />
+                )}
+                {tarjetaFormError.includes('✅') && (
+                  <span style={{ fontSize: '16px' }}>✅</span>
+                )}
+                <span>{tarjetaFormError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreateTarjeta}>
               <div className={styles.modalFormGroup}>
                 <label className={styles.modalLabel}>UID RFID *</label>
-                <input
-                  type="text"
-                  value={tarjetaForm.uid_rfid}
-                  onChange={(e) => {
-                    const val = e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
-                    setTarjetaForm({ ...tarjetaForm, uid_rfid: val });
-                  }}
-                  placeholder="Ej: 4A3B2C1D (junto) o 4A 3B 2C 1D (con espacios)"
-                  required
-                  className={styles.modalInput}
-                  style={{ fontFamily: 'monospace' }}
-                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={tarjetaForm.uid_rfid}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+                      setTarjetaForm({ ...tarjetaForm, uid_rfid: val });
+                    }}
+                    placeholder="Ej: 4A3B2C1D (junto) o 4A 3B 2C 1D (con espacios)"
+                    required
+                    className={styles.modalInput}
+                    style={{ fontFamily: 'monospace', flex: 1 }}
+                    disabled={escaneandoUID}
+                  />
+                  {tarjetaModal === 'crear' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (escaneandoUID) {
+                          setEscaneandoUID(false);
+                          setUltimoUIDDetectado(null);
+                          uidDetectadoRef.current = null;
+                          setTarjetaFormError('');
+                        } else {
+                          setEscaneandoUID(true);
+                          setUltimoUIDDetectado(null);
+                          uidDetectadoRef.current = null;
+                          setTarjetaFormError('🔄 Acerca la tarjeta al lector RFID...');
+                        }
+                      }}
+                      className={`${styles.btnScanRfid} ${escaneandoUID ? styles.btnScanRfidActive : ''}`}
+                      title={escaneandoUID ? 'Detener escaneo' : 'Escuchar tarjeta RFID'}
+                    >
+                      {escaneandoUID ? (
+                        <>
+                          <span style={{
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '50%',
+                            background: '#34d399',
+                            display: 'inline-block',
+                            animation: 'pulse 1s ease-in-out infinite',
+                          }} />
+                          Escuchando...
+                        </>
+                      ) : (
+                        <>
+                          <Waves size={16} />
+                          Leer tarjeta
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+                {ultimoUIDDetectado && (
+                  <p style={{
+                    margin: '6px 0 0',
+                    fontSize: '11px',
+                    color: 'rgba(52, 211, 153, 0.7)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <span>✓</span> UID capturado automáticamente del lector
+                  </p>
+                )}
               </div>
 
               <div className={styles.modalFormGroup}>
@@ -1750,7 +1930,12 @@ export default function DashboardPage() {
               <div className={styles.modalActions}>
                 <button
                   type="button"
-                  onClick={() => setTarjetaModal(null)}
+                  onClick={() => {
+                    setEscaneandoUID(false);
+                    setUltimoUIDDetectado(null);
+                    uidDetectadoRef.current = null;
+                    setTarjetaModal(null);
+                  }}
                   className={styles.btnCancel}
                 >
                   Cancelar
