@@ -240,17 +240,12 @@ void loop() {
               String estado = bufferLinea.substring(pos1 + 1, pos2);
               permitidoBridge = (estado == "PERMITIDO");
 
-              if (pos3 > pos2) {
-                nombreBridge = bufferLinea.substring(pos2 + 1, pos3);
-                if (pos4 > pos3) {
-                  motivoBridge = bufferLinea.substring(pos3 + 1, pos4);
-                  tipoAccesoBridge = bufferLinea.substring(pos4 + 1);
-                } else {
-                  motivoBridge = bufferLinea.substring(pos3 + 1);
-                }
-              } else {
-                nombreBridge = bufferLinea.substring(pos2 + 1);
-              }
+              // Nombre: entre pos2+1 y pos3 (puede estar vacío)
+              nombreBridge = (pos3 > pos2) ? bufferLinea.substring(pos2 + 1, pos3) : bufferLinea.substring(pos2 + 1);
+              // Motivo: entre pos3+1 y pos4 (puede estar vacío)
+              motivoBridge = (pos4 > pos3) ? bufferLinea.substring(pos3 + 1, pos4) : (pos3 > pos2 ? bufferLinea.substring(pos3 + 1) : "");
+              // Tipo acceso: después de pos4+1 (puede estar vacío)
+              tipoAccesoBridge = (pos4 > pos3) ? bufferLinea.substring(pos4 + 1) : "";
 
               respuestaRecibida = true;
               break;
@@ -265,6 +260,12 @@ void loop() {
     }
 
     apagarLEDs();
+
+    // Limpiar completamente las líneas 2 y 3 antes de mostrar resultado
+    lcd.setCursor(0, 2);
+    lcd.print("                    ");
+    lcd.setCursor(0, 3);
+    lcd.print("                    ");
 
     // Mostrar resultado en LCD, LEDs y buzzer
     if (respuestaRecibida) {

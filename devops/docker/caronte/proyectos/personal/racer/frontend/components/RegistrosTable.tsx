@@ -21,6 +21,7 @@ interface Acceso {
   nombre_estudiante: string;
   curso: string;
   resultado: 'CONCEDIDO' | 'DENEGADO';
+  tipo_acceso?: string;
 }
 
 const PAGE_SIZE = 15;
@@ -169,12 +170,13 @@ export default function RegistrosTable() {
 
   // Exportar a CSV
   const exportCSV = useCallback(() => {
-    const headers = ['Fecha', 'Hora', 'Estudiante', 'Curso', 'UID Tarjeta', 'Resultado'];
+    const headers = ['Fecha', 'Hora', 'Estudiante', 'Curso', 'Tipo', 'UID Tarjeta', 'Resultado'];
     const rows = filteredAccesos.map((a) => [
       a.fecha || new Date(a.timestamp).toLocaleDateString('es-ES'),
       a.hora || new Date(a.timestamp).toLocaleTimeString('es-ES'),
       a.nombre_estudiante || 'Tarjeta no Asignada',
       a.curso || '—',
+      a.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA',
       a.uid_tarjeta,
       a.resultado,
     ]);
@@ -200,6 +202,7 @@ export default function RegistrosTable() {
         <td>${a.hora || new Date(a.timestamp).toLocaleTimeString('es-ES')}</td>
         <td>${a.nombre_estudiante || 'Tarjeta no Asignada'}</td>
         <td>${a.curso || '—'}</td>
+        <td>${a.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA'}</td>
         <td style="font-family:monospace;font-size:11px">${a.uid_tarjeta}</td>
         <td>${a.resultado === 'CONCEDIDO' ? 'Concedido' : 'Denegado'}</td>
       </tr>
@@ -230,6 +233,7 @@ export default function RegistrosTable() {
               <th>Hora</th>
               <th>Estudiante</th>
               <th>Curso</th>
+              <th>Tipo</th>
               <th>UID Tarjeta</th>
               <th>Resultado</th>
             </tr>
@@ -504,6 +508,7 @@ export default function RegistrosTable() {
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Resultado</th>
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Estudiante</th>
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Curso</th>
+              <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Tipo</th>
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Fecha</th>
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>Hora</th>
               <th style={{ padding: '12px 24px', textAlign: 'left', fontWeight: 500 }}>UID Tarjeta</th>
@@ -512,7 +517,7 @@ export default function RegistrosTable() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
+                <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                   <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
                     Cargando registros...
                   </div>
@@ -520,7 +525,7 @@ export default function RegistrosTable() {
               </tr>
             ) : filteredAccesos.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
+                <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                   <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
                     {searchTerm || dateFrom || dateTo || filter !== 'todos'
                       ? 'No se encontraron registros con los filtros aplicados'
@@ -565,6 +570,18 @@ export default function RegistrosTable() {
                     </td>
                     <td style={{ padding: '14px 24px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
                       {acceso.curso}
+                    </td>
+                    <td style={{ padding: '14px 24px' }}>
+                      <span style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        background: acceso.tipo_acceso === 'salida' ? 'rgba(251, 191, 36, 0.15)' : 'rgba(96, 165, 250, 0.15)',
+                        color: acceso.tipo_acceso === 'salida' ? '#fbbf24' : '#60a5fa',
+                      }}>
+                        {acceso.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA'}
+                      </span>
                     </td>
                     <td style={{ padding: '14px 24px', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
                       {acceso.fecha || new Date(acceso.timestamp).toLocaleDateString('es-ES')}
