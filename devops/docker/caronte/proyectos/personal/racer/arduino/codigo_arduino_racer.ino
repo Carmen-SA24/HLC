@@ -180,11 +180,15 @@ void setup() {
 
 // Bucle principal: muestra hora, lee tarjetas RFID y procesa accesos
 void loop() {
-  // Solo actualizar el LCD cuando cambie el segundo para no saturar el bus I2C
-  DateTime ahora = rtc.now();
-  if (ahora.second() != ultimoSegundoLCD) {
-    ultimoSegundoLCD = ahora.second();
-    mostrarHoraYFecha(ahora);
+  // Solo leer el RTC y actualizar el LCD 1 vez por segundo para no saturar el bus I2C
+  unsigned long ahoraMs = millis();
+  if (ahoraMs - ultimaActualizacionLCD >= 1000) {
+    ultimaActualizacionLCD = ahoraMs;
+    DateTime ahora = rtc.now();
+    if (ahora.second() != ultimoSegundoLCD) {
+      ultimoSegundoLCD = ahora.second();
+      mostrarHoraYFecha(ahora);
+    }
   }
 
   // NO llamar a PCD_Init() aquí. Llamarlo en cada iteración resetea el módulo
@@ -346,7 +350,9 @@ void loop() {
 void mostrarHoraYFecha(DateTime ahora) {
   lcd.setCursor(0, 0);
   String diasSemana[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado  "};
-  lcd.print(diasSemana[ahora.dayOfTheWeek()]);
+  int diaIdx = ahora.dayOfTheWeek();
+  if (diaIdx < 0 || diaIdx > 6) diaIdx = 0;
+  lcd.print(diasSemana[diaIdx]);
   lcd.print(" ");
   if (ahora.day() < 10) lcd.print("0");
   lcd.print(ahora.day());
