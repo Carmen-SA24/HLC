@@ -191,10 +191,6 @@ void loop() {
     }
   }
 
-  // NO llamar a PCD_Init() aquí. Llamarlo en cada iteración resetea el módulo
-  // RFID constantemente e impide que detecte tarjetas. Solo se llama PCD_Init()
-  // después de procesar una tarjeta (PICC_HaltA + PCD_Init).
-
   // Si se detecta una tarjeta RFID, leer su UID
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
     String uid = "";
@@ -205,9 +201,9 @@ void loop() {
       uid += h;
     }
 
-    // Limpiar líneas 2 y 3 del LCD
+    // Mostrar "PROCESANDO..." en el LCD mientras se comunica con el puente
     lcd.setCursor(0, 2);
-    lcd.print("                    ");
+    lcd.print("    PROCESANDO...   ");
     lcd.setCursor(0, 3);
     lcd.print("                    ");
 
@@ -217,36 +213,24 @@ void loop() {
     Serial.println(" | Alumno: PENDIENTE");
     Serial.flush();
 
-    // Vaciar buffer serial antes de esperar respuesta
-    unsigned long inicioVaciado = millis();
-    while (millis() - inicioVaciado < 100) {
-      while (Serial.available() > 0) {
-        Serial.read();
-      }
-      delay(5);
-    }
-
-    // Esperar respuesta del puente (máximo 3 segundos)
+    // Esperar respuesta del puente (máximo 5 segundos)
+    // NO vaciar el buffer serial antes, porque el puente puede responder rápido
     bool respuestaRecibida = false;
     bool permitidoBridge = false;
     String nombreBridge = "";
     String motivoBridge = "";
-    String tipoAccesoBridge = "";  // "entrada" o "salida"
+    String tipoAccesoBridge = "";
     String bufferLinea = "";
     unsigned long inicioEspera = millis();
-    const unsigned long TIMEOUT_ESPERA = 3000;
+    const unsigned long TIMEOUT_ESPERA = 5000;
 
     while (millis() - inicioEspera < TIMEOUT_ESPERA) {
       if (Serial.available() > 0) {
         char c = Serial.read();
 
-        // Cuando llega un salto de línea, procesar el mensaje completo
         if (c == '\n') {
           bufferLinea.trim();
-          // El mensaje del puente empieza con "RESULTADO|"
           if (bufferLinea.length() > 0 && bufferLinea.startsWith("RESULTADO|")) {
-            // Separar el mensaje por el carácter "|"
-            // Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO|TIPO_ACCESO
             int pos1 = bufferLinea.indexOf('|');
             int pos2 = bufferLinea.indexOf('|', pos1 + 1);
             int pos3 = bufferLinea.indexOf('|', pos2 + 1);
@@ -256,11 +240,8 @@ void loop() {
               String estado = bufferLinea.substring(pos1 + 1, pos2);
               permitidoBridge = (estado == "PERMITIDO");
 
-              // Nombre: entre pos2+1 y pos3 (puede estar vacío)
               nombreBridge = (pos3 > pos2) ? bufferLinea.substring(pos2 + 1, pos3) : bufferLinea.substring(pos2 + 1);
-              // Motivo: entre pos3+1 y pos4 (puede estar vacío)
               motivoBridge = (pos4 > pos3) ? bufferLinea.substring(pos3 + 1, pos4) : (pos3 > pos2 ? bufferLinea.substring(pos3 + 1) : "");
-              // Tipo acceso: después de pos4+1 (puede estar vacío)
               tipoAccesoBridge = (pos4 > pos3) ? bufferLinea.substring(pos4 + 1) : "";
 
               respuestaRecibida = true;
@@ -272,41 +253,37 @@ void loop() {
           bufferLinea += c;
         }
       }
-      delay(5);
     }
 
     apagarLEDs();
 
-    // Limpiar completamente las líneas 2 y 3 antes de mostrar resultado
+    // Mostrar resultado en LCD
     lcd.setCursor(0, 2);
     lcd.print("                    ");
     lcd.setCursor(0, 3);
     lcd.print("                    ");
 
-    // Mostrar resultado en LCD, LEDs y buzzer
     if (respuestaRecibida) {
       if (permitidoBridge) {
         lcd.setCursor(0, 2);
-        // Mostrar tipo de acceso: "ENTRADA" o "SALIDA"
-        String tipoStr = (tipoAccesoBridge == "salida") ? "SALIDA" : "ENTRADA";
-        lcd.print("ACCESO PERMITIDO  ");
+        lcd.print(" ACCESO PERMITIDO   ");
         lcd.setCursor(0, 3);
+        String tipoStr = (tipoAccesoBridge == "salida") ? "SALIDA" : "ENTRADA";
         if (nombreBridge.length() > 0) {
-          lcd.print(nombreBridge.substring(0, 14));
-          lcd.print(" ");
-          lcd.print(tipoStr);
-          for (int i = 0; i < 20 - nombreBridge.substring(0, 14).length() - tipoStr.length() - 1; i++) lcd.print(" ");
+          String linea3 = nombreBridge.substring(0, 12) + " " + tipoStr;
+          lcd.print(linea3);
+          for (int i = linea3.length(); i < 20; i++) lcd.print(" ");
         } else {
-          lcd.print("Bienvenido ");
-          lcd.print(tipoStr);
-          for (int i = 0; i < 20 - 10 - tipoStr.length(); i++) lcd.print(" ");
+          String linea3 = "Bienvenido " + tipoStr;
+          lcd.print(linea3);
+          for (int i = linea3.length(); i < 20; i++) lcd.print(" ");
         }
         encenderLED(LED_VERDE);
         sonidoCorto();
         apagarLEDs();
       } else {
         lcd.setCursor(0, 2);
-        lcd.print("ACCESO DENEGADO   ");
+        lcd.print(" ACCESO DENEGADO    ");
         lcd.setCursor(0, 3);
         String msg = (nombreBridge.length() > 0 && nombreBridge != "Desconocido") ? nombreBridge : "No autorizado";
         lcd.print(msg.substring(0, 20));
@@ -316,10 +293,9 @@ void loop() {
         apagarLEDs();
       }
     } else {
-      // Si el puente no respondió, usar la lista de UIDs locales
       if (estaAutorizado(uid)) {
         lcd.setCursor(0, 2);
-        lcd.print("ACCESO PERMITIDO  ");
+        lcd.print(" ACCESO PERMITIDO   ");
         lcd.setCursor(0, 3);
         lcd.print("Bienvenido          ");
         encenderLED(LED_VERDE);
@@ -327,7 +303,7 @@ void loop() {
         apagarLEDs();
       } else {
         lcd.setCursor(0, 2);
-        lcd.print("ACCESO DENEGADO   ");
+        lcd.print(" ACCESO DENEGADO    ");
         lcd.setCursor(0, 3);
         lcd.print("No autorizado       ");
         encenderLED(LED_ROJO);
@@ -336,14 +312,13 @@ void loop() {
       }
     }
 
-    delay(1500);
-    mostrarPantallaBienvenida();
+    delay(2000);
     rfid.PICC_HaltA();
-    // Reiniciar el lector RFID para la siguiente detección
     rfid.PCD_Init();
+    mostrarPantallaBienvenida();
   }
 
-  delay(100);
+  delay(50);
 }
 
 // Muestra la fecha y hora actual del RTC en las líneas 0 y 1 del LCD
