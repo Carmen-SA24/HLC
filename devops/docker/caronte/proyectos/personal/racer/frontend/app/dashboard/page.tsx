@@ -154,13 +154,8 @@ export default function DashboardPage() {
   const uidDetectadoRef = useRef<string | null>(null);
 
   // Estado para reportes
-  const [reporteTipo, setReporteTipo] = useState<'diario' | 'semanal' | 'mensual'>('diario');
   const [reporteFecha, setReporteFecha] = useState(() => new Date().toISOString().split('T')[0]);
-  const [reporteFechaFin, setReporteFechaFin] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
-  });
+  const [reporteFechaFin, setReporteFechaFin] = useState(() => new Date().toISOString().split('T')[0]);
   const [reporteCurso, setReporteCurso] = useState('');
   const [reporteData, setReporteData] = useState<any>(null);
   const [reporteLoading, setReporteLoading] = useState(false);
@@ -537,43 +532,17 @@ export default function DashboardPage() {
     setReporteData(null);
 
     try {
-      const inicioDia = new Date(reporteFecha);
-      inicioDia.setHours(0, 0, 0, 0);
-      const finDia = new Date(reporteFecha);
-      finDia.setHours(23, 59, 59, 999);
+      const inicio = new Date(reporteFecha);
+      inicio.setHours(0, 0, 0, 0);
+      const fin = new Date(reporteFechaFin);
+      fin.setHours(23, 59, 59, 999);
 
-      let q;
-      if (reporteTipo === 'diario') {
-        q = query(
-          collection(db, 'accesos'),
-          where('timestamp', '>=', inicioDia.getTime()),
-          where('timestamp', '<=', finDia.getTime()),
-          orderBy('timestamp', 'desc')
-        );
-      } else if (reporteTipo === 'semanal') {
-        const inicioSemana = new Date(reporteFecha);
-        inicioSemana.setHours(0, 0, 0, 0);
-        const finSemana = reporteFechaFin ? new Date(reporteFechaFin) : new Date(inicioSemana.getTime() + 7 * 24 * 60 * 60 * 1000);
-        finSemana.setHours(23, 59, 59, 999);
-        q = query(
-          collection(db, 'accesos'),
-          where('timestamp', '>=', inicioSemana.getTime()),
-          where('timestamp', '<=', finSemana.getTime()),
-          orderBy('timestamp', 'desc')
-        );
-      } else {
-        // Mensual: desde el día 1 del mes hasta el último día
-        const [year, month] = reporteFecha.split('-').map(Number);
-        const inicioMes = new Date(year, month - 1, 1);
-        inicioMes.setHours(0, 0, 0, 0);
-        const finMes = new Date(year, month, 0, 23, 59, 59, 999);
-        q = query(
-          collection(db, 'accesos'),
-          where('timestamp', '>=', inicioMes.getTime()),
-          where('timestamp', '<=', finMes.getTime()),
-          orderBy('timestamp', 'desc')
-        );
-      }
+      const q = query(
+        collection(db, 'accesos'),
+        where('timestamp', '>=', inicio.getTime()),
+        where('timestamp', '<=', fin.getTime()),
+        orderBy('timestamp', 'desc')
+      );
 
       const snapshot = await getDocs(q);
       let registros = snapshot.docs.map((doc) => ({
@@ -616,6 +585,102 @@ export default function DashboardPage() {
       setReporteLoading(false);
     }
   };
+
+  // Exportar reporte a CSV
+  const exportReportCSV = useCallback(() => {
+    if (!reporteData?.registros?.length) return;
+    const headers = ['Fecha', 'Hora', 'Estudiante', 'Curso', 'UID Tarjeta', 'Resultado', 'Motivo'];
+    const rows = reporteData.registros.map((r: any) => [
+      r.timestamp ? new Date(r.timestamp).toLocaleDateString('es-ES') : r.fecha || '—',
+      r.timestamp ? new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : r.hora || '—',
+      r.nombre_estudiante || '—',
+      r.curso || '—',
+      r.uid_tarjeta || '—',
+      r.resultado === 'CONCEDIDO' ? 'Permitido' : 'Denegado',
+      r.motivo_denegacion || r.motivo || '—',
+    ]);
+
+    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte_accesos_${reporteFecha}_${reporteFechaFin}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [reporteData, reporteFecha, reporteFechaFin]);
+
+  // Exportar reporte a PDF (vista de impresión)
+  const exportReportPDF = useCallback(() => {
+    if (!reporteData?.registros?.length) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const rows = reporteData.registros.map((r: any) => `
+      <tr>
+        <td>${r.timestamp ? new Date(r.timestamp).toLocaleDateString('es-ES') : r.fecha || '—'}</td>
+        <td>${r.timestamp ? new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : r.hora || '—'}</td>
+        <td>${r.nombre_estudiante || '—'}</td>
+        <td>${r.curso || '—'}</td>
+        <td style="font-family:monospace;font-size:11px">${r.uid_tarjeta || '—'}</td>
+        <td>${r.resultado === 'CONCEDIDO' ? 'Permitido' : 'Denegado'}</td>
+        <td>${r.motivo_denegacion || r.motivo || '—'}</td>
+      </tr>
+    `).join('');
+
+    const cursoLabel = reporteCurso || 'Todos los cursos';
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Reporte de Accesos - R.A.C.E.R</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #333; font-size: 20px; margin-bottom: 5px; }
+          .subtitle { color: #666; font-size: 12px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background: #1d4ed8; color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
+          td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 12px; }
+          tr:nth-child(even) { background: #f8f9fa; }
+          .summary { margin-top: 16px; font-size: 13px; color: #666; }
+          .summary span { margin-right: 20px; }
+        </style>
+      </head>
+      <body>
+        <h1>Reporte de accesos - R.A.C.E.R</h1>
+        <p class="subtitle">
+          Del ${new Date(reporteFecha).toLocaleDateString('es-ES')} al ${new Date(reporteFechaFin).toLocaleDateString('es-ES')}
+          | Curso: ${cursoLabel}
+          | Generado el ${new Date().toLocaleString('es-ES')}
+        </p>
+        <div class="summary">
+          <span>Total: ${reporteData.resumen.total_accesos} accesos</span>
+          <span style="color:#059669">Permitidos: ${reporteData.resumen.total_permitidos}</span>
+          <span style="color:#dc2626">Denegados: ${reporteData.resumen.total_denegados}</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Estudiante</th>
+              <th>Curso</th>
+              <th>UID</th>
+              <th>Resultado</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <p class="subtitle" style="margin-top:20px">Total de registros: ${reporteData.registros.length}</p>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }, [reporteData, reporteFecha, reporteFechaFin, reporteCurso]);
 
   const handleCreateTarjeta = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1186,20 +1251,7 @@ export default function DashboardPage() {
               {/* Filtros */}
               <div className={styles.filtersContainer}>
                 <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Tipo de reporte</label>
-                  <select
-                    value={reporteTipo}
-                    onChange={(e) => setReporteTipo(e.target.value as 'diario' | 'semanal' | 'mensual')}
-                    className={styles.filterSelect}
-                  >
-                    <option value="diario">Diario</option>
-                    <option value="semanal">Semanal</option>
-                    <option value="mensual">Mensual</option>
-                  </select>
-                </div>
-
-                <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Fecha</label>
+                  <label className={styles.filterLabel}>Fecha inicio</label>
                   <input
                     type="date"
                     value={reporteFecha}
@@ -1208,17 +1260,15 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                {reporteTipo === 'semanal' && (
-                  <div className={styles.filterGroup}>
-                    <label className={styles.filterLabel}>Fecha fin</label>
-                    <input
-                      type="date"
-                      value={reporteFechaFin}
-                      onChange={(e) => setReporteFechaFin(e.target.value)}
-                      className={styles.filterInput}
-                    />
-                  </div>
-                )}
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Fecha fin</label>
+                  <input
+                    type="date"
+                    value={reporteFechaFin}
+                    onChange={(e) => setReporteFechaFin(e.target.value)}
+                    className={styles.filterInput}
+                  />
+                </div>
 
                 <div className={styles.filterGroup}>
                   <label className={styles.filterLabel}>Curso (opcional)</label>
@@ -1290,21 +1340,28 @@ export default function DashboardPage() {
                         <table className={styles.table}>
                           <thead>
                             <tr className={styles.tableHeadRow}>
+                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Fecha</th>
+                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Hora</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Estudiante</th>
-                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Tipo</th>
+                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Curso</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Resultado</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Motivo</th>
-                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Hora</th>
                             </tr>
                           </thead>
                           <tbody>
                             {reporteData.registros.map((reg: any, idx: number) => (
                               <tr key={idx} className={styles.tableBodyRow}>
+                                <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
+                                  {reg.timestamp ? new Date(reg.timestamp).toLocaleDateString('es-ES') : reg.fecha || '—'}
+                                </td>
+                                <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontFamily: 'monospace' }}>
+                                  {reg.timestamp ? new Date(reg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : reg.hora || '—'}
+                                </td>
                                 <td style={{ padding: '12px 20px', color: 'white', fontSize: '13px', fontWeight: 500 }}>
                                   {reg.nombre_estudiante || reg.estudiante_nombre || '—'}
                                 </td>
                                 <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
-                                  {reg.tipo_acceso || reg.tipo || '—'}
+                                  {reg.curso || '—'}
                                 </td>
                                 <td style={{ padding: '12px 20px' }}>
                                   <span className={styles.statusBadge} style={{
@@ -1317,13 +1374,70 @@ export default function DashboardPage() {
                                 <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
                                   {reg.motivo_denegacion || reg.motivo || '—'}
                                 </td>
-                                <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontFamily: 'monospace' }}>
-                                  {reg.timestamp ? new Date(reg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : reg.hora || '—'}
-                                </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                      </div>
+
+                      {/* Botones de exportar - aparecen solo después de generar el reporte */}
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={exportReportCSV}
+                          className={styles.btnSecondary}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 18px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            background: 'rgba(52, 211, 153, 0.1)',
+                            border: '1px solid rgba(52, 211, 153, 0.25)',
+                            color: '#34d399',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(52, 211, 153, 0.18)';
+                            e.currentTarget.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(52, 211, 153, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(52, 211, 153, 0.25)';
+                          }}
+                        >
+                          📄 Exportar CSV
+                        </button>
+                        <button
+                          onClick={exportReportPDF}
+                          className={styles.btnSecondary}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 18px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            background: 'rgba(96, 165, 250, 0.1)',
+                            border: '1px solid rgba(96, 165, 250, 0.25)',
+                            color: '#60a5fa',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(96, 165, 250, 0.18)';
+                            e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.25)';
+                          }}
+                        >
+                          🖨️ Exportar PDF
+                        </button>
                       </div>
                     </div>
                   )}
