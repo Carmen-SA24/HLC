@@ -174,9 +174,18 @@ void setup() {
   mostrarPantallaBienvenida();
 }
 
+// Antes de leer una tarjeta, asegurar que el RFID está en estado limpio
+void prepararRFID() {
+  rfid.PCD_Init();
+  delay(50);
+}
+
 // Bucle principal: muestra hora, lee tarjetas RFID y procesa accesos
 void loop() {
   mostrarHoraYFecha();
+
+  // Preparar el RFID antes de cada intento de lectura
+  prepararRFID();
 
   // Si se detecta una tarjeta RFID, leer su UID
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
@@ -322,9 +331,11 @@ void loop() {
     delay(1500);
     mostrarPantallaBienvenida();
     rfid.PICC_HaltA();
+    // Reiniciar el lector RFID para la siguiente detección
+    rfid.PCD_Init();
   }
 
-  delay(50);
+  delay(100);
 }
 
 // Muestra la fecha y hora actual del RTC en las líneas 0 y 1 del LCD
@@ -332,7 +343,7 @@ void mostrarHoraYFecha() {
   DateTime ahora = rtc.now();
 
   lcd.setCursor(0, 0);
-  String diasSemana[] = {"Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"};
+  String diasSemana[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado  "};
   lcd.print(diasSemana[ahora.dayOfTheWeek()]);
   lcd.print(" ");
   if (ahora.day() < 10) lcd.print("0");
