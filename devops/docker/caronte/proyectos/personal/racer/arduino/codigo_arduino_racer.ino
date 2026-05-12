@@ -266,18 +266,17 @@ void loop() {
     if (respuestaRecibida) {
       if (permitidoBridge) {
         lcd.setCursor(0, 2);
-        lcd.print(" ACCESO PERMITIDO   ");
-        lcd.setCursor(0, 3);
-        String tipoStr = (tipoAccesoBridge == "salida") ? "SALIDA" : "ENTRADA";
-        if (nombreBridge.length() > 0) {
-          String linea3 = nombreBridge.substring(0, 12) + " " + tipoStr;
-          lcd.print(linea3);
-          for (int i = linea3.length(); i < 20; i++) lcd.print(" ");
+        if (tipoAccesoBridge == "salida") {
+          lcd.print("    HASTA LUEGO     ");
         } else {
-          String linea3 = "Bienvenido " + tipoStr;
-          lcd.print(linea3);
-          for (int i = linea3.length(); i < 20; i++) lcd.print(" ");
+          lcd.print("     BIENVENIDO     ");
         }
+        
+        lcd.setCursor(0, 3);
+        String linea4 = (nombreBridge.length() > 0 && nombreBridge != "Desconocido") ? nombreBridge : "Acceso concedido";
+        lcd.print(linea4.substring(0, 20));
+        for (int i = linea4.length(); i < 20; i++) lcd.print(" ");
+
         encenderLED(LED_VERDE);
         sonidoCorto();
         apagarLEDs();

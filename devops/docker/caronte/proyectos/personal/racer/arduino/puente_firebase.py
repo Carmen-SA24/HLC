@@ -448,33 +448,54 @@ def agregar_pendiente(registro: RegistroAcceso) -> None:
 
 # VALIDACIÓN Y CONTROL DE ACCESO
 
-def determinar_tipo_acceso_alternancia(estudiante_id: str) -> str:
+def determinar_tipo_acceso_alternancia(estudiante_id: str, uid_rfid: str = "") -> str:
     """Determina si el siguiente acceso es 'entrada' o 'salida' según el último registro.
 
     Lógica de alternancia:
     - Si el estudiante NO tiene registros previos → 'entrada' (primera vez)
     - Si su último registro fue 'entrada' → 'salida'
     - Si su último registro fue 'salida' → 'entrada'
+
+    Busca primero por estudiante_id; si no hay resultados, busca por uid_tarjeta.
     """
     if firestore_client is None:
         return "entrada"
 
     try:
-        ultimos = (
-            firestore_client
-            .collection(FIRESTORE_ACCESOS_COLLECTION)
-            .where("estudiante_id", "==", estudiante_id)
-            .order_by("timestamp", direction="DESCENDING")
-            .limit(1)
-            .get()
-        )
+        ultimos = None
+
+        # Intentar buscar por estudiante_id primero (si existe)
+        if estudiante_id:
+            ultimos = (
+                firestore_client
+                .collection(FIRESTORE_ACCESOS_COLLECTION)
+                .where("estudiante_id", "==", estudiante_id)
+                .order_by("timestamp", direction="DESCENDING")
+                .limit(1)
+                .get()
+            )
+
+        # Fallback: buscar por uid_tarjeta (siempre existe en los registros)
+        if (not ultimos) and uid_rfid:
+            uid_norm = normalizar_uid_rfid(uid_rfid)
+            ultimos = (
+                firestore_client
+                .collection(FIRESTORE_ACCESOS_COLLECTION)
+                .where("uid_tarjeta", "==", uid_norm)
+                .order_by("timestamp", direction="DESCENDING")
+                .limit(1)
+                .get()
+            )
 
         if not ultimos:
+            logger.info("Sin registros previos para estudiante_id='%s' / uid='%s' → entrada", estudiante_id, uid_rfid)
             return "entrada"
 
         ultimo = ultimos[0].to_dict()
         ultimo_tipo = ultimo.get("tipo_acceso", "salida")
-        return "entrada" if ultimo_tipo == "salida" else "salida"
+        nuevo_tipo = "entrada" if ultimo_tipo == "salida" else "salida"
+        logger.info("Último acceso fue '%s' → nuevo acceso será '%s'", ultimo_tipo, nuevo_tipo)
+        return nuevo_tipo
 
     except Exception as exc:
         logger.warning("Error determinando tipo de acceso: %s", exc)
@@ -505,7 +526,8 @@ def validar_acceso_y_controlador_arduino(uid_rfid: str, arduino_serial) -> tuple
             return False, "tarjeta_bloqueada", nombre_estudiante, "entrada", estudiante_id
 
         # Determinar si es entrada o salida por alternancia
-        tipo_acceso = determinar_tipo_acceso_alternancia(estudiante_id) if estudiante_id else "entrada"
+        # Usa estudiante_id Y uid_rfid para buscar el último acceso (fallback por UID)
+        tipo_acceso = determinar_tipo_acceso_alternancia(estudiante_id, uid_rfid_norm)
 
         logger.info(
             "Acceso PERMITIDO: %s - %s (%s)",
