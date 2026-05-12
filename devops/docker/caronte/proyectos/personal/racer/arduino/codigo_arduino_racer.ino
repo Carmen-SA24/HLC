@@ -174,18 +174,13 @@ void setup() {
   mostrarPantallaBienvenida();
 }
 
-// Antes de leer una tarjeta, asegurar que el RFID está en estado limpio
-void prepararRFID() {
-  rfid.PCD_Init();
-  delay(50);
-}
-
 // Bucle principal: muestra hora, lee tarjetas RFID y procesa accesos
 void loop() {
   mostrarHoraYFecha();
 
-  // Preparar el RFID antes de cada intento de lectura
-  prepararRFID();
+  // NO llamar a PCD_Init() aquí. Llamarlo en cada iteración resetea el módulo
+  // RFID constantemente e impide que detecte tarjetas. Solo se llama PCD_Init()
+  // después de procesar una tarjeta (PICC_HaltA + PCD_Init).
 
   // Si se detecta una tarjeta RFID, leer su UID
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
