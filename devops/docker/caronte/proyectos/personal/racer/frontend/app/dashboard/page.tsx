@@ -589,12 +589,13 @@ export default function DashboardPage() {
   // Exportar reporte a CSV
   const exportReportCSV = useCallback(() => {
     if (!reporteData?.registros?.length) return;
-    const headers = ['Fecha', 'Hora', 'Estudiante', 'Curso', 'UID Tarjeta', 'Resultado', 'Motivo'];
+    const headers = ['Fecha', 'Hora', 'Estudiante', 'Curso', 'Tipo', 'UID Tarjeta', 'Resultado', 'Motivo'];
     const rows = reporteData.registros.map((r: any) => [
       r.timestamp ? new Date(r.timestamp).toLocaleDateString('es-ES') : r.fecha || '—',
       r.timestamp ? new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : r.hora || '—',
       r.nombre_estudiante || '—',
       r.curso || '—',
+      r.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA',
       r.uid_tarjeta || '—',
       r.resultado === 'CONCEDIDO' ? 'Permitido' : 'Denegado',
       r.motivo_denegacion || r.motivo || '—',
@@ -622,6 +623,7 @@ export default function DashboardPage() {
         <td>${r.timestamp ? new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : r.hora || '—'}</td>
         <td>${r.nombre_estudiante || '—'}</td>
         <td>${r.curso || '—'}</td>
+        <td>${r.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA'}</td>
         <td style="font-family:monospace;font-size:11px">${r.uid_tarjeta || '—'}</td>
         <td>${r.resultado === 'CONCEDIDO' ? 'Permitido' : 'Denegado'}</td>
         <td>${r.motivo_denegacion || r.motivo || '—'}</td>
@@ -664,6 +666,7 @@ export default function DashboardPage() {
               <th>Hora</th>
               <th>Estudiante</th>
               <th>Curso</th>
+              <th>Tipo</th>
               <th>UID</th>
               <th>Resultado</th>
               <th>Motivo</th>
@@ -1344,6 +1347,7 @@ export default function DashboardPage() {
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Hora</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Estudiante</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Curso</th>
+                              <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Tipo</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Resultado</th>
                               <th className={styles.tableHeadCell} style={{ padding: '12px 20px' }}>Motivo</th>
                             </tr>
@@ -1362,6 +1366,18 @@ export default function DashboardPage() {
                                 </td>
                                 <td style={{ padding: '12px 20px', color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
                                   {reg.curso || '—'}
+                                </td>
+                                <td style={{ padding: '12px 20px' }}>
+                                  <span style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    background: reg.tipo_acceso === 'salida' ? 'rgba(251, 191, 36, 0.15)' : 'rgba(96, 165, 250, 0.15)',
+                                    color: reg.tipo_acceso === 'salida' ? '#fbbf24' : '#60a5fa',
+                                  }}>
+                                    {reg.tipo_acceso === 'salida' ? 'SALIDA' : 'ENTRADA'}
+                                  </span>
                                 </td>
                                 <td style={{ padding: '12px 20px' }}>
                                   <span className={styles.statusBadge} style={{

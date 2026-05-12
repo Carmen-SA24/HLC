@@ -205,6 +205,7 @@ class RegistroAcceso:
     nombre_estudiante: str = ""
     curso: str = ""
     motivo: str = ""
+    tipo_acceso: str = "entrada"  # "entrada" o "salida" - se determina por alternancia
     synced: bool = False
     retry_count: int = 0
 
@@ -216,6 +217,7 @@ class RegistroAcceso:
             "hora": self.hora,
             "nombre_estudiante": self.nombre_estudiante,
             "resultado": self.resultado,
+            "tipo_acceso": self.tipo_acceso,
             "timestamp": self.timestamp,
             "uid_tarjeta": self.uid,
         }
@@ -444,41 +446,81 @@ def agregar_pendiente(registro: RegistroAcceso) -> None:
 
 # VALIDACIÓN Y CONTROL DE ACCESO
 
+def determinar_tipo_acceso_alternancia(estudiante_id: str) -> str:
+    """Determina si el siguiente acceso es 'entrada' o 'salida' según el último registro.
+
+    Lógica de alternancia:
+    - Si el estudiante NO tiene registros previos → 'entrada' (primera vez)
+    - Si su último registro fue 'entrada' → 'salida'
+    - Si su último registro fue 'salida' → 'entrada'
+    """
+    if firestore_client is None:
+        return "entrada"
+
+    try:
+        ultimos = (
+            firestore_client
+            .collection(FIRESTORE_ACCESOS_COLLECTION)
+            .where("estudiante_id", "==", estudiante_id)
+            .order_by("timestamp", direction="DESCENDING")
+            .limit(1)
+            .get()
+        )
+
+        if not ultimos:
+            return "entrada"
+
+        ultimo = ultimos[0].to_dict()
+        ultimo_tipo = ultimo.get("tipo_acceso", "salida")
+        return "entrada" if ultimo_tipo == "salida" else "salida"
+
+    except Exception as exc:
+        logger.warning("Error determinando tipo de acceso: %s", exc)
+        return "entrada"
+
+
 def validar_acceso_y_controlador_arduino(uid_rfid: str, arduino_serial) -> tuple:
     # Comprueba si la tarjeta está autorizada y envía el resultado al Arduino
-    # Retorna: (permitido, motivo, nombre_estudiante)
+    # Retorna: (permitido, motivo, nombre_estudiante, tipo_acceso)
     if firestore_client is None:
         logger.warning("Firestore no disponible. Se permite el acceso para no bloquear.")
-        return True, "firebase_no_disponible", ""
+        return True, "firebase_no_disponible", "", "entrada"
 
     try:
         uid_rfid_norm = normalizar_uid_rfid(uid_rfid)
         tarjeta_data = obtener_tarjeta_por_uid(uid_rfid_norm)
         if not tarjeta_data:
             logger.warning("Tarjeta no registrada: %s", uid_rfid_norm)
-            enviar_resultado_arduino(arduino_serial, False, "No registrada", "")
-            return False, "sin_registrar", ""
+            enviar_resultado_arduino(arduino_serial, False, "No registrada", "", "")
+            return False, "sin_registrar", "", "entrada"
 
         nombre_estudiante = str(tarjeta_data.get("nombre_estudiante", "")).strip()
+        estudiante_id = str(tarjeta_data.get("estudiante_id", "")).strip()
 
         if not tarjeta_data.get("activo", False):
             logger.warning("Tarjeta bloqueada: %s", uid_rfid_norm)
-            enviar_resultado_arduino(arduino_serial, False, "Tarjeta Bloqueada", nombre_estudiante)
-            return False, "tarjeta_bloqueada", nombre_estudiante
+            enviar_resultado_arduino(arduino_serial, False, "Tarjeta Bloqueada", nombre_estudiante, "")
+            return False, "tarjeta_bloqueada", nombre_estudiante, "entrada"
 
-        logger.info("Acceso PERMITIDO: %s - %s", uid_rfid_norm, nombre_estudiante)
-        enviar_resultado_arduino(arduino_serial, True, "Acceso permitido", nombre_estudiante)
-        return True, "acceso_permitido", nombre_estudiante
+        # Determinar si es entrada o salida por alternancia
+        tipo_acceso = determinar_tipo_acceso_alternancia(estudiante_id) if estudiante_id else "entrada"
+
+        logger.info(
+            "Acceso PERMITIDO: %s - %s (%s)",
+            uid_rfid_norm, nombre_estudiante, tipo_acceso
+        )
+        enviar_resultado_arduino(arduino_serial, True, "Acceso permitido", nombre_estudiante, tipo_acceso)
+        return True, "acceso_permitido", nombre_estudiante, tipo_acceso
 
     except Exception as exc:
         logger.error("Error validando acceso: %s", exc)
-        enviar_resultado_arduino(arduino_serial, False, "Error sistema", "")
-        return False, "error_sistema", ""
+        enviar_resultado_arduino(arduino_serial, False, "Error sistema", "", "")
+        return False, "error_sistema", "", "entrada"
 
 
-def enviar_resultado_arduino(arduino_serial, permitido: bool, motivo: str, nombre: str) -> None:
-    # Envía PERMITIDO o DENEGADO al Arduino con el nombre para la LCD
-    # Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO
+def enviar_resultado_arduino(arduino_serial, permitido: bool, motivo: str, nombre: str, tipo_acceso: str = "") -> None:
+    # Envía PERMITIDO o DENEGADO al Arduino con el nombre y tipo para la LCD
+    # Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO|TIPO_ACCESO
     try:
         if not arduino_serial or not arduino_serial.is_open:
             logger.warning("Puerto Arduino no disponible")
@@ -487,7 +529,7 @@ def enviar_resultado_arduino(arduino_serial, permitido: bool, motivo: str, nombr
         nombre_limpio = nombre[:20] if nombre else "Desconocido"
         estado = "PERMITIDO" if permitido else "DENEGADO"
         
-        mensaje = f"RESULTADO|{estado}|{nombre_limpio}|{motivo}\r\n"
+        mensaje = f"RESULTADO|{estado}|{nombre_limpio}|{motivo}|{tipo_acceso}\r\n"
         arduino_serial.write(mensaje.encode("utf-8"))
         arduino_serial.flush()
         logger.info("Enviado al Arduino: %s", mensaje.strip())
@@ -603,14 +645,19 @@ def leer_arduino() -> None:
                     continue
 
                 # Validar la tarjeta y enviar el resultado al Arduino
-                permitido, motivo, nombre = validar_acceso_y_controlador_arduino(registro.uid, arduino)
+                # Ahora devuelve 4 valores: (permitido, motivo, nombre, tipo_acceso)
+                permitido, motivo, nombre, tipo_acceso = validar_acceso_y_controlador_arduino(registro.uid, arduino)
                 registro.resultado = "CONCEDIDO" if permitido else "DENEGADO"
                 registro.nombre_estudiante = nombre
                 registro.motivo = "" if permitido else motivo
+                registro.tipo_acceso = tipo_acceso
 
                 try:
                     push_a_firebase(registro)
-                    logger.info("Registro subido a Firebase con éxito.")
+                    logger.info(
+                        "Registro subido a Firebase con éxito: %s - %s",
+                        tipo_acceso, registro.nombre_estudiante
+                    )
                 except Exception as exc:
                     logger.warning("Fallo al subir a Firebase. Se guarda localmente: %s", exc)
                     agregar_pendiente(registro)

@@ -5,7 +5,7 @@
    Flujo:
    1. Lee UID de tarjeta RFID
    2. Envía UID al puente Python por serial
-   3. Espera respuesta con formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO
+   3. Espera respuesta con formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO|TIPO_ACCESO
    4. Muestra resultado en LCD, LEDs y buzzer
 
    Componentes:
@@ -14,7 +14,7 @@
    - Buzzer pasivo (pin 8)
    - RTC DS3231 (I2C)
    - LED verde (pin 6) y LED rojo (pin 7)
-*/
+ */
 
 #include <SPI.h>
 #include <MFRC522.h>
@@ -215,6 +215,7 @@ void loop() {
     bool permitidoBridge = false;
     String nombreBridge = "";
     String motivoBridge = "";
+    String tipoAccesoBridge = "";  // "entrada" o "salida"
     String bufferLinea = "";
     unsigned long inicioEspera = millis();
     const unsigned long TIMEOUT_ESPERA = 3000;
@@ -229,10 +230,11 @@ void loop() {
           // El mensaje del puente empieza con "RESULTADO|"
           if (bufferLinea.length() > 0 && bufferLinea.startsWith("RESULTADO|")) {
             // Separar el mensaje por el carácter "|"
-            // Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO
+            // Formato: RESULTADO|PERMITIDO/DENEGADO|NOMBRE|MOTIVO|TIPO_ACCESO
             int pos1 = bufferLinea.indexOf('|');
             int pos2 = bufferLinea.indexOf('|', pos1 + 1);
             int pos3 = bufferLinea.indexOf('|', pos2 + 1);
+            int pos4 = bufferLinea.indexOf('|', pos3 + 1);
 
             if (pos1 > 0 && pos2 > pos1) {
               String estado = bufferLinea.substring(pos1 + 1, pos2);
@@ -240,7 +242,12 @@ void loop() {
 
               if (pos3 > pos2) {
                 nombreBridge = bufferLinea.substring(pos2 + 1, pos3);
-                motivoBridge = bufferLinea.substring(pos3 + 1);
+                if (pos4 > pos3) {
+                  motivoBridge = bufferLinea.substring(pos3 + 1, pos4);
+                  tipoAccesoBridge = bufferLinea.substring(pos4 + 1);
+                } else {
+                  motivoBridge = bufferLinea.substring(pos3 + 1);
+                }
               } else {
                 nombreBridge = bufferLinea.substring(pos2 + 1);
               }
@@ -263,13 +270,19 @@ void loop() {
     if (respuestaRecibida) {
       if (permitidoBridge) {
         lcd.setCursor(0, 2);
+        // Mostrar tipo de acceso: "ENTRADA" o "SALIDA"
+        String tipoStr = (tipoAccesoBridge == "salida") ? "SALIDA" : "ENTRADA";
         lcd.print("ACCESO PERMITIDO  ");
         lcd.setCursor(0, 3);
         if (nombreBridge.length() > 0) {
-          lcd.print(nombreBridge.substring(0, 20));
-          for (int i = nombreBridge.length(); i < 20; i++) lcd.print(" ");
+          lcd.print(nombreBridge.substring(0, 14));
+          lcd.print(" ");
+          lcd.print(tipoStr);
+          for (int i = 0; i < 20 - nombreBridge.substring(0, 14).length() - tipoStr.length() - 1; i++) lcd.print(" ");
         } else {
-          lcd.print("Bienvenido          ");
+          lcd.print("Bienvenido ");
+          lcd.print(tipoStr);
+          for (int i = 0; i < 20 - 10 - tipoStr.length(); i++) lcd.print(" ");
         }
         encenderLED(LED_VERDE);
         sonidoCorto();

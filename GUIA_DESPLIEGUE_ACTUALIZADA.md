@@ -573,6 +573,6 @@ kubectl port-forward svc/nestasir-backend 3001:3001 -n nestasir-ns
 
 ---
 
-**¡Despliegue completado!** 🎉
+**¡Despliegue completado!** 
 
 Para soporte, revisa los logs de los pods o la sección de Troubleshooting.
